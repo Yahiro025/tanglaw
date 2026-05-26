@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "dev:backend": "cd backend && npm run dev",
+    "build:backend": "cd backend && npm run build",
+    "start:backend": "cd backend && npm run start"
   },
   "dependencies": {
     "framer-motion": "^11.0.0",
