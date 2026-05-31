@@ -1,16 +1,9 @@
 import { ChatOpenAI } from "@langchain/openai";
-import { HuggingFaceTransformersEmbeddings } from "@langchain/community/embeddings/huggingface_transformers";
-import { MemoryVectorStore } from "@langchain/classic/vectorstores/memory";
 import { ChatPromptTemplate, MessagesPlaceholder } from "@langchain/core/prompts";
 import { RunnableWithMessageHistory, RunnablePassthrough } from "@langchain/core/runnables";
 import { InMemoryChatMessageHistory } from "@langchain/core/chat_history";
 import { StringOutputParser } from "@langchain/core/output_parsers";
-import path from "path";
-import fs from "fs";
-
-// ─── Module-level cache: load once per server instance ──────────────────────
-let cachedVectorStore: MemoryVectorStore | null = null;
-let cachedEmbeddings: HuggingFaceTransformersEmbeddings | null = null;
+import { searchScholarshipsAsContext, getAllScholarshipsAsContext } from "./scholarshipSearchService";
 
 // ─── Session store: persists conversation history per session_id ─────────────
 const sessionStore = new Map<string, InMemoryChatMessageHistory>();
@@ -22,64 +15,19 @@ function getSessionHistory(sessionId: string): InMemoryChatMessageHistory {
   return sessionStore.get(sessionId)!;
 }
 
-// ─── Load pre-computed MemoryVectorStore from JSON (no native modules) ────────
-async function getVectorStore(): Promise<MemoryVectorStore> {
-  if (cachedVectorStore) return cachedVectorStore;
-
-  const storePath = path.join(process.cwd(), "data", "vector_store.json");
-  if (!fs.existsSync(storePath)) {
-    throw new Error(
-      "vector_store.json not found in data/. Run: npx tsx scripts/ingest-memory.ts"
-    );
-  }
-
-  // Re-use or create the embeddings model (needed only for query-time embedding)
-  if (!cachedEmbeddings) {
-    cachedEmbeddings = new HuggingFaceTransformersEmbeddings({
-      model: "Xenova/all-MiniLM-L6-v2",
-    });
-  }
-
-  // Load pre-computed vectors from JSON → reconstruct MemoryVectorStore in-place
-  const raw = fs.readFileSync(storePath, "utf-8");
-  const precomputedVectors = JSON.parse(raw) as Array<{
-    content: string;
-    embedding: number[];
-    metadata: Record<string, unknown>;
-  }>;
-
-  // Build store with the embeddings model (used only for query embedding at search time)
-  const store = new MemoryVectorStore(cachedEmbeddings);
-
-  // Inject pre-computed document vectors directly — no re-embedding of documents
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (store as any).memoryVectors = precomputedVectors;
-
-  cachedVectorStore = store;
-  console.log(
-    `[Owel RAG] Loaded ${precomputedVectors.length} pre-computed vectors from vector_store.json`
-  );
-
-  return store;
-}
-
 export async function generateChatResponse(question: string, sessionId: string) {
-  // ── 1. Load vector store (cached after first request) ─────────────────────
-  const vectorStore = await getVectorStore();
-  const retriever = vectorStore.asRetriever(4); // retrieve top-4 most relevant chunks
-
-  // ── 2. Initialize LLM (OpenRouter – free owl-alpha model) ─────────────────
+  // ── 1. Initialize LLM (OpenRouter – free models) ─────────────────────────
   const apiKey = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY;
   if (!apiKey) {
     throw new Error("No OPENROUTER_API_KEY or OPENAI_API_KEY found in environment variables.");
   }
 
-  // ── 3. Query Condensation Prompt ─────────────────────────────────────────
+  // ── 2. Query Condensation Prompt ─────────────────────────────────────────
   const condensePrompt = ChatPromptTemplate.fromMessages([
     new MessagesPlaceholder("chat_history"),
     [
       "human",
-      `Given the conversation above, rephrase the following follow-up question into a single, standalone search query in English suitable for retrieving scholarship documents. 
+      `Given the conversation above, rephrase the following follow-up question into a single, standalone search query for finding scholarships. 
 Output ONLY the search query — do NOT answer the question or add any explanation.
 If the question is already standalone (no prior context needed), return it unchanged.
 
@@ -87,7 +35,7 @@ Follow-up question: {question}`,
     ],
   ]);
 
-  // ── 4. Main System Prompt ─────────────────────────────────────────────────
+  // ── 3. Main System Prompt ─────────────────────────────────────────────────
   const answerPrompt = ChatPromptTemplate.fromMessages([
     [
       "system",
@@ -136,14 +84,14 @@ For questions about specific scholarships (requirements, benefits, deadlines, et
 
 ---
 
-## Scholarship Context (Retrieved from Knowledge Base):
+## Scholarship Context (Retrieved from Database):
 {context}`,
     ],
     new MessagesPlaceholder("chat_history"),
     ["human", "{question}"],
   ]);
 
-  // ── 5. Run with Multiple Fallback Models ──────────────────────────────────
+  // ── 4. Run with Multiple Fallback Models ──────────────────────────────────
   const MODELS = [
     "nvidia/nemotron-3-super-120b-a12b:free",
     "openai/gpt-oss-120b:free",
@@ -187,15 +135,17 @@ For questions about specific scholarships (requirements, benefits, deadlines, et
               });
               if (condensed?.trim()) {
                 searchQuery = condensed.trim();
-                console.log(`[Owel RAG] Original: "${input.question}" → Condensed: "${searchQuery}"`);
+                console.log(`[Owel DB RAG] Original: "${input.question}" → Condensed: "${searchQuery}"`);
               }
             } catch (err) {
-              console.warn(`[Owel RAG] [${modelName}] Condensation failed, using raw question:`, err);
+              console.warn(`[Owel DB RAG] [${modelName}] Condensation failed, using raw question:`, err);
             }
           }
 
-          const docs = await retriever.invoke(searchQuery);
-          return docs.map((d) => d.pageContent).join("\n\n---\n\n");
+          // ── Search the database instead of the old vector store ────────────
+          const context = await searchScholarshipsAsContext(searchQuery, 8);
+          console.log(`[Owel DB RAG] Retrieved context for query: "${searchQuery}"`);
+          return context;
         },
       })
         .pipe(answerPrompt)
@@ -215,12 +165,12 @@ For questions about specific scholarships (requirements, benefits, deadlines, et
       );
 
       if (answer) {
-        console.log(`[Owel RAG] Successfully generated response using model: ${modelName}`);
+        console.log(`[Owel DB RAG] Successfully generated response using model: ${modelName}`);
         return answer;
       }
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : String(err);
-      console.warn(`[Owel RAG] Model ${modelName} failed: ${errMsg}`);
+      console.warn(`[Owel DB RAG] Model ${modelName} failed: ${errMsg}`);
       lastError = err;
     }
   }
