@@ -159,26 +159,18 @@ This pings your backend every 5 minutes, preventing it from sleeping. The 750 fr
 
 ---
 
-## Step 6 — Seed the Database (Automated via GitHub Actions)
+## Step 6 — Seed the Database (Automated on Render Deploy)
 
-Your tables are created automatically by Prisma during build. The database is seeded automatically via a **GitHub Actions workflow** on every push to `main`.
+The database schema and seed data are applied **automatically every time Render deploys** — no manual steps needed.
 
-### Setup (one-time)
+When you push to `main`, Render:
+1. ✅ Builds the backend
+2. ✅ Runs `backend/start.sh` which:
+   - Pushes the Prisma schema (`prisma db push`)
+   - Seeds scholarship data (`prisma/seed.ts`)
+   - Starts the server
 
-1. Go to your GitHub repo → **Settings → Secrets and variables → Actions**
-2. You'll default to the **Secrets** tab — click **New repository secret**
-3. **Name**: `DATABASE_URL`
-4. **Value**: Your Supabase connection string from Step 1
-   ```
-   postgresql://postgres:[PASSWORD]@db.[REF].supabase.co:5432/postgres
-   ```
-5. Click **Add secret**
-
-That's it! Every time you push to `main` (which triggers Render deploy), the workflow will:
-1. ✅ Push the Prisma schema (`prisma db push`)
-2. ✅ Seed scholarship data (`prisma/seed.ts`)
-
-You can also trigger it manually from **GitHub → Actions → Seed Database → Run workflow**.
+Render supports IPv6 out of the box, which is required because Supabase free-tier databases are IPv6-only.
 
 > **Note on vector store (ingest-memory.ts):** The RAG vector store (`vector_store.json`) is already committed to git, so it doesn't need to regenerate on every deploy. Only run `ingest-memory.ts` **locally** when you add new PDF documents to `backend/data/`, then commit the updated `vector_store.json`:
 > ```bash
@@ -186,15 +178,6 @@ You can also trigger it manually from **GitHub → Actions → Seed Database →
 > npx tsx scripts/ingest-memory.ts
 > git add data/vector_store.json && git commit -m "update vector store"
 > ```
-
-### Manual fallback (if needed)
-
-Run locally pointing to your production Supabase database:
-```bash
-cd backend
-DATABASE_URL="your-supabase-url" npx prisma db push
-DATABASE_URL="your-supabase-url" npx tsx prisma/seed.ts
-```
 
 ---
 
