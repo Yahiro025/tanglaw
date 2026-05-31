@@ -35,32 +35,29 @@ export const getScholarships = async (req: Request, res: Response) => {
       where.minGwa = { lte: gwa };
     }
 
-    const [data, total] = await prisma.$transaction([
-      prisma.scholarship.findMany({
-        where,
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-        select: {
-          id: true,
-          name: true,
-          provider: true,
-          sector: true,
-          incomeBracket: true,
-          programCategories: true,
-          requirements: true,
-          benefits: true,
-          link: true,
-        },
-      }),
-      prisma.scholarship.count({ where }),
-    ]);
+    const data = await prisma.scholarship.findMany({
+      where,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      select: {
+        id: true,
+        name: true,
+        provider: true,
+        sector: true,
+        incomeBracket: true,
+        programCategories: true,
+        requirements: true,
+        benefits: true,
+        link: true,
+      },
+    });
 
     const formatted = data.map((scholarship) => ({
       id: scholarship.id,
       name: scholarship.name,
       provider: scholarship.provider,
       type: scholarship.sector === "PUBLIC" ? "Public" : "Private",
-      incomeBracket: scholarship.incomeBracket,
+      incomeBracket: Number(scholarship.incomeBracket),
       program: scholarship.programCategories?.length ? scholarship.programCategories[0] : "Any",
       benefits: scholarship.benefits
         .split(/\r?\n/)
@@ -73,7 +70,7 @@ export const getScholarships = async (req: Request, res: Response) => {
       link: scholarship.link,
     }));
 
-    res.json({ page, pageSize, count: total, data: formatted });
+    res.json({ data: formatted });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "DB error" });

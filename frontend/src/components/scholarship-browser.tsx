@@ -5,7 +5,7 @@
  * Supports keyword search, program filtering, income constraints, and scholarship listings.
  */
 import React, { useEffect, useState, useMemo } from "react";
-import { Search, SlidersHorizontal, ExternalLink, Filter, GraduationCap, DollarSign, Building2, BookOpen, AlertCircle } from "lucide-react";
+import { Search, SlidersHorizontal, ExternalLink, Filter, GraduationCap, DollarSign, Building2, BookOpen, AlertCircle, RefreshCw } from "lucide-react";
 import { fetchScholarships } from "@/lib/backend";
 
 interface Scholarship {
@@ -20,12 +20,70 @@ interface Scholarship {
   link: string;
 }
 
+// ── sessionStorage cache ─────────────────────────────────────────────────────
+const CACHE_KEY = "tanglaw-scholarships-v1";
+const CACHE_AGE_MS = 5 * 60 * 1000; // 5 minutes
+
+interface CacheEntry {
+  data: Scholarship[];
+  timestamp: number;
+}
+
+function getCachedScholarships(): Scholarship[] | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const entry: CacheEntry = JSON.parse(raw);
+    if (Date.now() - entry.timestamp > CACHE_AGE_MS) {
+      sessionStorage.removeItem(CACHE_KEY);
+      return null;
+    }
+    return entry.data;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedScholarships(data: Scholarship[]) {
+  if (typeof window === "undefined") return;
+  try {
+    const entry: CacheEntry = { data, timestamp: Date.now() };
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify(entry));
+  } catch {
+    // sessionStorage full or unavailable — ignore
+  }
+}
+
+// ── Skeleton card for loading state ──────────────────────────────────────────
+function ScholarshipSkeleton() {
+  return (
+    <div className="bg-base-pastel border-2 border-accent-muted/40 rounded-2xl p-6 animate-pulse">
+      <div className="flex gap-1.5 mb-3.5">
+        <div className="h-4 w-16 bg-zinc-300 rounded-full" />
+        <div className="h-4 w-24 bg-zinc-300 rounded-full" />
+      </div>
+      <div className="h-5 w-3/4 bg-zinc-300 rounded mb-2" />
+      <div className="h-3 w-1/2 bg-zinc-200 rounded mb-4" />
+      <div className="space-y-1.5 mb-4">
+        <div className="h-3 w-1/3 bg-zinc-200 rounded" />
+        <div className="h-3 w-full bg-zinc-200 rounded" />
+        <div className="h-3 w-5/6 bg-zinc-200 rounded" />
+      </div>
+      <div className="h-10 w-full bg-zinc-300 rounded-xl" />
+    </div>
+  );
+}
+
 export default function ScholarshipBrowser() {
-  const [scholarships, setScholarships] = useState<Scholarship[]>([]);
-  const [loadingScholarships, setLoadingScholarships] = useState(true);
+  const [scholarships, setScholarships] = useState<Scholarship[]>(() => getCachedScholarships() ?? []);
+  const [loadingScholarships, setLoadingScholarships] = useState(() => getCachedScholarships() === null);
   const [scholarshipError, setScholarshipError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Skip fetch if we already have cached data
+    if (!loadingScholarships) return;
+
     let active = true;
 
     async function loadScholarships() {
@@ -33,6 +91,7 @@ export default function ScholarshipBrowser() {
         const backendScholarships = await fetchScholarships();
         if (!active) return;
         setScholarships(backendScholarships);
+        setCachedScholarships(backendScholarships);
       } catch (error) {
         console.error("Failed to load scholarships from backend:", error);
         if (active) {
@@ -49,7 +108,7 @@ export default function ScholarshipBrowser() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [loadingScholarships]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [incomeLimit, setIncomeLimit] = useState<string>("all");
@@ -91,6 +150,11 @@ export default function ScholarshipBrowser() {
     setIncomeLimit("all");
     setScholarshipType("all");
     setProgramType("all");
+  };
+
+  const handleRetry = () => {
+    setScholarshipError(null);
+    setLoadingScholarships(true);
   };
 
   return (
@@ -206,7 +270,15 @@ export default function ScholarshipBrowser() {
         {/* Statistics Bar */}
         <div className="flex flex-col sm:flex-row justify-between items-center bg-white border border-accent-periwinkle rounded-2xl px-6 py-4 shadow-sm gap-3">
           <div className="text-sm font-semibold text-zinc-600">
-            Showing <span className="text-text-primary font-bold">{filteredScholarships.length}</span> matching scholarships
+            {loadingScholarships ? (
+              "Loading scholarships..."
+            ) : scholarshipError ? (
+              <span className="text-red-600">Failed to load — server may be starting up</span>
+            ) : (
+              <>
+                Showing <span className="text-text-primary font-bold">{filteredScholarships.length}</span> matching scholarships
+              </>
+            )}
           </div>
           <div className="flex items-center gap-2 text-xs">
             <span className="inline-flex items-center px-2 py-1 rounded bg-accent-periwinkle/30 border border-accent-periwinkle text-text-primary font-bold">Pastel Palette Active</span>
@@ -214,8 +286,37 @@ export default function ScholarshipBrowser() {
           </div>
         </div>
 
+        {/* Error State */}
+        {scholarshipError && (
+          <div className="flex flex-col items-center justify-center bg-white border border-red-200 rounded-2xl p-12 text-center shadow-sm">
+            <AlertCircle className="h-12 w-12 text-red-400 mb-4" />
+            <h3 className="font-bold text-lg text-text-primary mb-2">Could Not Load Scholarships</h3>
+            <p className="text-sm text-zinc-500 max-w-md mb-1">
+              The backend server may be waking up from sleep (free-tier cold start can take 30–60 seconds).
+            </p>
+            <p className="text-xs text-zinc-400 max-w-md mb-6">
+              Error: {scholarshipError}
+            </p>
+            <button
+              onClick={handleRetry}
+              className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-full text-xs font-bold border border-accent-muted hover:bg-primary-hover transition-colors cursor-pointer"
+            >
+              <RefreshCw className="h-3.5 w-3.5" /> Retry
+            </button>
+          </div>
+        )}
+
+        {/* Loading Skeleton */}
+        {loadingScholarships && !scholarshipError && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[1, 2, 3, 4].map((n) => (
+              <ScholarshipSkeleton key={n} />
+            ))}
+          </div>
+        )}
+
         {/* Listings Grid */}
-        {filteredScholarships.length > 0 ? (
+        {!loadingScholarships && !scholarshipError && filteredScholarships.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {filteredScholarships.map((s) => (
               <article
@@ -237,7 +338,7 @@ export default function ScholarshipBrowser() {
                     </span>
                     {s.incomeBracket > 0 && (
                       <span className="text-[10px] bg-accent-rose/70 border border-accent-rose text-zinc-800 font-bold px-2.5 py-0.5 rounded-full">
-                        Family Income Limit: ₱{(s.incomeBracket).toLocaleString()}
+                        Family Income Limit: ₱{s.incomeBracket.toLocaleString()}
                       </span>
                     )}
                   </div>
@@ -292,7 +393,10 @@ export default function ScholarshipBrowser() {
               </article>
             ))}
           </div>
-        ) : (
+        )}
+
+        {/* Empty State (no filters match, but data is loaded) */}
+        {!loadingScholarships && !scholarshipError && filteredScholarships.length === 0 && (
           <div className="flex flex-col items-center justify-center bg-white border border-accent-periwinkle rounded-2xl p-16 text-center shadow-sm">
             <Filter className="h-12 w-12 text-accent-muted mb-4 animate-pulse" />
             <h3 className="font-bold text-lg text-text-primary mb-2">No Matching Aid Found</h3>
