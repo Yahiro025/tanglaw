@@ -46,5 +46,4 @@ frontend/.next/
 # Vector Database (Generated locally for Vercel deployment, but public/faiss_index is usually committed if small or ignored if dynamic)
 # /frontend/public/faiss_index/
 
-#subagent from an agentic coder
-.agents/
+
