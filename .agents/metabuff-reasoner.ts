@@ -149,6 +149,7 @@ const definition: AgentDefinition = {
     'basher',
     'glob',
     'think_deeply',
+    'spawn_agents',
     'end_turn',
   ],
 
