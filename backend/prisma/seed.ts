@@ -1,7 +1,21 @@
+import { Sector } from "@prisma/client";
 import prisma from "../src/services/prismaClient";
 
+interface ScholarshipSeed {
+  name: string;
+  provider: string;
+  sector: Sector;
+  incomeBracket: number;
+  programCategories: string[];
+  minGwa: number;
+  requirements: string;
+  benefits: string;
+  returnService: boolean;
+  link: string;
+}
+
 async function main() {
-  const scholarships = [
+  const scholarships: ScholarshipSeed[] = [
     {
       name: "DOST-SEI Undergraduate Scholarship",
       provider: "Department of Science and Technology",
@@ -97,8 +111,10 @@ async function main() {
       benefits: "₱15,000 financial assistance per school year\nCan be combined with local government subsidies",
       returnService: false,
       link: "https://unifast.deped.gov.ph",
-    }
+    },
   ];
+
+  console.log(`Seeding ${scholarships.length} scholarships...`);
 
   // Clear existing scholarship rows and insert canonical prototype data.
   await prisma.scholarship.deleteMany();
@@ -108,7 +124,7 @@ async function main() {
       data: {
         name: scholarship.name,
         provider: scholarship.provider,
-        sector: scholarship.sector as any,
+        sector: scholarship.sector,
         incomeBracket: String(scholarship.incomeBracket),
         programCategories: scholarship.programCategories,
         minGwa: scholarship.minGwa,
@@ -116,16 +132,16 @@ async function main() {
         benefits: scholarship.benefits,
         returnService: scholarship.returnService,
         link: scholarship.link,
-      } as any,
+      },
     });
   }
 
-  console.log("Seeded scholarship data successfully.");
+  console.log(`✅ Seeded ${scholarships.length} scholarship records successfully.`);
 }
 
 main()
   .catch((error) => {
-    console.error(error);
+    console.error("❌ Seed failed:", error);
     process.exit(1);
   })
   .finally(async () => {

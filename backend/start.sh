@@ -10,13 +10,22 @@ echo "=== Tanglaw Backend Startup ==="
 date -u
 
 echo "[1/3] Generating Prisma client..."
-npx prisma generate 2>&1 || echo "⚠️ Prisma generate failed, continuing..."
+if ! npx prisma generate 2>&1; then
+  echo "❌ Prisma generate failed — cannot continue without database client."
+  exit 1
+fi
 
 echo "[2/3] Pushing database schema..."
-npx prisma db push --accept-data-loss 2>&1 || echo "⚠️ Schema push failed, continuing..."
+if ! npx prisma db push --accept-data-loss 2>&1; then
+  echo "❌ Schema push failed — cannot continue without database schema."
+  exit 1
+fi
 
 echo "[3/3] Seeding scholarship data..."
-npx ts-node --transpile-only prisma/seed.ts 2>&1 || echo "⚠️ Seeding failed, continuing..."
+if ! npx ts-node --transpile-only prisma/seed.ts 2>&1; then
+  echo "❌ Seeding failed — scholarships will not be available."
+  exit 1
+fi
 
 echo "=== Starting server ==="
 exec node dist/server.js
