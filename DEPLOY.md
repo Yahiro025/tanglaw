@@ -81,9 +81,19 @@ After the initial deploy (it will fail the first time — that's expected), go t
 | Variable | Value |
 |----------|-------|
 | `FRONTEND_URL` | Your Vercel URL — **no trailing slash** (e.g. `https://tanglaw.vercel.app`, not `https://tanglaw.vercel.app/`) |
-| `DATABASE_URL` | Your Supabase connection string from Step 1 |
-| `DIRECT_URL` | Same as above |
+| `DATABASE_URL` | **Pooler connection string** from Supabase (port 6543) — see note below |
+| `DIRECT_URL` | Direct connection string from Step 1 (port 5432) — for `prisma db push` |
 | `OPENROUTER_API_KEY` | Your key from Step 2 |
+
+> ⚠️ **Important:** Supabase free-tier databases use **IPv6 only** on the direct port (5432). Render's free plan may not support IPv6 outbound connections. You **must** use the **connection pooler** (port **6543**) for `DATABASE_URL`.
+>
+> To get the pooler URL:
+> 1. Go to **Supabase Dashboard → Project Settings → Database**
+> 2. Scroll to **Connection pooler** section
+> 3. Copy the **Transaction** connection string (port 6543)
+>    - Format: `postgresql://postgres.[PROJECT_REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres`
+> 4. Set this as `DATABASE_URL` on Render
+> 5. Keep `DIRECT_URL` as the original port 5432 connection string (for `prisma db push`)
 
 3. Click **Save Changes**
 4. Go to **Manual Deploy → Deploy latest commit** to rebuild
@@ -170,7 +180,7 @@ When you push to `main`, Render:
    - Seeds scholarship data (`prisma/seed.ts`)
    - Starts the server
 
-Render supports IPv6 out of the box, which is required because Supabase free-tier databases are IPv6-only.
+> **Important:** Render's free plan uses IPv4 by default. Your `DATABASE_URL` must be the **connection pooler** URL (port 6543) from Supabase — see Step 3 for setup instructions. The `DIRECT_URL` (port 5432) is only used by `prisma db push` and is set separately.
 
 > **Note on vector store (ingest-memory.ts):** The RAG vector store (`vector_store.json`) is already committed to git, so it doesn't need to regenerate on every deploy. Only run `ingest-memory.ts` **locally** when you add new PDF documents to `backend/data/`, then commit the updated `vector_store.json`:
 > ```bash
