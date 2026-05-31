@@ -84,7 +84,7 @@ export default function ScholarshipBrowser() {
 
       return matchesSearch && matchesIncome && matchesType && matchesProgram;
     });
-  }, [searchTerm, incomeLimit, scholarshipType, programType]);
+  }, [searchTerm, incomeLimit, scholarshipType, programType, scholarships]);
 
   const handleResetFilters = () => {
     setSearchTerm("");
