@@ -80,7 +80,7 @@ After the initial deploy (it will fail the first time — that's expected), go t
 
 | Variable | Value |
 |----------|-------|
-| `FRONTEND_URL` | Your Vercel URL later — set to `http://localhost:3000` for now, update after Step 4 |
+| `FRONTEND_URL` | Your Vercel URL — **no trailing slash** (e.g. `https://tanglaw.vercel.app`, not `https://tanglaw.vercel.app/`) |
 | `DATABASE_URL` | Your Supabase connection string from Step 1 |
 | `DIRECT_URL` | Same as above |
 | `OPENROUTER_API_KEY` | Your key from Step 2 |
@@ -159,24 +159,41 @@ This pings your backend every 5 minutes, preventing it from sleeping. The 750 fr
 
 ---
 
-## Step 6 — Seed the Database
+## Step 6 — Seed the Database (Automated via GitHub Actions)
 
-Your tables are created automatically by Prisma during build. Now you need to seed data:
+Your tables are created automatically by Prisma during build. The database is seeded automatically via a **GitHub Actions workflow** on every push to `main`.
 
-1. Go to **Render Dashboard → tanglaw-api → Shell** (top right)
-2. Run:
-```bash
-npx prisma db push
-npx tsx prisma/seed.ts
-npx tsx scripts/ingest-memory.ts
-```
+### Setup (one-time)
 
-Or run locally and point to the production Supabase database:
+1. Go to your GitHub repo → **Settings → Secrets and variables → Actions**
+2. You'll default to the **Secrets** tab — click **New repository secret**
+3. **Name**: `DATABASE_URL`
+4. **Value**: Your Supabase connection string from Step 1
+   ```
+   postgresql://postgres:[PASSWORD]@db.[REF].supabase.co:5432/postgres
+   ```
+5. Click **Add secret**
+
+That's it! Every time you push to `main` (which triggers Render deploy), the workflow will:
+1. ✅ Push the Prisma schema (`prisma db push`)
+2. ✅ Seed scholarship data (`prisma/seed.ts`)
+
+You can also trigger it manually from **GitHub → Actions → Seed Database → Run workflow**.
+
+> **Note on vector store (ingest-memory.ts):** The RAG vector store (`vector_store.json`) is already committed to git, so it doesn't need to regenerate on every deploy. Only run `ingest-memory.ts` **locally** when you add new PDF documents to `backend/data/`, then commit the updated `vector_store.json`:
+> ```bash
+> cd backend
+> npx tsx scripts/ingest-memory.ts
+> git add data/vector_store.json && git commit -m "update vector store"
+> ```
+
+### Manual fallback (if needed)
+
+Run locally pointing to your production Supabase database:
 ```bash
 cd backend
 DATABASE_URL="your-supabase-url" npx prisma db push
 DATABASE_URL="your-supabase-url" npx tsx prisma/seed.ts
-DATABASE_URL="your-supabase-url" npx tsx scripts/ingest-memory.ts
 ```
 
 ---

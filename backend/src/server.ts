@@ -19,9 +19,12 @@ if (!frontendOrigin) {
   throw new Error("FRONTEND_URL environment variable is required");
 }
 
+// Strip trailing slash to avoid CORS origin mismatch (browser sends origin without /)
+const corsOrigin = frontendOrigin.replace(/\/+$/, "");
+
 app.use(
   cors({
-    origin: frontendOrigin,
+    origin: corsOrigin,
     credentials: true,
   })
 );
