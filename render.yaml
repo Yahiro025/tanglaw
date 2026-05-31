@@ -8,6 +8,7 @@ services:
     env: node
     region: singapore  # Closest to Philippines for lowest latency
     plan: free
+    rootDir: backend
     buildCommand: npm install && npm run build
     startCommand: npm start
     healthCheckPath: /api/health

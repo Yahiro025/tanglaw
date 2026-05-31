@@ -67,10 +67,9 @@ CREATE EXTENSION IF NOT EXISTS vector;
 2. Sign in with **GitHub** — **no credit card required**
 3. Click **New + → Blueprint** (this uses the `render.yaml` we created)
 4. Select your repository: `Yahiro025/tanglaw`
-5. Set the **Root Directory**: `backend`
-6. Click **Apply**
+5. Click **Apply** — `rootDir` is already set in `render.yaml`, so no need to configure it manually
 
-Render will read `backend/render.yaml` and create the service automatically.
+Render will read `render.yaml` at the project root and create the service automatically.
 
 ### Set Environment Variables on Render
 
