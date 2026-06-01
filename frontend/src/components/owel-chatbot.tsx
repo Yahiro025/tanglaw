@@ -334,9 +334,9 @@ export default function OwelChatbot() {
   const panelBody = (
     <>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-white/80 flex-shrink-0">
+      <div className="flex items-center justify-between p-4 bg-[color:var(--theme-surface)]/80 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className="h-12 w-12 overflow-hidden rounded-full bg-white flex items-center justify-center shadow-lg">
+          <div className="h-12 w-12 overflow-hidden rounded-full bg-[color:var(--theme-surface)] flex items-center justify-center shadow-lg">
             <Image
               src="/assets/owel-head.png"
               alt="Owel Mascot"
@@ -346,13 +346,13 @@ export default function OwelChatbot() {
             />
           </div>
           <div>
-            <p className="text-sm font-bold text-zinc-900">Owel Assistant</p>
-            <p className="text-[10px] text-zinc-500">Live guidance for dashboard users</p>
+            <p className="text-sm font-bold text-[color:var(--theme-typography-main)]">Owel Assistant</p>
+            <p className="text-[10px] text-[color:var(--theme-text-muted)]">Live guidance for dashboard users</p>
           </div>
         </div>
         <button
           onClick={handleClose}
-          className="rounded-full p-1 text-zinc-700 hover:bg-base-light focus:outline-none"
+          className="rounded-full p-1 text-[color:var(--theme-text-body)] hover:bg-base-light focus:outline-none"
           aria-label="Close chat"
         >
           <X className="h-5 w-5" />
@@ -360,7 +360,7 @@ export default function OwelChatbot() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[color:var(--theme-surface)]">
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -370,11 +370,11 @@ export default function OwelChatbot() {
               className={`max-w-[80%] rounded-3xl px-4 py-3 text-sm whitespace-pre-wrap shadow-sm ${
                 msg.sender === "user"
                   ? "bg-primary text-white rounded-br-none"
-                  : "bg-base-pastel text-zinc-900 rounded-bl-none"
+                  : "bg-base-pastel text-[color:var(--theme-typography-main)] rounded-bl-none"
               }`}
             >
               {msg.text}
-              <span className="block text-[9px] text-zinc-500 text-right mt-2">
+              <span className="block text-[9px] text-[color:var(--theme-text-muted)] text-right mt-2">
                 {msg.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
               </span>
             </div>
@@ -385,9 +385,9 @@ export default function OwelChatbot() {
           <div className="flex justify-start">
             <div className="rounded-3xl bg-base-pastel px-4 py-3 text-sm shadow-sm">
               <div className="flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-zinc-600 animate-bounce" />
-                <span className="h-1.5 w-1.5 rounded-full bg-zinc-600 animate-bounce" />
-                <span className="h-1.5 w-1.5 rounded-full bg-zinc-600 animate-bounce" />
+                <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--theme-typography-secondary)] animate-bounce" />
+                <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--theme-typography-secondary)] animate-bounce" />
+                <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--theme-typography-secondary)] animate-bounce" />
               </div>
             </div>
           </div>
@@ -396,8 +396,8 @@ export default function OwelChatbot() {
       </div>
 
       {/* Quick questions */}
-      <div className="p-3 bg-white border-t border-accent-muted/20 flex-shrink-0">
-        <div className="mb-3 text-[10px] uppercase tracking-[0.28em] text-zinc-500 font-bold flex items-center gap-2">
+      <div className="p-3 bg-[color:var(--theme-surface)] border-t border-accent-muted/20 flex-shrink-0">
+        <div className="mb-3 text-[10px] uppercase tracking-[0.28em] text-[color:var(--theme-text-muted)] font-bold flex items-center gap-2">
           <HelpCircle className="h-3 w-3" /> Quick Questions
         </div>
         <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto pr-1">
@@ -406,7 +406,7 @@ export default function OwelChatbot() {
               key={idx}
               type="button"
               onClick={() => handleSendMessage(prompt.query)}
-              className="rounded-full border border-zinc-200 bg-white px-3 py-2 text-[11px] text-zinc-700 hover:bg-primary/10 transition"
+              className="rounded-full border border-white/10 bg-[color:var(--theme-canvas)]/90 px-3 py-2 text-[11px] text-[color:var(--theme-text-body)] hover:bg-primary/10 transition"
             >
               {prompt.label}
             </button>
@@ -420,19 +420,19 @@ export default function OwelChatbot() {
           e.preventDefault();
           handleSendMessage(input);
         }}
-        className="flex items-center gap-2 p-3 bg-white flex-shrink-0"
+        className="flex items-center gap-2 p-3 bg-[color:var(--theme-surface)] flex-shrink-0"
       >
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask Owel about grants..."
-          className="flex-1 rounded-full border border-zinc-200 bg-base-light/70 px-4 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-primary"
+          className="flex-1 rounded-full border border-white/10 bg-base-light/70 px-4 py-2 text-sm text-[color:var(--theme-typography-main)] focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <button
           type="submit"
           disabled={!input.trim()}
-          className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center hover:bg-primary-hover transition disabled:bg-zinc-200 disabled:text-zinc-400"
+          className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center hover:bg-primary-hover transition disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Send className="h-4 w-4" />
         </button>
@@ -471,7 +471,7 @@ export default function OwelChatbot() {
       {isOpen && !isMobile && (
         <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 font-sans">
           <div
-            className={`relative flex flex-col rounded-[2rem] bg-white/95 shadow-2xl backdrop-blur-xl overflow-hidden ${
+            className={`relative flex flex-col rounded-[2rem] bg-[color:var(--theme-surface)]/95 shadow-2xl backdrop-blur-xl overflow-hidden ${
               isResizing ? "select-none" : ""
             }`}
             style={{
@@ -491,7 +491,7 @@ export default function OwelChatbot() {
               role="slider"
               tabIndex={-1}
             >
-              <GripHorizontal className="h-4 w-4 text-zinc-400 group-hover:text-zinc-600 transition-colors -rotate-45" />
+              <GripHorizontal className="h-4 w-4 text-[color:var(--theme-text-muted)] group-hover:text-[color:var(--theme-text-body)] transition-colors -rotate-45" />
             </div>
 
             {/* Resize handle — bottom-left corner */}
@@ -503,7 +503,7 @@ export default function OwelChatbot() {
               role="slider"
               tabIndex={-1}
             >
-              <GripHorizontal className="h-4 w-4 text-zinc-400 group-hover:text-zinc-600 transition-colors rotate-45" />
+              <GripHorizontal className="h-4 w-4 text-[color:var(--theme-text-muted)] group-hover:text-[color:var(--theme-text-body)] transition-colors rotate-45" />
             </div>
           </div>
         </div>
@@ -523,13 +523,13 @@ export default function OwelChatbot() {
 
           {/* Sheet */}
           <div
-            className={`absolute inset-x-0 bottom-0 bg-white rounded-t-2xl max-h-[85vh] flex flex-col shadow-2xl transition-transform duration-300 ease-out ${
+            className={`absolute inset-x-0 bottom-0 bg-[color:var(--theme-surface)] rounded-t-2xl max-h-[85vh] flex flex-col shadow-2xl transition-transform duration-300 ease-out ${
               sheetVisible ? "translate-y-0" : "translate-y-full"
             }`}
           >
             {/* Drag handle */}
             <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-              <div className="w-10 h-1.5 rounded-full bg-zinc-300" />
+              <div className="w-10 h-1.5 rounded-full bg-[color:var(--theme-borders-system)]/50" />
             </div>
 
             {panelBody}

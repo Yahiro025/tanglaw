@@ -38,20 +38,45 @@ export default function SiteHeader() {
           </span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-6 text-[11px] uppercase tracking-[0.34em] text-[color:var(--theme-typography-secondary)] font-black">
-          <Link href="/" className="transition hover:text-[color:var(--theme-typography-main)]">
+        <nav className="hidden md:flex items-center gap-2 text-[11px] uppercase tracking-[0.34em] text-[color:var(--theme-typography-secondary)] font-black">
+          <Link
+            href="/"
+            className={`transition px-3 py-2 rounded-full ${
+              pathname === "/"
+                ? "border border-primary/20 bg-primary/75 text-white"
+                : "hover:text-[color:var(--theme-typography-main)]"
+            }`}
+          >
             Home
           </Link>
-          <Link href="/about" className="transition hover:text-[color:var(--theme-typography-main)]">
+          <Link
+            href="/about"
+            className={`transition px-3 py-2 rounded-full ${
+              pathname === "/about"
+                ? "border border-primary/20 bg-primary/75 text-white"
+                : "hover:text-[color:var(--theme-typography-main)]"
+            }`}
+          >
             About
           </Link>
-          <Link href="/contact" className="transition hover:text-[color:var(--theme-typography-main)]">
+          <Link
+            href="/contact"
+            className={`transition px-3 py-2 rounded-full ${
+              pathname === "/contact"
+                ? "border border-primary/20 bg-primary/75 text-white"
+                : "hover:text-[color:var(--theme-typography-main)]"
+            }`}
+          >
             Contact
           </Link>
           {isAuthenticated ? (
             <Link
               href="/dashboard"
-              className="rounded-full border border-primary/20 bg-primary/75 px-4 py-2 text-white transition hover:bg-primary-hover"
+              className={`transition px-4 py-2 rounded-full ${
+                pathname?.startsWith("/dashboard")
+                  ? "border border-primary/20 bg-primary/75 text-white hover:bg-primary-hover"
+                  : "hover:text-[color:var(--theme-typography-main)]"
+              }`}
             >
               Dashboard
             </Link>

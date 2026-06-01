@@ -103,7 +103,7 @@ export default function ReviewerPage() {
           </div>
           <div
             className={`rounded-3xl px-4 py-4 text-sm border shadow-sm ${
-              timeLeft <= 120 ? "border-rose-400 bg-rose-50 text-rose-700" : "border-accent-muted/40 bg-base-pastel text-zinc-700"
+              timeLeft <= 120 ? "border-rose-400 bg-rose-50 text-rose-700" : "border-accent-muted/40 bg-base-pastel text-[color:var(--theme-text-body)]"
             }`}
           >
             <div className="flex items-center gap-2 font-bold mb-2">
@@ -140,7 +140,7 @@ export default function ReviewerPage() {
                 ? "bg-primary text-white"
                 : answered
                 ? "bg-secondary text-white"
-                : "bg-base-pastel text-zinc-700";
+                : "bg-base-pastel text-[color:var(--theme-text-body)]";
 
               return (
                 <button
@@ -184,9 +184,9 @@ export default function ReviewerPage() {
                 <p className="text-[11px] uppercase tracking-[0.32em] text-zinc-500 font-bold">Subject</p>
                 <h2 className="font-display text-2xl font-black text-zinc-900 mt-2">{currentQuestion.subject}</h2>
               </div>
-              <div className="rounded-3xl bg-base-pastel px-4 py-3 text-sm text-zinc-700 border border-accent-muted/40">
-                <p className="text-[10px] uppercase tracking-[0.28em] text-zinc-500">Question</p>
-                <p className="mt-1 text-lg font-black text-zinc-900">{currentQuestion.id}</p>
+              <div className="rounded-3xl bg-base-pastel px-4 py-3 text-sm text-[color:var(--theme-text-body)] border border-accent-muted/40">
+                <p className="text-[10px] uppercase tracking-[0.28em] text-[color:var(--theme-text-muted)]">Question</p>
+                <p className="mt-1 text-lg font-black text-[color:var(--theme-typography-main)]">{currentQuestion.id}</p>
               </div>
             </div>
 
@@ -202,7 +202,7 @@ export default function ReviewerPage() {
                   <label
                     key={option}
                     className={`group flex cursor-pointer flex-col rounded-3xl border px-4 py-4 transition-all ${
-                      selected ? "border-primary bg-primary text-white shadow-lg" : "border-accent-muted/40 bg-base-light text-zinc-900 hover:border-primary hover:bg-primary/5"
+                      selected ? "border-primary bg-primary text-white shadow-lg" : "border-accent-muted/40 bg-base-light text-[color:var(--theme-typography-main)] hover:border-primary hover:bg-primary/5"
                     }`}
                   >
                     <input

@@ -60,17 +60,17 @@ function ScholarshipSkeleton() {
   return (
     <div className="bg-[color:var(--theme-surface)]/80 border-2 border-accent-muted/40 rounded-2xl p-6 animate-pulse">
       <div className="flex gap-1.5 mb-3.5">
-        <div className="h-4 w-16 bg-zinc-300 rounded-full" />
-        <div className="h-4 w-24 bg-zinc-300 rounded-full" />
+        <div className="h-4 w-16 bg-[color:var(--theme-borders-system)]/35 rounded-full" />
+        <div className="h-4 w-24 bg-[color:var(--theme-borders-system)]/35 rounded-full" />
       </div>
-      <div className="h-5 w-3/4 bg-zinc-300 rounded mb-2" />
-      <div className="h-3 w-1/2 bg-zinc-200 rounded mb-4" />
+      <div className="h-5 w-3/4 bg-[color:var(--theme-borders-system)]/35 rounded mb-2" />
+      <div className="h-3 w-1/2 bg-[color:var(--theme-borders-system)]/22 rounded mb-4" />
       <div className="space-y-1.5 mb-4">
-        <div className="h-3 w-1/3 bg-zinc-200 rounded" />
-        <div className="h-3 w-full bg-zinc-200 rounded" />
-        <div className="h-3 w-5/6 bg-zinc-200 rounded" />
+        <div className="h-3 w-1/3 bg-[color:var(--theme-borders-system)]/22 rounded" />
+        <div className="h-3 w-full bg-[color:var(--theme-borders-system)]/22 rounded" />
+        <div className="h-3 w-5/6 bg-[color:var(--theme-borders-system)]/22 rounded" />
       </div>
-      <div className="h-10 w-full bg-zinc-300 rounded-xl" />
+      <div className="h-10 w-full bg-[color:var(--theme-borders-system)]/35 rounded-xl" />
     </div>
   );
 }
@@ -196,7 +196,7 @@ export default function ScholarshipBrowser() {
           </div>
           <button
             onClick={handleResetFilters}
-            className="text-xs font-semibold text-zinc-600 hover:text-zinc-950 transition-colors cursor-pointer hover:underline"
+            className="text-xs font-semibold text-[color:var(--theme-text-body)] hover:text-[color:var(--theme-typography-main)] transition-colors cursor-pointer hover:underline"
           >
             Clear All
           </button>
@@ -249,7 +249,7 @@ export default function ScholarshipBrowser() {
                   className={`py-1.5 rounded-lg text-xs font-bold capitalize transition-all cursor-pointer ${
                     scholarshipType === t
                       ? "bg-primary text-white shadow-sm"
-                      : "text-zinc-500 hover:text-zinc-800"
+                      : "text-[color:var(--theme-text-muted)] hover:text-[color:var(--theme-text-body)]"
                   }`}
                 >
                   {t}
@@ -275,7 +275,7 @@ export default function ScholarshipBrowser() {
                   className={`flex items-center gap-2.5 p-2.5 rounded-xl border transition-all cursor-pointer text-xs font-bold ${
                     programType === p.value
                       ? "bg-primary/20 border-primary text-text-primary"
-                      : "bg-[color:var(--theme-surface)] border-accent-periwinkle/60 text-zinc-600 hover:border-accent-periwinkle"
+                      : "bg-[color:var(--theme-surface)] border-accent-periwinkle/60 text-[color:var(--theme-text-body)] hover:border-accent-periwinkle"
                   }`}
                 >
                   <input
@@ -297,7 +297,7 @@ export default function ScholarshipBrowser() {
         <div className={`mt-4 lg:hidden ${showMobileFilters ? "block" : "hidden"}`}>
           <button
             onClick={handleResetFilters}
-            className="w-full text-xs font-semibold text-zinc-600 hover:text-zinc-950 transition-colors cursor-pointer hover:underline py-2"
+            className="w-full text-xs font-semibold text-[color:var(--theme-text-body)] hover:text-[color:var(--theme-typography-main)] transition-colors cursor-pointer hover:underline py-2"
           >
             Clear All Filters
           </button>
@@ -321,7 +321,7 @@ export default function ScholarshipBrowser() {
           </div>
           <div className="flex items-center gap-2 text-xs">
             <span className="inline-flex items-center px-2 py-1 rounded bg-accent-periwinkle/30 border border-accent-periwinkle text-text-primary font-bold">Pastel Palette Active</span>
-            <span className="inline-flex items-center px-2 py-1 rounded bg-accent-rose/50 border border-accent-rose text-zinc-800 font-bold">AI Matched</span>
+            <span className="inline-flex items-center px-2 py-1 rounded bg-accent-rose/50 border border-accent-rose text-[color:var(--theme-text-body)] font-bold">AI Matched</span>
           </div>
         </div>
 
@@ -376,17 +376,17 @@ export default function ScholarshipBrowser() {
                       {s.program === "Any" ? "Open for All Major streams" : `${s.program} major`}
                     </span>
                     {s.incomeBracket > 0 && (
-                      <span className="text-[10px] bg-accent-rose/70 border border-accent-rose text-zinc-800 font-bold px-2.5 py-0.5 rounded-full">
+                      <span className="text-[10px] bg-accent-rose/70 border border-accent-rose text-[color:var(--theme-text-body)] font-bold px-2.5 py-0.5 rounded-full">
                         Family Income Limit: ₱{s.incomeBracket.toLocaleString()}
                       </span>
                     )}
                   </div>
 
                   {/* Name and Sponsoring */}
-                  <h3 className="font-bold text-lg text-text-primary leading-tight group-hover:text-zinc-950 mb-1">
+                  <h3 className="font-bold text-lg text-text-primary leading-tight group-hover:text-[color:var(--theme-typography-main)] mb-1">
                     {s.name}
                   </h3>
-                  <p className="text-xs text-zinc-600 font-medium mb-4">
+                  <p className="text-xs text-[color:var(--theme-text-body)] font-medium mb-4">
                     Sponsor: <span className="text-text-primary font-bold">{s.provider}</span>
                   </p>
 
@@ -400,7 +400,7 @@ export default function ScholarshipBrowser() {
                         <li key={idx}>{b}</li>
                       ))}
                       {s.benefits.length > 3 && (
-                        <li className="text-[10px] font-bold text-zinc-500 list-none mt-0.5">
+                        <li className="text-[10px] font-bold text-[color:var(--theme-text-muted)] list-none mt-0.5">
                           + {s.benefits.length - 3} more financial incentives
                         </li>
                       )}
@@ -439,7 +439,7 @@ export default function ScholarshipBrowser() {
           <div className="flex flex-col items-center justify-center bg-[color:var(--theme-surface)] border border-accent-periwinkle rounded-2xl p-16 text-center shadow-sm">
             <Filter className="h-12 w-12 text-[color:var(--theme-typography-secondary)] mb-4 animate-pulse" />
             <h3 className="font-bold text-lg text-text-primary mb-2">No Matching Aid Found</h3>
-            <p className="text-sm text-zinc-500 max-w-sm">
+            <p className="text-sm text-[color:var(--theme-text-muted)] max-w-sm">
               We couldn't find any scholarships matching your active filter choices. Try clearing some attributes or adjusting family income constraints.
             </p>
             <button

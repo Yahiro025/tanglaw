@@ -349,7 +349,7 @@ export default function ReadinessForm() {
         <section className="bg-[color:var(--theme-surface)]/80 border-2 border-accent-muted/60 rounded-2xl p-4 sm:p-6 lg:p-8 shadow-xl animate-fade-in">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-black text-text-primary tracking-tight">Interactive Readiness Check</h2>
-            <p className="text-sm text-zinc-600 mt-2">
+            <p className="text-sm text-[color:var(--theme-text-body)] mt-2">
               Gamified timed mock-assessment to map your academic strengths before applying for grants.
             </p>
           </div>
@@ -399,7 +399,7 @@ export default function ReadinessForm() {
                 onChange={(e) => setItemCount(parseInt(e.target.value, 10))}
                 className="w-full h-2 bg-[color:var(--theme-surface)] rounded-lg appearance-none cursor-pointer accent-primary border border-accent-periwinkle"
               />
-              <div className="flex justify-between text-[10px] text-zinc-500 font-bold px-1">
+              <div className="flex justify-between text-[10px] text-[color:var(--theme-text-muted)] font-bold px-1">
                 <span>5 Items</span>
                 <span>10 Items</span>
                 <span>15 Items</span>
@@ -425,7 +425,7 @@ export default function ReadinessForm() {
                     className={`py-2 rounded-lg text-xs font-black transition-all cursor-pointer ${
                       selectedDifficulty === lvl
                         ? "bg-primary text-white shadow-sm"
-                        : "text-zinc-400 hover:text-zinc-700"
+                        : "text-[color:var(--theme-text-muted)] hover:text-[color:var(--theme-text-body)]"
                     }`}
                   >
                     {lvl}
@@ -451,14 +451,14 @@ export default function ReadinessForm() {
           {/* Header Progress and Timer */}
           <div className="bg-[color:var(--theme-canvas)] px-4 sm:px-6 py-4 flex items-center justify-between border-b border-accent-periwinkle">
             <div className="space-y-1">
-              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              <span className="text-[10px] font-bold text-[color:var(--theme-text-muted)] uppercase tracking-widest">
                 Question {currentIndex + 1} of {activeQuestions.length}
               </span>
               <div className="flex items-center gap-2">
                 <span className="text-xs bg-[color:var(--theme-canvas)] border border-accent-periwinkle/80 px-2 py-0.5 rounded-full font-bold text-text-primary">
                   {activeQuestions[currentIndex].subject}
                 </span>
-                <span className="text-[10px] text-zinc-500">
+                <span className="text-[10px] text-[color:var(--theme-text-muted)]">
                   Difficulty Level {activeQuestions[currentIndex].difficulty}
                 </span>
               </div>
@@ -473,7 +473,7 @@ export default function ReadinessForm() {
           </div>
 
           {/* Time Bar indicator */}
-          <div className="w-full bg-zinc-100 h-1">
+          <div className="w-full bg-[color:var(--theme-borders-system)]/25 h-1">
             <div
               className={`h-full transition-all duration-1000 ${timeLeft < 10 ? "bg-red-500" : "bg-primary-hover"}`}
               style={{ width: `${(timeLeft / 45) * 100}%` }}
@@ -503,7 +503,7 @@ export default function ReadinessForm() {
                     <span className={`h-6 w-6 rounded-full flex items-center justify-center border text-xs font-bold ${
                       isSelected
                         ? "bg-primary border-primary-hover text-white"
-                        : "border-zinc-300 bg-zinc-50 text-zinc-500"
+                        : "border-white/10 bg-[color:var(--theme-canvas)]/90 text-[color:var(--theme-text-muted)]"
                     }`}>
                       {String.fromCharCode(65 + idx)}
                     </span>
@@ -515,14 +515,14 @@ export default function ReadinessForm() {
           </div>
 
           {/* Footer Controls */}
-          <div className="bg-zinc-50 border-t border-zinc-100 px-4 sm:px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+          <div className="bg-[color:var(--theme-canvas)] border-t border-white/10 px-4 sm:px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
             <p className="text-[11px] text-zinc-400">
               * Click an option above to select. Time resets each item.
             </p>
             <button
               onClick={handleNextQuestion}
               disabled={selectedAnswers[currentIndex] === undefined}
-              className="flex items-center gap-1.5 bg-primary disabled:bg-zinc-200 disabled:text-zinc-400 text-white px-5 py-2.5 rounded-xl text-xs font-bold border border-accent-muted shadow-sm hover:bg-primary-hover transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 bg-primary text-white px-5 py-2.5 rounded-xl text-xs font-bold border border-accent-muted shadow-sm hover:bg-primary-hover transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {currentIndex < activeQuestions.length - 1 ? (
                 <>Next Item <ChevronRight className="h-4 w-4" /></>
@@ -543,7 +543,7 @@ export default function ReadinessForm() {
               <Award className="h-12 w-12 text-primary-hover animate-bounce" />
             </div>
             <h2 className="text-2xl font-black text-text-primary tracking-tight">Assessment Completed</h2>
-            <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest mt-1">
+            <p className="text-xs text-[color:var(--theme-text-muted)] font-bold uppercase tracking-widest mt-1">
               Tanglaw Competency Evaluator
             </p>
           </div>
@@ -552,16 +552,16 @@ export default function ReadinessForm() {
             {/* Score circle / level */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
               <div className="text-center p-6 bg-base-light/35 border border-accent-periwinkle rounded-2xl">
-                <span className="text-xs font-bold text-zinc-500 block uppercase mb-1">Your Score</span>
+                <span className="text-xs font-bold text-[color:var(--theme-text-muted)] block uppercase mb-1">Your Score</span>
                 <span className="text-4xl font-black text-text-primary">
-                  {score} <span className="text-lg text-zinc-500 font-normal">/ {activeQuestions.length}</span>
+                  {score} <span className="text-lg text-[color:var(--theme-text-muted)] font-normal">/ {activeQuestions.length}</span>
                 </span>
-                <span className="block text-xs text-zinc-600 font-semibold mt-1">
+                <span className="block text-xs text-[color:var(--theme-text-body)] font-semibold mt-1">
                   ({scorePercentage}% accuracy)
                 </span>
               </div>
 
-              <div className="md:col-span-2 p-6 rounded-2xl border-2 flex gap-4 items-start bg-zinc-50">
+              <div className="md:col-span-2 p-6 rounded-2xl border-2 flex gap-4 items-start bg-[color:var(--theme-canvas)]">
                 <div className="mt-1 flex-shrink-0">
                   {readinessDetails.icon}
                 </div>

@@ -106,7 +106,7 @@ export default function ContactPage() {
                   <input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full rounded-3xl border border-accent-periwinkle/60 bg-white px-4 py-3 text-sm text-[color:var(--theme-text-body)] outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-zinc-400"
+                    className="w-full rounded-3xl border border-white/10 bg-[color:var(--theme-canvas)]/90 px-4 py-3 text-sm text-[color:var(--theme-text-body)] outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-[color:var(--theme-text-muted)]"
                     placeholder="Juan dela Cruz"
                     required
                   />
@@ -117,7 +117,7 @@ export default function ContactPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full rounded-3xl border border-accent-periwinkle/60 bg-white px-4 py-3 text-sm text-[color:var(--theme-text-body)] outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-zinc-400"
+                    className="w-full rounded-3xl border border-white/10 bg-[color:var(--theme-canvas)]/90 px-4 py-3 text-sm text-[color:var(--theme-text-body)] outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-[color:var(--theme-text-muted)]"
                     placeholder="juan@student.pup.edu.ph"
                     required
                   />
@@ -129,7 +129,7 @@ export default function ContactPage() {
                 <input
                   value={group}
                   onChange={(e) => setGroup(e.target.value)}
-                  className="w-full rounded-3xl border border-accent-periwinkle/60 bg-white px-4 py-3 text-sm text-[color:var(--theme-text-body)] outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-zinc-400"
+                  className="w-full rounded-3xl border border-white/10 bg-[color:var(--theme-canvas)]/90 px-4 py-3 text-sm text-[color:var(--theme-text-body)] outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-[color:var(--theme-text-muted)]"
                   placeholder="BSCS 1-2"
                 />
               </label>
@@ -140,7 +140,7 @@ export default function ContactPage() {
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
                   rows={5}
-                  className="w-full rounded-[1.5rem] border border-accent-periwinkle/60 bg-white px-4 py-3 text-sm text-[color:var(--theme-text-body)] outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-zinc-400"
+                  className="w-full rounded-[1.5rem] border border-white/10 bg-[color:var(--theme-canvas)]/90 px-4 py-3 text-sm text-[color:var(--theme-text-body)] outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-[color:var(--theme-text-muted)]"
                   placeholder="Tell us how we can improve TANGLAW or ask about your scholarship match."
                   required
                 />
@@ -149,7 +149,7 @@ export default function ContactPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-black uppercase tracking-[0.18em] text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-400"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-black uppercase tracking-[0.18em] text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {loading ? "Sending..." : "Send Message"}
               </button>
