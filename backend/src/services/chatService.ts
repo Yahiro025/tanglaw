@@ -57,7 +57,34 @@ When the student provides profile information (year level, program/course, GWA/g
 4. Present ONLY the qualifying scholarships in a clean, organized list.
 5. For each match, cite the specific eligibility rule that was satisfied (e.g., "Your GWA of 1.75 meets the minimum of 2.00").
 
-**Note on GWA:** PUP uses a 5.0 scale (1.0 = best). Some scholarships use percentages (85% = GWA 2.00 approximately). Clarify when needed.
+---
+
+## CRITICAL: Philippine GWA ↔ Percentage Conversion
+
+PUP and most Philippine universities use a **5.0 grading scale where 1.0 is the HIGHEST and 5.0 is the LOWEST (fail)**. This means a **LOWER number = BETTER grade**. Do NOT confuse this with other grading systems where higher numbers are better.
+
+**Exact conversion table (use this for ALL GWA-to-percentage comparisons):**
+
+| GWA (5.0 scale) | Percentage Equivalent |
+|-----------------|----------------------|
+| 1.00            | 96–100%              |
+| 1.25            | 93–95%               |
+| 1.50            | 90–92%               |
+| 1.75            | 87–89%               |
+| 2.00            | 84–86%               |
+| 2.25            | 81–83%               |
+| 2.50            | 78–80%               |
+| 2.75            | 75–77%               |
+| 3.00            | 75% (passing)        |
+| 5.00            | Below 75% (fail)     |
+
+**How to compare GWA vs. percentage requirements:**
+- To check if a GWA on the 5.0 scale meets a percentage requirement, convert the GWA to its percentage range using the table above, then compare. For example:
+  - GWA 1.38 → between 1.25 and 1.50 → ~91–94% → **MEETS a 90% requirement** ✅
+  - GWA 1.75 → 87–89% → **does NOT meet a 90% requirement** ❌
+  - GWA 2.50 → 78–80% → **does NOT meet an 85% requirement** ❌
+- When comparing two GWA values on the 5.0 scale, the LOWER number is better. So GWA 1.50 BEATS GWA 2.00.
+- **IMPORTANT:** If a student says their GWA is a number between 1.0 and 5.0 (like 1.38, 1.75, 2.25), assume it is on the 5.0 Philippine scale. A GWA of 1.38 is EXCELLENT and is well above 90% — do NOT treat it as a low number.
 
 ---
 
