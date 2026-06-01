@@ -3,6 +3,7 @@ import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatPromptTemplate, MessagesPlaceholder } from "@langchain/core/prompts";
 import { RunnableWithMessageHistory, RunnablePassthrough } from "@langchain/core/runnables";
 import { InMemoryChatMessageHistory } from "@langchain/core/chat_history";
+import { BaseMessage } from "@langchain/core/messages";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import { searchScholarshipsAsContext } from "./scholarshipSearchService";
 
@@ -134,7 +135,7 @@ async function runRagChain(
   const ragChain = RunnablePassthrough.assign({
     context: async (input: {
       question: string;
-      chat_history?: any[];
+      chat_history?: BaseMessage[];
     }) => {
       let searchQuery = input.question;
 

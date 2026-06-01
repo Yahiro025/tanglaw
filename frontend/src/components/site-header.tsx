@@ -7,11 +7,14 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import ThemeChanger from "@/components/theme-changer";
 
 export default function SiteHeader() {
   const pathname = usePathname();
+  const { status } = useSession();
   const isDashboard = pathname?.startsWith("/dashboard");
+  const isAuthenticated = status === "authenticated";
 
   if (isDashboard) {
     return null;
@@ -45,18 +48,29 @@ export default function SiteHeader() {
           <Link href="/contact" className="transition hover:text-[color:var(--theme-typography-main)]">
             Contact
           </Link>
-          <Link
-            href="/login"
-            className="rounded-full border border-white/10 bg-[color:var(--theme-surface)]/70 px-4 py-2 transition hover:bg-[color:var(--theme-surface)]"
-          >
-            Log In
-          </Link>
-          <Link
-            href="/signup"
-            className="rounded-full border border-primary/20 bg-primary/75 px-4 py-2 text-white transition hover:bg-primary-hover"
-          >
-            Sign Up
-          </Link>
+          {isAuthenticated ? (
+            <Link
+              href="/dashboard"
+              className="rounded-full border border-primary/20 bg-primary/75 px-4 py-2 text-white transition hover:bg-primary-hover"
+            >
+              Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="rounded-full border border-white/10 bg-[color:var(--theme-surface)]/70 px-4 py-2 transition hover:bg-[color:var(--theme-surface)]"
+              >
+                Log In
+              </Link>
+              <Link
+                href="/signup"
+                className="rounded-full border border-primary/20 bg-primary/75 px-4 py-2 text-white transition hover:bg-primary-hover"
+              >
+                Sign Up
+              </Link>
+            </>
+          )}
         </nav>
 
         <div className="flex items-center gap-3">

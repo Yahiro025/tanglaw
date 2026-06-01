@@ -2,21 +2,38 @@
 
 /**
  * Mini chatbot component for the dashboard.
- * Uses a set of preloaded prompts and simple simulated responses.
+ * On desktop: floating resizable panel anchored to bottom-right.
+ * On mobile (< 640px): bottom sheet that slides up from the bottom like a native app.
  */
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { X, Send, HelpCircle, GripHorizontal } from "lucide-react";
 import { createChatMessage, getChatMessages, sendChatMessage } from "@/lib/backend";
+import type { BackendMessage } from "@/lib/backend";
 
-const MIN_WIDTH = 320;
+const MIN_WIDTH = 280;
 const MAX_WIDTH = 800;
-const MIN_HEIGHT = 360;
-const DEFAULT_WIDTH = 384;
-const DEFAULT_HEIGHT = 520;
+const MIN_HEIGHT = 280;
+const SMALL_SCREEN_BREAKPOINT = 640;
+
+function getIsMobile() {
+  return typeof window !== "undefined" && window.innerWidth < SMALL_SCREEN_BREAKPOINT;
+}
+
+function getDefaultWidth() {
+  return getIsMobile() ? Math.min(340, typeof window !== "undefined" ? window.innerWidth - 32 : 340) : 384;
+}
+
+function getDefaultHeight() {
+  return getIsMobile() ? 380 : 520;
+}
 
 function getMaxHeight() {
-  return typeof window !== "undefined" ? window.innerHeight * 0.9 : 800;
+  return typeof window !== "undefined" ? window.innerHeight * 0.85 : 800;
+}
+
+function getMaxWidth() {
+  return typeof window !== "undefined" ? Math.min(800, window.innerWidth - 24) : 800;
 }
 
 interface Message {
@@ -55,11 +72,16 @@ const PRELOADED_PROMPTS = [
 
 export default function OwelChatbot() {
   const [isOpen, setIsOpen] = useState(false);
-  const [panelWidth, setPanelWidth] = useState(DEFAULT_WIDTH);
-  const [panelHeight, setPanelHeight] = useState(DEFAULT_HEIGHT);
+  const [panelWidth, setPanelWidth] = useState(getDefaultWidth);
+  const [panelHeight, setPanelHeight] = useState(getDefaultHeight);
   const [isResizing, setIsResizing] = useState(false);
   const resizeRef = useRef<{ startX: number; startY: number; startWidth: number; startHeight: number } | null>(null);
-  const panelDimsRef = useRef({ width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT });
+  const panelDimsRef = useRef({ width: getDefaultWidth(), height: getDefaultHeight() });
+
+  // Mobile bottom-sheet state
+  const [isMobile, setIsMobile] = useState(() => getIsMobile());
+  const [sheetVisible, setSheetVisible] = useState(false);
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Keep the ref in sync with state so resize callbacks always read current dims
   panelDimsRef.current = { width: panelWidth, height: panelHeight };
@@ -86,7 +108,7 @@ export default function OwelChatbot() {
 
         if (storedMessages.length > 0) {
           setMessages(
-            storedMessages.map((msg: any) => ({
+            storedMessages.map((msg: BackendMessage) => ({
               id: msg.id,
               sender: msg.role === "user" ? "user" : "owel",
               text: msg.content,
@@ -111,16 +133,34 @@ export default function OwelChatbot() {
     }
   }, [messages, isOpen, isTyping]);
 
+  // Track mobile / desktop changes
+  useEffect(() => {
+    const handleResize = () => setIsMobile(getIsMobile());
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Trigger slide-up animation after mount on mobile
+  useEffect(() => {
+    if (isOpen && isMobile) {
+      const raf = requestAnimationFrame(() => setSheetVisible(true));
+      return () => cancelAnimationFrame(raf);
+    } else if (!isOpen) {
+      setSheetVisible(false);
+    }
+  }, [isOpen, isMobile]);
+
   // Update max height when window resizes
   useEffect(() => {
     const handleWindowResize = () => {
-      setPanelHeight((prev) => Math.min(prev, window.innerHeight * 0.9));
+      setPanelHeight((prev) => Math.min(prev, getMaxHeight()));
     };
     window.addEventListener("resize", handleWindowResize);
     return () => window.removeEventListener("resize", handleWindowResize);
   }, []);
 
-  // Resize handlers — supports both mouse and touch
+  // ── Resize handlers (desktop only) ──────────────────────────────────────
+
   const handleResizeStart = useCallback((clientX: number, clientY: number) => {
     setIsResizing(true);
     const dims = panelDimsRef.current;
@@ -153,10 +193,10 @@ export default function OwelChatbot() {
       const deltaX = clientX - resizeRef.current.startX;
       const deltaY = clientY - resizeRef.current.startY;
       const maxH = getMaxHeight();
+      const maxW = getMaxWidth();
 
-      // Resizing from bottom-left: dragging left increases width, dragging down increases height
-      const newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, resizeRef.current.startWidth - deltaX));
-      const newHeight = Math.min(maxH, Math.max(MIN_HEIGHT, resizeRef.current.startHeight + deltaY));
+      const newWidth = Math.min(maxW, Math.max(MIN_WIDTH, resizeRef.current.startWidth - deltaX));
+      const newHeight = Math.min(maxH, Math.max(MIN_HEIGHT, resizeRef.current.startHeight - deltaY));
 
       setPanelWidth(newWidth);
       setPanelHeight(newHeight);
@@ -184,6 +224,43 @@ export default function OwelChatbot() {
       document.removeEventListener("touchend", endResize);
     };
   }, [isResizing]);
+
+  // ── Close helpers ──────────────────────────────────────────────────────
+
+  const handleOpen = useCallback(() => {
+    // Cancel any pending close timeout to prevent race condition
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    setIsOpen(true);
+  }, []);
+
+  const handleClose = useCallback(() => {
+    if (isMobile) {
+      setSheetVisible(false);
+      // Clear any stale timeout before scheduling a new one
+      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = setTimeout(() => {
+        closeTimeoutRef.current = null;
+        setIsOpen(false);
+      }, 300);
+    } else {
+      setIsOpen(false);
+    }
+  }, [isMobile]);
+
+  // Prevent body scroll when mobile sheet is open
+  useEffect(() => {
+    if (isOpen && isMobile) {
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = "";
+      };
+    }
+  }, [isOpen, isMobile]);
+
+  // ── Message handling ───────────────────────────────────────────────────
 
   const handleSendMessage = async (textToSend: string) => {
     if (!textToSend.trim()) return;
@@ -219,7 +296,6 @@ export default function OwelChatbot() {
       if (matchingPrompt) {
         replyText = matchingPrompt.reply;
       } else {
-        // No preloaded match — call the AI backend (RAG pipeline)
         try {
           const { answer } = await sendChatMessage(textToSend);
           replyText = answer;
@@ -253,147 +329,213 @@ export default function OwelChatbot() {
     }, 900);
   };
 
-  return (
-    <div className="fixed bottom-6 right-6 z-50 font-sans">
-      {!isOpen && (
-        <button
-          onClick={() => setIsOpen(true)}
-          className="flex h-16 w-16 items-center justify-center rounded-full bg-transparent text-primary shadow-2xl hover:scale-105 transition-transform duration-300 focus:outline-none"
-          aria-label="Open Owel chat"
-        >
-          <Image
-            src="/assets/owel-head.png"
-            alt="Owel Mascot"
-            width={48}
-            height={48}
-            className="rounded-full object-cover"
-          />
-        </button>
-      )}
+  // ── Shared panel body (used by both desktop & mobile) ──────────────────
 
-      {isOpen && (
-        <div
-          className={`relative flex flex-col rounded-[2rem] bg-white/95 shadow-2xl backdrop-blur-xl overflow-hidden ${isResizing ? "select-none" : ""}`}
-          style={{
-            width: panelWidth,
-            maxWidth: "calc(100vw - 2rem)",
-            height: panelHeight,
-          }}
-        >
-          <div className="flex items-center justify-between p-4 bg-white/80">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 overflow-hidden rounded-full bg-white flex items-center justify-center shadow-lg">
-                <Image
-                  src="/assets/owel-head.png"
-                  alt="Owel Mascot"
-                  width={40}
-                  height={40}
-                  className="object-cover"
-                />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-zinc-900">Owel Assistant</p>
-                <p className="text-[10px] text-zinc-500">Live guidance for dashboard users</p>
-              </div>
-            </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="rounded-full p-1 text-zinc-700 hover:bg-base-light focus:outline-none"
-              aria-label="Close chat"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white">
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex w-full ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-[80%] rounded-3xl px-4 py-3 text-sm whitespace-pre-wrap shadow-sm ${
-                    msg.sender === "user"
-                      ? "bg-primary text-white rounded-br-none"
-                      : "bg-base-pastel text-zinc-900 rounded-bl-none"
-                  }`}
-                >
-                  {msg.text}
-                  <span className="block text-[9px] text-zinc-500 text-right mt-2">
-                    {msg.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                  </span>
-                </div>
-              </div>
-            ))}
-
-            {isTyping && (
-              <div className="flex justify-start">
-                <div className="rounded-3xl bg-base-pastel px-4 py-3 text-sm shadow-sm">
-                  <div className="flex items-center gap-1">
-                    <span className="h-1.5 w-1.5 rounded-full bg-zinc-600 animate-bounce" />
-                    <span className="h-1.5 w-1.5 rounded-full bg-zinc-600 animate-bounce" />
-                    <span className="h-1.5 w-1.5 rounded-full bg-zinc-600 animate-bounce" />
-                  </div>
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          <div className="p-3 bg-white border-t border-accent-muted/20">
-            <div className="mb-3 text-[10px] uppercase tracking-[0.28em] text-zinc-500 font-bold flex items-center gap-2">
-              <HelpCircle className="h-3 w-3" /> Quick Questions
-            </div>
-            <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto pr-1">
-              {PRELOADED_PROMPTS.map((prompt, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => handleSendMessage(prompt.query)}
-                  className="rounded-full border border-zinc-200 bg-white px-3 py-2 text-[11px] text-zinc-700 hover:bg-primary/10 transition"
-                >
-                  {prompt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSendMessage(input);
-            }}
-            className="flex items-center gap-2 p-3 bg-white"
-          >
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask Owel about grants..."
-              className="flex-1 rounded-full border border-zinc-200 bg-base-light/70 px-4 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-primary"
+  const panelBody = (
+    <>
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 bg-white/80 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="h-12 w-12 overflow-hidden rounded-full bg-white flex items-center justify-center shadow-lg">
+            <Image
+              src="/assets/owel-head.png"
+              alt="Owel Mascot"
+              width={40}
+              height={40}
+              className="object-cover"
             />
-            <button
-              type="submit"
-              disabled={!input.trim()}
-              className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center hover:bg-primary-hover transition disabled:bg-zinc-200 disabled:text-zinc-400"
-            >
-              <Send className="h-4 w-4" />
-            </button>
-          </form>
+          </div>
+          <div>
+            <p className="text-sm font-bold text-zinc-900">Owel Assistant</p>
+            <p className="text-[10px] text-zinc-500">Live guidance for dashboard users</p>
+          </div>
+        </div>
+        <button
+          onClick={handleClose}
+          className="rounded-full p-1 text-zinc-700 hover:bg-base-light focus:outline-none"
+          aria-label="Close chat"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
 
-          {/* Resize handle — bottom-left corner */}
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white">
+        {messages.map((msg) => (
           <div
-            onMouseDown={handleMouseDown}
-            onTouchStart={handleTouchStart}
-            className="absolute bottom-0 left-0 w-6 h-6 cursor-nesw-resize flex items-end justify-start p-0.5 group touch-none"
-            aria-label="Resize chat panel"
-            role="slider"
-            tabIndex={-1}
+            key={msg.id}
+            className={`flex w-full ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
           >
-            <GripHorizontal className="h-4 w-4 text-zinc-400 group-hover:text-zinc-600 transition-colors rotate-45" />
+            <div
+              className={`max-w-[80%] rounded-3xl px-4 py-3 text-sm whitespace-pre-wrap shadow-sm ${
+                msg.sender === "user"
+                  ? "bg-primary text-white rounded-br-none"
+                  : "bg-base-pastel text-zinc-900 rounded-bl-none"
+              }`}
+            >
+              {msg.text}
+              <span className="block text-[9px] text-zinc-500 text-right mt-2">
+                {msg.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </span>
+            </div>
+          </div>
+        ))}
+
+        {isTyping && (
+          <div className="flex justify-start">
+            <div className="rounded-3xl bg-base-pastel px-4 py-3 text-sm shadow-sm">
+              <div className="flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-zinc-600 animate-bounce" />
+                <span className="h-1.5 w-1.5 rounded-full bg-zinc-600 animate-bounce" />
+                <span className="h-1.5 w-1.5 rounded-full bg-zinc-600 animate-bounce" />
+              </div>
+            </div>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Quick questions */}
+      <div className="p-3 bg-white border-t border-accent-muted/20 flex-shrink-0">
+        <div className="mb-3 text-[10px] uppercase tracking-[0.28em] text-zinc-500 font-bold flex items-center gap-2">
+          <HelpCircle className="h-3 w-3" /> Quick Questions
+        </div>
+        <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto pr-1">
+          {PRELOADED_PROMPTS.map((prompt, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => handleSendMessage(prompt.query)}
+              className="rounded-full border border-zinc-200 bg-white px-3 py-2 text-[11px] text-zinc-700 hover:bg-primary/10 transition"
+            >
+              {prompt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Input */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSendMessage(input);
+        }}
+        className="flex items-center gap-2 p-3 bg-white flex-shrink-0"
+      >
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Ask Owel about grants..."
+          className="flex-1 rounded-full border border-zinc-200 bg-base-light/70 px-4 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+        <button
+          type="submit"
+          disabled={!input.trim()}
+          className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center hover:bg-primary-hover transition disabled:bg-zinc-200 disabled:text-zinc-400"
+        >
+          <Send className="h-4 w-4" />
+        </button>
+      </form>
+    </>
+  );
+
+  // ── Render ─────────────────────────────────────────────────────────────
+
+  return (
+    <>
+      {/* ── Trigger button (hidden when mobile sheet is open) ──────────── */}
+      <div
+        className={`fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 font-sans ${
+          isOpen && isMobile ? "hidden" : ""
+        }`}
+      >
+        {!isOpen && (
+          <button
+            onClick={handleOpen}
+            className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-transparent text-primary shadow-2xl hover:scale-105 transition-transform duration-300 focus:outline-none"
+            aria-label="Open Owel chat"
+          >
+            <Image
+              src="/assets/owel-head.png"
+              alt="Owel Mascot"
+              width={44}
+              height={44}
+              className="rounded-full object-cover sm:w-12 sm:h-12"
+            />
+          </button>
+        )}
+      </div>
+
+      {/* ── Desktop floating panel ─────────────────────────────────────── */}
+      {isOpen && !isMobile && (
+        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 font-sans">
+          <div
+            className={`relative flex flex-col rounded-[2rem] bg-white/95 shadow-2xl backdrop-blur-xl overflow-hidden ${
+              isResizing ? "select-none" : ""
+            }`}
+            style={{
+              width: panelWidth,
+              maxWidth: "calc(100vw - 2rem)",
+              height: panelHeight,
+            }}
+          >
+            {panelBody}
+
+            {/* Resize handle — top-left corner */}
+            <div
+              onMouseDown={handleMouseDown}
+              onTouchStart={handleTouchStart}
+              className="absolute top-0 left-0 w-6 h-6 cursor-nwse-resize flex items-start justify-start p-0.5 group touch-none"
+              aria-label="Resize chat panel from top-left"
+              role="slider"
+              tabIndex={-1}
+            >
+              <GripHorizontal className="h-4 w-4 text-zinc-400 group-hover:text-zinc-600 transition-colors -rotate-45" />
+            </div>
+
+            {/* Resize handle — bottom-left corner */}
+            <div
+              onMouseDown={handleMouseDown}
+              onTouchStart={handleTouchStart}
+              className="absolute bottom-0 left-0 w-6 h-6 cursor-nesw-resize flex items-end justify-start p-0.5 group touch-none"
+              aria-label="Resize chat panel from bottom-left"
+              role="slider"
+              tabIndex={-1}
+            >
+              <GripHorizontal className="h-4 w-4 text-zinc-400 group-hover:text-zinc-600 transition-colors rotate-45" />
+            </div>
           </div>
         </div>
       )}
-    </div>
+
+      {/* ── Mobile bottom sheet ────────────────────────────────────────── */}
+      {isOpen && isMobile && (
+        <div className="fixed inset-0 z-50 font-sans">
+          {/* Backdrop */}
+          <div
+            className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${
+              sheetVisible ? "opacity-100" : "opacity-0"
+            }`}
+            onClick={handleClose}
+            aria-hidden="true"
+          />
+
+          {/* Sheet */}
+          <div
+            className={`absolute inset-x-0 bottom-0 bg-white rounded-t-2xl max-h-[85vh] flex flex-col shadow-2xl transition-transform duration-300 ease-out ${
+              sheetVisible ? "translate-y-0" : "translate-y-full"
+            }`}
+          >
+            {/* Drag handle */}
+            <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
+              <div className="w-10 h-1.5 rounded-full bg-zinc-300" />
+            </div>
+
+            {panelBody}
+          </div>
+        </div>
+      )}
+    </>
   );
 }

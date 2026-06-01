@@ -19,6 +19,14 @@ export interface BackendScholarship {
   link: string;
 }
 
+export interface BackendMessage {
+  id: string;
+  role: string;
+  content: string;
+  createdAt: string;
+  metadata?: unknown;
+}
+
 export interface BackendMessagePayload {
   role: string;
   content: string;
@@ -113,11 +121,11 @@ export async function fetchScholarships(): Promise<BackendScholarship[]> {
   return payload.data ?? [];
 }
 
-export async function getChatMessages(): Promise<any[]> {
+export async function getChatMessages(): Promise<BackendMessage[]> {
   return authorizedFetch(`${apiBase}/messages`);
 }
 
-export async function createChatMessage(payload: BackendMessagePayload): Promise<any> {
+export async function createChatMessage(payload: BackendMessagePayload): Promise<BackendMessage> {
   return authorizedFetch(`${apiBase}/messages`, {
     method: "POST",
     body: JSON.stringify(payload),

@@ -37,9 +37,9 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${outfit.variable} h-full antialiased`}>
       <body className="relative min-h-full flex flex-col bg-base-light text-text-primary">
         <NatureCanvas />
-        <SiteHeader />
 
         <NextAuthProvider>
+          <SiteHeader />
           <main className="flex-grow flex flex-col">{children}</main>
         </NextAuthProvider>
 

@@ -1,14 +1,7 @@
 import { Request, Response } from "express";
 import prisma from "../services/prismaClient";
 import { generateChatResponse } from "../services/chatService";
-
-type AuthenticatedRequest = Request & {
-  user?: {
-    id: string;
-    email: string;
-    name?: string | null;
-  };
-};
+import type { AuthenticatedRequest } from "../middleware/auth";
 
 /**
  * Controller for chat persistence endpoints.

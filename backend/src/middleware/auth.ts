@@ -13,7 +13,7 @@ type JwtPayload = {
   name?: string | null;
 };
 
-type AuthenticatedRequest = Request & {
+export type AuthenticatedRequest = Request & {
   user?: {
     id: string;
     email: string;

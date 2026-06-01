@@ -75,7 +75,6 @@ frontend/                        Next.js 16 app (deployed on Vercel)
   src/lib/
     backend.ts                   Backend API client (fetch wrappers with JWT token)
     db.ts                        Prisma client singleton
-    supabase.ts                  Supabase client (public URL + anon key)
     nextauth.ts                  NextAuth options (Credentials → backend JWT)
     ai/
       models.ts                  AI model factory (Gemini 3.1 Flash-Lite → OpenRouter)
@@ -103,8 +102,6 @@ backend/                         Express API server (deployed on Render)
       prismaClient.ts            Prisma client singleton (PrismaPg adapter + pg.Pool)
       scholarshipSearchService.ts DB-backed RAG: ILIKE search → formatted LLM context
       chatService.ts             Two-tier RAG: Gemini 3.1 Flash-Lite (primary) → OpenRouter free fallbacks
-    models/
-      scholarship.ts             Scholarship TypeScript interface (legacy mock shape)
   prisma/
     schema.prisma                Database schema (source of truth for both FE/BE)
     seed.ts                      Seed script: 8 canonical scholarships
@@ -116,10 +113,6 @@ backend/                         Express API server (deployed on Render)
   start.sh                       Render start script (prisma db push + seed + start)
   package.json                   Backend dependencies
   tsconfig.json                  TypeScript config (ES2022, CommonJS)
-  data/
-    faiss_index/                 Legacy FAISS vector store files
-    hnsw_index/                  Legacy HNSW vector store files
-
 render.yaml                      Render Blueprint (rootDir: backend, Singapore region)
 DEPLOY.md                        Full deployment guide (Vercel + Render + Supabase)
 README.md                        Project overview and getting started
@@ -172,7 +165,8 @@ README.md                        Project overview and getting started
 - **BackendUser** (`frontend/src/lib/backend.ts`): `id`, `email`, `name?`
 - **BackendMessagePayload**: `role` (string), `content` (string), `metadata?` (unknown)
 - **Question (Prisma)**: `id`, `type` (QuestionType enum), `difficulty` (Int), `text`, `choices` (Json), `correctAnswer`, `explanation`
-- The backend `Scholarship` interface in `models/scholarship.ts` is a legacy/mock shape (`title`, `description`, `category`, `amount`, `eligibility[]`, `deadline`) — NOT used in the current API. The actual API uses Prisma directly.
+- **BackendMessage** (`frontend/src/lib/backend.ts`): `id`, `role`, `content`, `createdAt`, `metadata?`
+- **AuthenticatedRequest** (`backend/src/middleware/auth.ts`): Exported type — `Request & { user?: { id, email, name? } }`. Imported by controllers.
 - API responses return Express `res.json()`; no shared ApiResponse wrapper type
 - NextAuth session user includes custom `token` field (JWT from backend)
 

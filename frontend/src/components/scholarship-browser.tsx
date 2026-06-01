@@ -5,7 +5,7 @@
  * Supports keyword search, program filtering, income constraints, and scholarship listings.
  */
 import React, { useEffect, useState, useMemo } from "react";
-import { Search, SlidersHorizontal, ExternalLink, Filter, GraduationCap, DollarSign, Building2, BookOpen, AlertCircle, RefreshCw } from "lucide-react";
+import { Search, SlidersHorizontal, ExternalLink, Filter, GraduationCap, DollarSign, Building2, BookOpen, AlertCircle, RefreshCw, ChevronDown, ChevronUp, ArrowUp } from "lucide-react";
 import { fetchScholarships } from "@/lib/backend";
 
 interface Scholarship {
@@ -58,7 +58,7 @@ function setCachedScholarships(data: Scholarship[]) {
 // ── Skeleton card for loading state ──────────────────────────────────────────
 function ScholarshipSkeleton() {
   return (
-    <div className="bg-base-pastel border-2 border-accent-muted/40 rounded-2xl p-6 animate-pulse">
+    <div className="bg-[color:var(--theme-surface)]/80 border-2 border-accent-muted/40 rounded-2xl p-6 animate-pulse">
       <div className="flex gap-1.5 mb-3.5">
         <div className="h-4 w-16 bg-zinc-300 rounded-full" />
         <div className="h-4 w-24 bg-zinc-300 rounded-full" />
@@ -114,6 +114,17 @@ export default function ScholarshipBrowser() {
   const [incomeLimit, setIncomeLimit] = useState<string>("all");
   const [scholarshipType, setScholarshipType] = useState<string>("all");
   const [programType, setProgramType] = useState<string>("all");
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  // Track scroll position for "back to top" FAB on mobile
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 400);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const filteredScholarships = useMemo(() => {
     return scholarships.filter((item) => {
@@ -152,6 +163,10 @@ export default function ScholarshipBrowser() {
     setProgramType("all");
   };
 
+  const handleScrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const handleRetry = () => {
     setScholarshipError(null);
     setLoadingScholarships(true);
@@ -160,8 +175,21 @@ export default function ScholarshipBrowser() {
   return (
     <div className="flex flex-col lg:flex-row gap-8 w-full max-w-7xl mx-auto px-4 py-8 animate-fade-in font-sans">
       {/* Sidebar Panel for Filters */}
-      <aside className="w-full lg:w-80 flex-shrink-0 bg-base-pastel rounded-2xl p-6 border-2 border-accent-muted shadow-lg h-fit sticky top-24">
-        <div className="flex items-center justify-between mb-6 pb-4 border-b border-accent-muted/40">
+      <aside className="w-full lg:w-80 flex-shrink-0 bg-[color:var(--theme-surface)]/80 rounded-2xl p-4 sm:p-6 border-2 border-accent-muted shadow-lg h-fit lg:sticky lg:top-24">
+        {/* Mobile filter toggle button */}
+        <button
+          onClick={() => setShowMobileFilters((prev) => !prev)}
+          className="lg:hidden flex items-center justify-between w-full mb-4 pb-3 border-b border-accent-muted/40 text-text-primary"
+        >
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className="h-5 w-5" />
+            <h2 className="font-bold text-lg">Filter Controls</h2>
+          </div>
+          {showMobileFilters ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+        </button>
+
+        {/* Desktop header */}
+        <div className="hidden lg:flex items-center justify-between mb-6 pb-4 border-b border-accent-muted/40">
           <div className="flex items-center gap-2 text-text-primary">
             <SlidersHorizontal className="h-5 w-5" />
             <h2 className="font-bold text-lg">Filter Controls</h2>
@@ -174,7 +202,8 @@ export default function ScholarshipBrowser() {
           </button>
         </div>
 
-        <div className="space-y-6">
+        {/* Filter body — collapsible on mobile, always visible on desktop */}
+        <div className={`space-y-6 ${showMobileFilters ? "block" : "hidden lg:block"}`}>
           {/* Search Input */}
           <div className="space-y-2">
             <label className="text-sm font-bold text-text-primary flex items-center gap-1.5">
@@ -185,7 +214,7 @@ export default function ScholarshipBrowser() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search DOST, CHED, benefits..."
-              className="w-full bg-white border border-accent-periwinkle rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent-muted text-text-primary placeholder-zinc-400"
+              className="w-full bg-[color:var(--theme-surface)] border border-accent-periwinkle rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent-muted text-text-primary placeholder-zinc-400"
             />
           </div>
 
@@ -197,7 +226,7 @@ export default function ScholarshipBrowser() {
             <select
               value={incomeLimit}
               onChange={(e) => setIncomeLimit(e.target.value)}
-              className="w-full bg-white border border-accent-periwinkle rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent-muted text-text-primary"
+              className="w-full bg-[color:var(--theme-surface)] border border-accent-periwinkle rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent-muted text-text-primary"
             >
               <option value="all">Any Income Bracket</option>
               <option value="400000">₱400,000 or below</option>
@@ -212,7 +241,7 @@ export default function ScholarshipBrowser() {
             <label className="text-sm font-bold text-text-primary flex items-center gap-1.5">
               <Building2 className="h-4 w-4" /> Scholarship Sponsoring
             </label>
-            <div className="grid grid-cols-3 gap-1 bg-white p-1 rounded-xl border border-accent-periwinkle">
+            <div className="grid grid-cols-3 gap-1 bg-[color:var(--theme-surface)] p-1 rounded-xl border border-accent-periwinkle">
               {["all", "public", "private"].map((t) => (
                 <button
                   key={t}
@@ -246,7 +275,7 @@ export default function ScholarshipBrowser() {
                   className={`flex items-center gap-2.5 p-2.5 rounded-xl border transition-all cursor-pointer text-xs font-bold ${
                     programType === p.value
                       ? "bg-primary/20 border-primary text-text-primary"
-                      : "bg-white border-accent-periwinkle/60 text-zinc-600 hover:border-accent-periwinkle"
+                      : "bg-[color:var(--theme-surface)] border-accent-periwinkle/60 text-zinc-600 hover:border-accent-periwinkle"
                   }`}
                 >
                   <input
@@ -263,13 +292,23 @@ export default function ScholarshipBrowser() {
             </div>
           </div>
         </div>
+
+        {/* Mobile clear button */}
+        <div className={`mt-4 lg:hidden ${showMobileFilters ? "block" : "hidden"}`}>
+          <button
+            onClick={handleResetFilters}
+            className="w-full text-xs font-semibold text-zinc-600 hover:text-zinc-950 transition-colors cursor-pointer hover:underline py-2"
+          >
+            Clear All Filters
+          </button>
+        </div>
       </aside>
 
       {/* Main Display Grid */}
       <main className="flex-1 space-y-6">
         {/* Statistics Bar */}
-        <div className="flex flex-col sm:flex-row justify-between items-center bg-white border border-accent-periwinkle rounded-2xl px-6 py-4 shadow-sm gap-3">
-          <div className="text-sm font-semibold text-zinc-600">
+        <div className="flex flex-col sm:flex-row justify-between items-center bg-[color:var(--theme-surface)] border border-accent-periwinkle rounded-2xl px-6 py-4 shadow-sm gap-3">
+          <div className="text-sm font-semibold text-[color:var(--theme-text-body)]">
             {loadingScholarships ? (
               "Loading scholarships..."
             ) : scholarshipError ? (
@@ -288,13 +327,13 @@ export default function ScholarshipBrowser() {
 
         {/* Error State */}
         {scholarshipError && (
-          <div className="flex flex-col items-center justify-center bg-white border border-red-200 rounded-2xl p-12 text-center shadow-sm">
+          <div className="flex flex-col items-center justify-center bg-[color:var(--theme-surface)] border border-red-200 rounded-2xl p-12 text-center shadow-sm">
             <AlertCircle className="h-12 w-12 text-red-400 mb-4" />
             <h3 className="font-bold text-lg text-text-primary mb-2">Could Not Load Scholarships</h3>
-            <p className="text-sm text-zinc-500 max-w-md mb-1">
+            <p className="text-sm text-[color:var(--theme-text-muted)] max-w-md mb-1">
               The backend server may be waking up from sleep (free-tier cold start can take 30–60 seconds).
             </p>
-            <p className="text-xs text-zinc-400 max-w-md mb-6">
+            <p className="text-xs text-[color:var(--theme-text-muted)] max-w-md mb-6">
               Error: {scholarshipError}
             </p>
             <button
@@ -321,7 +360,7 @@ export default function ScholarshipBrowser() {
             {filteredScholarships.map((s) => (
               <article
                 key={s.id}
-                className="bg-base-pastel border-2 border-accent-muted/40 rounded-2xl p-6 flex flex-col justify-between hover:shadow-xl hover:border-accent-muted transition-all duration-300 group hover:-translate-y-1"
+                className="bg-[color:var(--theme-surface)]/80 border-2 border-accent-muted/40 rounded-2xl p-6 flex flex-col justify-between hover:shadow-xl hover:border-accent-muted transition-all duration-300 group hover:-translate-y-1"
               >
                 <div>
                   {/* Tags */}
@@ -333,7 +372,7 @@ export default function ScholarshipBrowser() {
                     }`}>
                       {s.type}
                     </span>
-                    <span className="text-[10px] bg-white border border-accent-periwinkle/80 text-zinc-600 font-bold px-2.5 py-0.5 rounded-full">
+                    <span className="text-[10px] bg-[color:var(--theme-canvas)] border border-accent-periwinkle/80 text-[color:var(--theme-text-body)] font-bold px-2.5 py-0.5 rounded-full">
                       {s.program === "Any" ? "Open for All Major streams" : `${s.program} major`}
                     </span>
                     {s.incomeBracket > 0 && (
@@ -354,9 +393,9 @@ export default function ScholarshipBrowser() {
                   {/* Benefits Block */}
                   <div className="mb-4">
                     <h4 className="text-xs font-bold text-text-primary mb-1.5 uppercase tracking-wide flex items-center gap-1">
-                      <GraduationCap className="h-3.5 w-3.5 text-zinc-700" /> Key Benefits:
+                      <GraduationCap className="h-3.5 w-3.5 text-[color:var(--theme-text-body)]" /> Key Benefits:
                     </h4>
-                    <ul className="text-xs text-zinc-700 space-y-1 pl-4 list-disc">
+                    <ul className="text-xs text-[color:var(--theme-text-body)] space-y-1 pl-4 list-disc">
                       {s.benefits.slice(0, 3).map((b, idx) => (
                         <li key={idx}>{b}</li>
                       ))}
@@ -371,9 +410,9 @@ export default function ScholarshipBrowser() {
                   {/* Requirements Block */}
                   <div className="mb-6">
                     <h4 className="text-xs font-bold text-text-primary mb-1.5 uppercase tracking-wide flex items-center gap-1">
-                      <AlertCircle className="h-3.5 w-3.5 text-zinc-700" /> Base Requirements:
+                      <AlertCircle className="h-3.5 w-3.5 text-[color:var(--theme-text-body)]" /> Base Requirements:
                     </h4>
-                    <ul className="text-xs text-zinc-600 space-y-1 pl-4 list-circle">
+                    <ul className="text-xs text-[color:var(--theme-text-body)] space-y-1 pl-4 list-circle">
                       {s.requirements.map((r, idx) => (
                         <li key={idx}>{r}</li>
                       ))}
@@ -397,8 +436,8 @@ export default function ScholarshipBrowser() {
 
         {/* Empty State (no filters match, but data is loaded) */}
         {!loadingScholarships && !scholarshipError && filteredScholarships.length === 0 && (
-          <div className="flex flex-col items-center justify-center bg-white border border-accent-periwinkle rounded-2xl p-16 text-center shadow-sm">
-            <Filter className="h-12 w-12 text-accent-muted mb-4 animate-pulse" />
+          <div className="flex flex-col items-center justify-center bg-[color:var(--theme-surface)] border border-accent-periwinkle rounded-2xl p-16 text-center shadow-sm">
+            <Filter className="h-12 w-12 text-[color:var(--theme-typography-secondary)] mb-4 animate-pulse" />
             <h3 className="font-bold text-lg text-text-primary mb-2">No Matching Aid Found</h3>
             <p className="text-sm text-zinc-500 max-w-sm">
               We couldn't find any scholarships matching your active filter choices. Try clearing some attributes or adjusting family income constraints.
@@ -412,6 +451,17 @@ export default function ScholarshipBrowser() {
           </div>
         )}
       </main>
+
+      {/* Scroll-to-top FAB — mobile only */}
+      <button
+        onClick={handleScrollToTop}
+        aria-label="Scroll to top"
+        className={`fixed bottom-20 left-4 z-30 lg:hidden flex items-center justify-center h-12 w-12 rounded-full bg-primary text-white shadow-lg hover:bg-primary-hover transition-all duration-300 focus:outline-none ${
+          showScrollTop ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
+        }`}
+      >
+        <ArrowUp className="h-5 w-5" />
+      </button>
     </div>
   );
 }

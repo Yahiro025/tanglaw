@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { Prisma } from "@prisma/client";
 import prisma from "../services/prismaClient";
 
 const parseStringQuery = (value: unknown): string | undefined => {
@@ -24,7 +25,7 @@ export const getScholarships = async (req: Request, res: Response) => {
     const page = Math.max(parseNumberQuery(req.query.page, 1), 1);
     const pageSize = Math.min(Math.max(parseNumberQuery(req.query.pageSize, 20), 1), 50);
 
-    const where: any = {};
+    const where: Prisma.ScholarshipWhereInput = {};
     if (program) {
       where.programCategories = { has: program };
     }
