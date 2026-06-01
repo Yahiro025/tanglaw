@@ -1,7 +1,7 @@
 /**
  * MetaBuff — Main Orchestrator v1.5.0
  * ─────────────────────────────────────
- * Makes Freebuff (DeepSeek V4 Flash) behave closer to Claude Opus 4.8 / Antigravity 2.0
+ * Makes Freebuff (DeepSeek V4 Pro) behave closer to Claude Opus 4.8 / Antigravity 2.0
  * by enforcing chain-of-thought, routing tasks by complexity, and coordinating
  * Codebuff's built-in agents + MetaBuff's own specialist subagents.
  *
@@ -70,7 +70,7 @@ const definition: AgentDefinition = {
     'including CoT enforcement, inter-session memory, continuous validation, ' +
     'regex safety checks, and anti-hallucination protocols.',
 
-  model: 'deepseek/deepseek-v4-flash',
+  model: 'deepseek/deepseek-v4-pro',  // Primary; falls back to deepseek-v4-flash when unavailable
 
   reasoningOptions: {
     enabled: true,

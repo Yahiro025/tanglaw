@@ -15,7 +15,7 @@
 
 import { AgentDefinition } from './types/agent-definition'
 
-const FREE_MODEL = 'deepseek/deepseek-v4-flash'
+const FREE_MODEL = 'deepseek/deepseek-v4-pro'  // Primary; falls back to deepseek-v4-flash when unavailable
 
 /** Common insecure patterns to search for and eliminate */
 const SECURITY_RED_FLAGS = [

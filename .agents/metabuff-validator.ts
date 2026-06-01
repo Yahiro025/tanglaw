@@ -25,7 +25,7 @@
 
 import { AgentDefinition } from './types/agent-definition'
 
-const FREE_MODEL = 'deepseek/deepseek-v4-flash'
+const FREE_MODEL = 'deepseek/deepseek-v4-pro'  // Primary; falls back to deepseek-v4-flash when unavailable
 
 const VALIDATOR_SYSTEM_PROMPT = `You are MetaBuff's anti-hallucination validator.
 Your ONLY job is to audit changes made by other agents and fix any problems.

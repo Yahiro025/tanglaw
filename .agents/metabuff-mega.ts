@@ -59,7 +59,7 @@ const definition: AgentDefinition = {
     'MetaBuff Mega decomposes the task into up to 12 subtasks and runs them in ' +
     'cascade waves of ≤6 parallel agents (Antigravity 2.0 pattern, Freebuff-safe).',
 
-  model: 'deepseek/deepseek-v4-flash',
+  model: 'deepseek/deepseek-v4-pro',  // Primary; falls back to deepseek-v4-flash when unavailable
 
   reasoningOptions: {
     enabled: true,
