@@ -1,9 +1,10 @@
 import { ChatOpenAI } from "@langchain/openai";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatPromptTemplate, MessagesPlaceholder } from "@langchain/core/prompts";
 import { RunnableWithMessageHistory, RunnablePassthrough } from "@langchain/core/runnables";
 import { InMemoryChatMessageHistory } from "@langchain/core/chat_history";
 import { StringOutputParser } from "@langchain/core/output_parsers";
-import { searchScholarshipsAsContext, getAllScholarshipsAsContext } from "./scholarshipSearchService";
+import { searchScholarshipsAsContext } from "./scholarshipSearchService";
 
 // ─── Session store: persists conversation history per session_id ─────────────
 const sessionStore = new Map<string, InMemoryChatMessageHistory>();
@@ -15,31 +16,24 @@ function getSessionHistory(sessionId: string): InMemoryChatMessageHistory {
   return sessionStore.get(sessionId)!;
 }
 
-export async function generateChatResponse(question: string, sessionId: string) {
-  // ── 1. Initialize LLM (OpenRouter – free models) ─────────────────────────
-  const apiKey = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new Error("No OPENROUTER_API_KEY or OPENAI_API_KEY found in environment variables.");
-  }
+// ─── Shared prompts (used by both Gemini and OpenRouter paths) ───────────────
 
-  // ── 2. Query Condensation Prompt ─────────────────────────────────────────
-  const condensePrompt = ChatPromptTemplate.fromMessages([
-    new MessagesPlaceholder("chat_history"),
-    [
-      "human",
-      `Given the conversation above, rephrase the following follow-up question into a single, standalone search query for finding scholarships. 
+const condensePrompt = ChatPromptTemplate.fromMessages([
+  new MessagesPlaceholder("chat_history"),
+  [
+    "human",
+    `Given the conversation above, rephrase the following follow-up question into a single, standalone search query for finding scholarships. 
 Output ONLY the search query — do NOT answer the question or add any explanation.
 If the question is already standalone (no prior context needed), return it unchanged.
 
 Follow-up question: {question}`,
-    ],
-  ]);
+  ],
+]);
 
-  // ── 3. Main System Prompt ─────────────────────────────────────────────────
-  const answerPrompt = ChatPromptTemplate.fromMessages([
-    [
-      "system",
-      `You are **Owel** 🦉, the intelligent scholarship navigation assistant for TANGLAW — a platform helping Filipino tertiary students find scholarships at Polytechnic University of the Philippines (PUP Manila).
+const answerPrompt = ChatPromptTemplate.fromMessages([
+  [
+    "system",
+    `You are **Owel** 🦉, the intelligent scholarship navigation assistant for TANGLAW — a platform helping Filipino tertiary students find scholarships at Polytechnic University of the Philippines (PUP Manila).
 
 You MUST follow ALL directives below without exception:
 
@@ -86,16 +80,105 @@ For questions about specific scholarships (requirements, benefits, deadlines, et
 
 ## Scholarship Context (Retrieved from Database):
 {context}`,
-    ],
-    new MessagesPlaceholder("chat_history"),
-    ["human", "{question}"],
-  ]);
+  ],
+  new MessagesPlaceholder("chat_history"),
+  ["human", "{question}"],
+]);
 
-  // ── 4. Run with Multiple Fallback Models ──────────────────────────────────
-  const MODELS = [
+/**
+ * Build and invoke the RAG chain with a given LLM model.
+ * Returns the generated answer string, or throws on failure.
+ */
+async function runRagChain(
+  model: ChatOpenAI | ChatGoogleGenerativeAI,
+  modelLabel: string,
+  question: string,
+  sessionId: string
+): Promise<string> {
+  const condenseChain = condensePrompt
+    .pipe(model)
+    .pipe(new StringOutputParser());
+
+  const ragChain = RunnablePassthrough.assign({
+    context: async (input: {
+      question: string;
+      chat_history?: any[];
+    }) => {
+      let searchQuery = input.question;
+
+      if (input.chat_history && input.chat_history.length > 0) {
+        try {
+          const condensed = await condenseChain.invoke({
+            question: input.question,
+            chat_history: input.chat_history,
+          });
+          if (condensed?.trim()) {
+            searchQuery = condensed.trim();
+            console.log(`[Owel DB RAG] Original: "${input.question}" → Condensed: "${searchQuery}"`);
+          }
+        } catch (err) {
+          console.warn(`[Owel DB RAG] [${modelLabel}] Condensation failed, using raw question:`, err);
+        }
+      }
+
+      const context = await searchScholarshipsAsContext(searchQuery, 8);
+      console.log(`[Owel DB RAG] Retrieved context for query: "${searchQuery}"`);
+      return context;
+    },
+  })
+    .pipe(answerPrompt)
+    .pipe(model)
+    .pipe(new StringOutputParser());
+
+  const chainWithHistory = new RunnableWithMessageHistory({
+    runnable: ragChain,
+    getMessageHistory: getSessionHistory,
+    inputMessagesKey: "question",
+    historyMessagesKey: "chat_history",
+  });
+
+  return chainWithHistory.invoke(
+    { question },
+    { configurable: { sessionId } }
+  );
+}
+
+export async function generateChatResponse(question: string, sessionId: string) {
+  // ── TIER 1: Google Gemini 3.1 Flash-Lite (free via GOOGLE_API_KEY) ────────
+  const googleApiKey = process.env.GOOGLE_API_KEY;
+
+  if (googleApiKey) {
+    try {
+      console.log("[Owel RAG] Attempting generation with Gemini 3.1 Flash-Lite (primary)");
+      const geminiModel = new ChatGoogleGenerativeAI({
+        model: "gemini-3.1-flash-lite",
+        apiKey: googleApiKey,
+      });
+
+      const answer = await runRagChain(geminiModel, "gemini-3.1-flash-lite", question, sessionId);
+      if (answer) {
+        console.log("[Owel RAG] Successfully generated response using Gemini 3.1 Flash-Lite");
+        return answer;
+      }
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      console.warn(`[Owel RAG] Gemini 3.1 Flash-Lite failed: ${errMsg}`);
+      console.warn("[Owel RAG] Falling back to OpenRouter free models...");
+    }
+  } else {
+    console.warn("[Owel RAG] GOOGLE_API_KEY not set — skipping Gemini primary, using OpenRouter fallbacks");
+  }
+
+  // ── TIER 2: OpenRouter free model fallback chain ───────────────────────────
+  const openRouterKey = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY;
+  if (!openRouterKey) {
+    throw new Error("No GOOGLE_API_KEY, OPENROUTER_API_KEY, or OPENAI_API_KEY found in environment variables.");
+  }
+
+  const FALLBACK_MODELS = [
+    "openrouter/owl-alpha",
     "nvidia/nemotron-3-super-120b-a12b:free",
     "openai/gpt-oss-120b:free",
-    "openrouter/owl-alpha",
     "meta-llama/llama-3-8b-instruct:free",
     "qwen/qwen-2.5-72b-instruct:free",
     "google/gemma-2-9b-it:free",
@@ -103,77 +186,30 @@ For questions about specific scholarships (requirements, benefits, deadlines, et
 
   let lastError: unknown = null;
 
-  for (const modelName of MODELS) {
+  for (const modelName of FALLBACK_MODELS) {
     try {
-      console.log(`[Owel RAG] Attempting generation with model: ${modelName}`);
+      console.log(`[Owel RAG] Attempting generation with OpenRouter model: ${modelName}`);
 
       const model = new ChatOpenAI({
         modelName,
-        apiKey,
+        apiKey: openRouterKey,
         configuration: {
           baseURL: "https://openrouter.ai/api/v1",
         },
         temperature: 0.2,
       });
 
-      const condenseChain = condensePrompt
-        .pipe(model)
-        .pipe(new StringOutputParser());
-
-      const ragChain = RunnablePassthrough.assign({
-        context: async (input: {
-          question: string;
-          chat_history?: any[];
-        }) => {
-          let searchQuery = input.question;
-
-          if (input.chat_history && input.chat_history.length > 0) {
-            try {
-              const condensed = await condenseChain.invoke({
-                question: input.question,
-                chat_history: input.chat_history,
-              });
-              if (condensed?.trim()) {
-                searchQuery = condensed.trim();
-                console.log(`[Owel DB RAG] Original: "${input.question}" → Condensed: "${searchQuery}"`);
-              }
-            } catch (err) {
-              console.warn(`[Owel DB RAG] [${modelName}] Condensation failed, using raw question:`, err);
-            }
-          }
-
-          // ── Search the database instead of the old vector store ────────────
-          const context = await searchScholarshipsAsContext(searchQuery, 8);
-          console.log(`[Owel DB RAG] Retrieved context for query: "${searchQuery}"`);
-          return context;
-        },
-      })
-        .pipe(answerPrompt)
-        .pipe(model)
-        .pipe(new StringOutputParser());
-
-      const chainWithHistory = new RunnableWithMessageHistory({
-        runnable: ragChain,
-        getMessageHistory: getSessionHistory,
-        inputMessagesKey: "question",
-        historyMessagesKey: "chat_history",
-      });
-
-      const answer = await chainWithHistory.invoke(
-        { question },
-        { configurable: { sessionId } }
-      );
-
+      const answer = await runRagChain(model, modelName, question, sessionId);
       if (answer) {
-        console.log(`[Owel DB RAG] Successfully generated response using model: ${modelName}`);
+        console.log(`[Owel RAG] Successfully generated response using OpenRouter model: ${modelName}`);
         return answer;
       }
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : String(err);
-      console.warn(`[Owel DB RAG] Model ${modelName} failed: ${errMsg}`);
+      console.warn(`[Owel RAG] OpenRouter model ${modelName} failed: ${errMsg}`);
       lastError = err;
     }
   }
 
-  throw lastError || new Error("All fallback models failed to generate a response.");
+  throw lastError || new Error("All models (Gemini + OpenRouter fallbacks) failed to generate a response.");
 }

@@ -2,7 +2,7 @@
  * API route powering the AI chatbot.
  * Uses LangChain tools and model prompts to stream conversational responses.
  */
-import { getGoogleModel } from "@/lib/ai/models";
+import { getPrimaryModel } from "@/lib/ai/models";
 import { tanglawPrompt } from "@/lib/ai/prompts";
 import { searchScholarships, getScholarshipDetails } from "@/lib/ai/tools";
 import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     const tools = [searchScholarships, getScholarshipDetails];
 
     const agent = await createToolCallingAgent({
-      llm: getGoogleModel(),
+      llm: getPrimaryModel(),
       tools,
       prompt: tanglawPrompt,
     });

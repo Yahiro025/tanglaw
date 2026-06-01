@@ -32,7 +32,7 @@ TANGLAW is a student-led research project that helps Filipino tertiary students 
 ```
 
 **Auth**: NextAuth.js v4 (Credentials provider) on the frontend, JWT (jsonwebtoken + bcryptjs) on the backend
-**AI/LLM**: LangChain with OpenRouter (multiple free model fallback chain), Google Gemini (ChatGoogleGenerativeAI), Groq (ChatGroq), and the Vercel AI SDK (`ai` package)
+**AI/LLM**: Primary: Google Gemini 3.1 Flash-Lite (via `GOOGLE_API_KEY`, free from Google AI Studio). Fallback: OpenRouter free models. Both frontend (`models.ts`) and backend (`chatService.ts`) follow: Gemini direct → OpenRouter. Backend has 6-model OpenRouter cascade (owl-alpha → nemotron → gpt-oss → llama-3 → qwen-2.5 → gemma-2); frontend uses owl-alpha as single OpenRouter fallback. Also uses LangChain with the Vercel AI SDK (`ai` package).
 **Styling**: Tailwind CSS v4 with CSS custom properties (theme variables in globals.css)
 **Animations**: Framer Motion
 **Icons**: lucide-react
@@ -78,7 +78,7 @@ frontend/                        Next.js 16 app (deployed on Vercel)
     supabase.ts                  Supabase client (public URL + anon key)
     nextauth.ts                  NextAuth options (Credentials → backend JWT)
     ai/
-      models.ts                  AI model factory (Gemini, Groq)
+      models.ts                  AI model factory (Gemini 3.1 Flash-Lite → OpenRouter)
       prompts.ts                 ChatPromptTemplate (Owel system prompt)
       tools.ts                   LangChain tools (searchScholarships, getScholarshipDetails)
   prisma/
@@ -102,7 +102,7 @@ backend/                         Express API server (deployed on Render)
     services/
       prismaClient.ts            Prisma client singleton (PrismaPg adapter + pg.Pool)
       scholarshipSearchService.ts DB-backed RAG: ILIKE search → formatted LLM context
-      chatService.ts             LangChain RAG pipeline (OpenRouter, condensation, history)
+      chatService.ts             Two-tier RAG: Gemini 3.1 Flash-Lite (primary) → OpenRouter free fallbacks
     models/
       scholarship.ts             Scholarship TypeScript interface (legacy mock shape)
   prisma/
@@ -133,7 +133,7 @@ README.md                        Project overview and getting started
 | backend/prisma.config.ts | Prisma v7 datasource config — URL resolution (DATABASE_URL or DIRECT_URL from .env.local), separate from schema.prisma |
 | backend/prisma/seed.ts | Seed script — 8 canonical scholarships, auto-run by start.sh on Render deploy |
 | backend/src/routes/index.ts | API route definitions — all endpoints and their middleware |
-| backend/src/services/chatService.ts | AI chat pipeline — LangChain RAG with OpenRouter, multi-model fallback, query condensation, session history |
+| backend/src/services/chatService.ts | AI chat pipeline — Gemini 3.1 Flash-Lite primary (GOOGLE_API_KEY) + 6 OpenRouter free fallbacks, RAG with query condensation |
 | backend/src/services/scholarshipSearchService.ts | RAG knowledge retrieval — PostgreSQL ILIKE search → formatted context for LLM |
 | frontend/src/lib/backend.ts | Frontend API client — fetch wrappers with JWT token management |
 | frontend/src/lib/ai/tools.ts | LangChain tools — searchScholarships (by GWA/sector/program) and getScholarshipDetails |
@@ -216,7 +216,7 @@ Key tables:
 - **CommonJS backend**: The backend `tsconfig.json` uses `"module": "commonjs"` and `"moduleResolution": "node"`. Use `require`/`module.exports` style or TypeScript with CommonJS output. Do NOT use top-level `await` or ESM-only packages in the backend.
 - **ESM frontend**: The frontend uses `"moduleResolution": "bundler"` and ESM imports everywhere.
 - **Two auth systems coexist**: NextAuth.js v4 on the frontend (for session management) AND raw JWT tokens on the backend (for API calls). The frontend `backend.ts` stores the JWT in localStorage as `tanglaw-token` and sends it as Bearer token. NextAuth also stores the JWT in the session token.
-- **OpenRouter multi-model fallback**: `chatService.ts` tries 6 free models in sequence: nemotron-3-super-120b, gpt-oss-120b, owl-alpha, llama-3-8b, qwen-2.5-72b, gemma-2-9b. It only throws if ALL fail.
+- **OpenRouter multi-model fallback**: If Gemini 3.1 Flash-Lite fails (or `GOOGLE_API_KEY` is unset), `chatService.ts` falls back to 6 free OpenRouter models in order: owl-alpha, nemotron-3-super-120b, gpt-oss-120b, llama-3-8b, qwen-2.5-72b, gemma-2-9b.
 - **No formal authentication library in backend**: Auth is custom JWT (jsonwebtoken + bcryptjs) — no Passport, no Supabase Auth, no NextAuth on the backend side.
 - **Tailwind CSS v4**: Uses `@tailwindcss/postcss` plugin (NOT v3 config). Configuration is in `postcss.config.mjs`. Theme values are CSS custom properties in `globals.css`.
 - **Next.js 16**: Uses App Router. No Pages Router files.
@@ -237,7 +237,7 @@ DeepSeek V4 Pro: treat these as ground truth; do not contradict them.
 - The frontend entry point is `frontend/src/app/page.tsx`, the backend entry is `backend/src/server.ts`
 - Database is PostgreSQL on Supabase, queried via Prisma with `@prisma/adapter-pg` (backend) and standard PrismaClient (frontend)
 - Auth is NextAuth.js v4 on the frontend + custom JWT on the backend — no Supabase Auth, no Passport
-- LangChain is used for AI/chat features with OpenRouter as the primary LLM provider
+- LangChain is used for AI/chat features with Google Gemini 3.1 Flash-Lite as primary and OpenRouter free models as fallback
 - Tailwind CSS v4 uses `@tailwindcss/postcss` plugin, NOT v3
 - The package manager is npm, NOT bun, yarn, or pnpm
 - There are NO Capacitor, Python scripts, or Wiktionary scrapers — those belong to a different project
