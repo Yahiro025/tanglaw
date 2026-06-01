@@ -4,10 +4,20 @@
  * Mini chatbot component for the dashboard.
  * Uses a set of preloaded prompts and simple simulated responses.
  */
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
-import { X, Send, HelpCircle } from "lucide-react";
+import { X, Send, HelpCircle, GripHorizontal } from "lucide-react";
 import { createChatMessage, getChatMessages, sendChatMessage } from "@/lib/backend";
+
+const MIN_WIDTH = 320;
+const MAX_WIDTH = 800;
+const MIN_HEIGHT = 360;
+const DEFAULT_WIDTH = 384;
+const DEFAULT_HEIGHT = 520;
+
+function getMaxHeight() {
+  return typeof window !== "undefined" ? window.innerHeight * 0.9 : 800;
+}
 
 interface Message {
   id: string;
@@ -45,6 +55,14 @@ const PRELOADED_PROMPTS = [
 
 export default function OwelChatbot() {
   const [isOpen, setIsOpen] = useState(false);
+  const [panelWidth, setPanelWidth] = useState(DEFAULT_WIDTH);
+  const [panelHeight, setPanelHeight] = useState(DEFAULT_HEIGHT);
+  const [isResizing, setIsResizing] = useState(false);
+  const resizeRef = useRef<{ startX: number; startY: number; startWidth: number; startHeight: number } | null>(null);
+  const panelDimsRef = useRef({ width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT });
+
+  // Keep the ref in sync with state so resize callbacks always read current dims
+  panelDimsRef.current = { width: panelWidth, height: panelHeight };
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -92,6 +110,80 @@ export default function OwelChatbot() {
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
     }
   }, [messages, isOpen, isTyping]);
+
+  // Update max height when window resizes
+  useEffect(() => {
+    const handleWindowResize = () => {
+      setPanelHeight((prev) => Math.min(prev, window.innerHeight * 0.9));
+    };
+    window.addEventListener("resize", handleWindowResize);
+    return () => window.removeEventListener("resize", handleWindowResize);
+  }, []);
+
+  // Resize handlers — supports both mouse and touch
+  const handleResizeStart = useCallback((clientX: number, clientY: number) => {
+    setIsResizing(true);
+    const dims = panelDimsRef.current;
+    resizeRef.current = {
+      startX: clientX,
+      startY: clientY,
+      startWidth: dims.width,
+      startHeight: dims.height,
+    };
+  }, []);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleResizeStart(e.clientX, e.clientY);
+  }, [handleResizeStart]);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const touch = e.touches[0];
+    handleResizeStart(touch.clientX, touch.clientY);
+  }, [handleResizeStart]);
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const applyResize = (clientX: number, clientY: number) => {
+      if (!resizeRef.current) return;
+      const deltaX = clientX - resizeRef.current.startX;
+      const deltaY = clientY - resizeRef.current.startY;
+      const maxH = getMaxHeight();
+
+      // Resizing from bottom-left: dragging left increases width, dragging down increases height
+      const newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, resizeRef.current.startWidth - deltaX));
+      const newHeight = Math.min(maxH, Math.max(MIN_HEIGHT, resizeRef.current.startHeight + deltaY));
+
+      setPanelWidth(newWidth);
+      setPanelHeight(newHeight);
+    };
+
+    const handleMouseMove = (e: MouseEvent) => applyResize(e.clientX, e.clientY);
+    const handleTouchMove = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      applyResize(touch.clientX, touch.clientY);
+    };
+
+    const endResize = () => {
+      setIsResizing(false);
+      resizeRef.current = null;
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", endResize);
+    document.addEventListener("touchmove", handleTouchMove, { passive: false });
+    document.addEventListener("touchend", endResize);
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", endResize);
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", endResize);
+    };
+  }, [isResizing]);
 
   const handleSendMessage = async (textToSend: string) => {
     if (!textToSend.trim()) return;
@@ -180,7 +272,14 @@ export default function OwelChatbot() {
       )}
 
       {isOpen && (
-        <div className="flex flex-col w-96 max-w-[calc(100vw-2rem)] h-[520px] rounded-[2rem] bg-white/95 shadow-2xl backdrop-blur-xl overflow-hidden">
+        <div
+          className={`relative flex flex-col rounded-[2rem] bg-white/95 shadow-2xl backdrop-blur-xl overflow-hidden ${isResizing ? "select-none" : ""}`}
+          style={{
+            width: panelWidth,
+            maxWidth: "calc(100vw - 2rem)",
+            height: panelHeight,
+          }}
+        >
           <div className="flex items-center justify-between p-4 bg-white/80">
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 overflow-hidden rounded-full bg-white flex items-center justify-center shadow-lg">
@@ -281,6 +380,18 @@ export default function OwelChatbot() {
               <Send className="h-4 w-4" />
             </button>
           </form>
+
+          {/* Resize handle — bottom-left corner */}
+          <div
+            onMouseDown={handleMouseDown}
+            onTouchStart={handleTouchStart}
+            className="absolute bottom-0 left-0 w-6 h-6 cursor-nesw-resize flex items-end justify-start p-0.5 group touch-none"
+            aria-label="Resize chat panel"
+            role="slider"
+            tabIndex={-1}
+          >
+            <GripHorizontal className="h-4 w-4 text-zinc-400 group-hover:text-zinc-600 transition-colors rotate-45" />
+          </div>
         </div>
       )}
     </div>
