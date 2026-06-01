@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import prisma from "../services/prismaClient";
+import { generateChatResponse } from "../services/chatService";
 
 type AuthenticatedRequest = Request & {
   user?: {
@@ -39,6 +40,36 @@ export const createMessage = async (req: Request, res: Response) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "DB error" });
+  }
+};
+
+/**
+ * AI-powered chat endpoint that uses the RAG pipeline
+ * (Gemini 3.1 Flash-Lite → OpenRouter fallbacks) to generate
+ * a contextual response based on the user's question.
+ */
+export const chatWithOwel = async (req: Request, res: Response) => {
+  const authReq = req as AuthenticatedRequest;
+  const user = authReq.user;
+  const { question } = req.body;
+
+  if (!user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  if (!question || typeof question !== "string" || question.trim().length === 0) {
+    return res.status(400).json({ error: "question (string) is required" });
+  }
+
+  try {
+    // Use the user's ID as the session key so conversation history persists
+    const answer = await generateChatResponse(question.trim(), user.id);
+    res.json({ answer });
+  } catch (err) {
+    console.error("[chatWithOwel] Error:", err);
+    res.status(500).json({
+      error: err instanceof Error ? err.message : "Failed to generate chat response",
+    });
   }
 };
 

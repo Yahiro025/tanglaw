@@ -123,3 +123,10 @@ export async function createChatMessage(payload: BackendMessagePayload): Promise
     body: JSON.stringify(payload),
   });
 }
+
+export async function sendChatMessage(question: string): Promise<{ answer: string }> {
+  return authorizedFetch(`${apiBase}/chat`, {
+    method: "POST",
+    body: JSON.stringify({ question }),
+  });
+}

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { getScholarships } from "../controllers/scholarshipController";
-import { createMessage, getMessagesForUser } from "../controllers/chatController";
+import { createMessage, getMessagesForUser, chatWithOwel } from "../controllers/chatController";
 import { signup, login, me, logout } from "../controllers/authController";
 import { authenticateToken } from "../middleware/auth";
 
@@ -21,6 +21,9 @@ router.post("/auth/logout", authenticateToken, logout);
 router.get("/auth/me", authenticateToken, me);
 
 router.get("/scholarships", authenticateToken, getScholarships);
+
+// AI chat endpoint
+router.post("/chat", authenticateToken, chatWithOwel);
 
 // Chat message routes
 router.post("/messages", authenticateToken, createMessage);

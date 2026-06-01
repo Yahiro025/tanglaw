@@ -7,7 +7,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { X, Send, HelpCircle } from "lucide-react";
-import { createChatMessage, getChatMessages } from "@/lib/backend";
+import { createChatMessage, getChatMessages, sendChatMessage } from "@/lib/backend";
 
 interface Message {
   id: string;
@@ -121,9 +121,22 @@ export default function OwelChatbot() {
         (p) => p.query.toLowerCase() === textToSend.toLowerCase() || p.label.toLowerCase() === textToSend.toLowerCase()
       );
 
-      const replyText = matchingPrompt
-        ? matchingPrompt.reply
-        : `Hoot! I've noted your question: "${textToSend}". As your AI assistant, I recommend browsing the Scholarships page or using the review engine for deeper guidance.`;
+      let replyText: string;
+      let aiGenerated = false;
+
+      if (matchingPrompt) {
+        replyText = matchingPrompt.reply;
+      } else {
+        // No preloaded match — call the AI backend (RAG pipeline)
+        try {
+          const { answer } = await sendChatMessage(textToSend);
+          replyText = answer;
+          aiGenerated = true;
+        } catch (error) {
+          console.error("AI chat failed, using generic fallback:", error);
+          replyText = `Hoot! I've noted your question: "${textToSend}". As your AI assistant, I recommend browsing the Scholarships page or using the review engine for deeper guidance.`;
+        }
+      }
 
       const owelMsg: Message = {
         id: `owel-${Date.now()}`,
@@ -138,7 +151,7 @@ export default function OwelChatbot() {
         await createChatMessage({
           role: "assistant",
           content: replyText,
-          metadata: { source: "frontend", aiFallback: true },
+          metadata: { source: aiGenerated ? "ai-rag" : "preloaded", aiFallback: !matchingPrompt && !aiGenerated },
         });
       } catch (error) {
         console.error("Failed to save assistant message:", error);
