@@ -36,6 +36,9 @@ yarn-error.log*
 # exclude .env.example to serve as reference
 !.env.example
 
+# this contains our env vars, don't push to repo
+LOCAL_DEVELOPMENT.md
+
 # vercel
 .vercel
 
