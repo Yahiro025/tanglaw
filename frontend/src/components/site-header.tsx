@@ -55,9 +55,14 @@ export default function SiteHeader() {
               className="object-cover"
             />
           </div>
-          <span className="font-display text-xl font-black tracking-[0.12em] text-[color:var(--theme-typography-main)]">
-            TANGLAW
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="font-display text-xl font-black tracking-[0.12em] text-[color:var(--theme-typography-main)]">
+              TANGLAW
+            </span>
+            <span className="rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-primary shadow-sm">
+              Beta
+            </span>
+          </div>
         </Link>
 
         <nav className="hidden md:flex items-center gap-2 text-[11px] uppercase tracking-[0.34em] text-[color:var(--theme-typography-secondary)] font-black">

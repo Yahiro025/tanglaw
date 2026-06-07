@@ -70,8 +70,8 @@ const PRELOADED_PROMPTS = [
   },
 ];
 
-export default function OwelChatbot() {
-  const [isOpen, setIsOpen] = useState(false);
+export default function OwelChatbot({ variant = "floating" }: { variant?: "floating" | "inline" }) {
+  const [isOpen, setIsOpen] = useState(variant === "inline");
   const [panelWidth, setPanelWidth] = useState(getDefaultWidth);
   const [panelHeight, setPanelHeight] = useState(getDefaultHeight);
   const [isResizing, setIsResizing] = useState(false);
@@ -350,13 +350,15 @@ export default function OwelChatbot() {
             <p className="text-[10px] text-[color:var(--theme-text-muted)]">Live guidance for dashboard users</p>
           </div>
         </div>
-        <button
-          onClick={handleClose}
-          className="rounded-full p-1 text-[color:var(--theme-text-body)] hover:bg-base-light focus:outline-none"
-          aria-label="Close chat"
-        >
-          <X className="h-5 w-5" />
-        </button>
+        {variant === "floating" && (
+          <button
+            onClick={handleClose}
+            className="rounded-full p-1 text-[color:var(--theme-text-body)] hover:bg-base-light focus:outline-none"
+            aria-label="Close chat"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        )}
       </div>
 
       {/* Messages */}
@@ -442,6 +444,14 @@ export default function OwelChatbot() {
 
   // ── Render ─────────────────────────────────────────────────────────────
 
+  if (variant === "inline") {
+    return (
+      <div className="flex flex-col rounded-[2rem] bg-[color:var(--theme-surface)]/90 border border-accent-muted/40 shadow-2xl overflow-hidden h-[500px] w-full">
+        {panelBody}
+      </div>
+    );
+  }
+
   return (
     <>
       {/* ── Trigger button (hidden when mobile sheet is open) ──────────── */}
@@ -471,7 +481,7 @@ export default function OwelChatbot() {
       {isOpen && !isMobile && (
         <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 font-sans">
           <div
-            className={`relative flex flex-col rounded-[2rem] bg-[color:var(--theme-surface)]/95 shadow-2xl backdrop-blur-xl overflow-hidden ${
+            className={`relative flex flex-col rounded-[2rem] bg-[color:var(--theme-surface)]/95 shadow-2xl backdrop-blur-xl overflow-hidden border border-white/5 shadow-[var(--theme-glow-ai)] transition-shadow duration-300 ${
               isResizing ? "select-none" : ""
             }`}
             style={{

@@ -12,6 +12,7 @@ import { signOut } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
 import AuthGuard from "@/components/AuthGuard";
 import ThemeChanger from "@/components/theme-changer";
+import { EtheralShadow } from "../../../components/ui/etheral-shadow";
 import OwelChatbot from "@/components/owel-chatbot";
 
 export default function DashboardLayout({
@@ -52,19 +53,24 @@ export default function DashboardLayout({
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-base-light text-text-primary">
-        <header className="relative z-50 border-b border-accent-muted/40 bg-white">
-          <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 px-4 py-4">
+      <div className="h-screen overflow-y-auto hide-scrollbar bg-base-light text-text-primary flex flex-col">
+          <EtheralShadow
+            animation={{ scale: 60, speed: 80 }}
+            noise={{ opacity: 0.8, scale: 1.0 }}
+            sizing="cover"
+            lightColor="rgba(200, 230, 175, 0.85)"
+          />
+        <header className="relative z-50 border-b border-accent-muted/40 bg-[color:var(--theme-surface)]">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 px-4 sm:px-6 py-3 sm:py-4">
             <div className="flex items-center gap-4">
-              <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.24em] text-zinc-900">
+              <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.24em] text-[color:var(--theme-typography-main)]">
                 <Sparkles className="h-5 w-5 text-primary" />
                 DASHBOARD
               </Link>
-              <nav className="hidden sm:flex flex-wrap gap-3 text-[11px] uppercase font-bold tracking-widest text-zinc-600">
-                <Link href="/dashboard" className="hover:text-zinc-900 transition-colors">Overview</Link>
-                <Link href="/dashboard/scholarships" className="hover:text-zinc-900 transition-colors">Scholarships</Link>
-                <Link href="/dashboard/readiness" className="hover:text-zinc-900 transition-colors">Readiness</Link>
-                <Link href="/dashboard/reviewer" className="hover:text-zinc-900 transition-colors">Exam Reviewer</Link>
+              <nav className="hidden sm:flex flex-wrap gap-3 text-[11px] uppercase font-bold tracking-widest text-[color:var(--theme-text-body)]">
+                <Link href="/dashboard" className="hover:text-[color:var(--theme-typography-main)] transition-colors">Overview</Link>
+                <Link href="/dashboard/scholarships" className="hover:text-[color:var(--theme-typography-main)] transition-colors">Scholarships</Link>
+                <Link href="/dashboard/readiness" className="hover:text-[color:var(--theme-typography-main)] transition-colors">Readiness</Link>
               </nav>
             </div>
 
@@ -72,14 +78,14 @@ export default function DashboardLayout({
               {/* Mobile hamburger */}
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
-                className="sm:hidden flex items-center justify-center h-10 w-10 rounded-full border border-accent-muted/40 bg-white hover:bg-zinc-50 transition"
+                className="sm:hidden flex items-center justify-center h-10 w-10 rounded-full border border-accent-muted/40 bg-[color:var(--theme-surface)] hover:bg-[color:var(--theme-base-pastel)] transition"
                 aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
                 aria-expanded={menuOpen}
               >
                 {menuOpen ? (
-                  <X className="h-5 w-5 text-zinc-700" />
+                  <X className="h-5 w-5 text-[color:var(--theme-text-body)]" />
                 ) : (
-                  <Menu className="h-5 w-5 text-zinc-700" />
+                  <Menu className="h-5 w-5 text-[color:var(--theme-text-body)]" />
                 )}
               </button>
 
@@ -101,15 +107,14 @@ export default function DashboardLayout({
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -12, scale: 0.97 }}
                       transition={{ duration: 0.22, ease: "easeOut" }}
-                      className="absolute top-full left-0 right-0 z-50 sm:hidden border-b border-accent-muted/40 bg-white shadow-2xl shadow-black/15 origin-top"
+                      className="absolute top-full left-0 right-0 z-50 sm:hidden border-b border-accent-muted/40 bg-[color:var(--theme-surface)] shadow-2xl shadow-black/15 origin-top"
                     >
-                    <nav className="max-w-7xl mx-auto px-4 py-5 flex flex-col gap-3 text-[11px] uppercase font-bold tracking-widest text-zinc-600">
+                    <nav className="max-w-7xl mx-auto px-4 py-5 flex flex-col gap-3 text-[11px] uppercase font-bold tracking-widest text-[color:var(--theme-text-body)]">
                       <Link
-                        href="/dashboard"
-                        className={`transition px-4 py-3 rounded-full ${
+                        href="/dashboard"                          className={`transition px-4 py-3 rounded-full ${
                           pathname === "/dashboard"
                             ? "bg-primary/10 text-primary font-black"
-                            : "hover:bg-zinc-50 hover:text-zinc-900"
+                            : "hover:bg-[color:var(--theme-base-pastel)] hover:text-[color:var(--theme-typography-main)]"
                         }`}
                       >
                         Overview
@@ -119,7 +124,7 @@ export default function DashboardLayout({
                         className={`transition px-4 py-3 rounded-full ${
                           pathname === "/dashboard/scholarships"
                             ? "bg-primary/10 text-primary font-black"
-                            : "hover:bg-zinc-50 hover:text-zinc-900"
+                            : "hover:bg-[color:var(--theme-base-pastel)] hover:text-[color:var(--theme-typography-main)]"
                         }`}
                       >
                         Scholarships
@@ -129,21 +134,12 @@ export default function DashboardLayout({
                         className={`transition px-4 py-3 rounded-full ${
                           pathname === "/dashboard/readiness"
                             ? "bg-primary/10 text-primary font-black"
-                            : "hover:bg-zinc-50 hover:text-zinc-900"
+                            : "hover:bg-[color:var(--theme-base-pastel)] hover:text-[color:var(--theme-typography-main)]"
                         }`}
                       >
                         Readiness
                       </Link>
-                      <Link
-                        href="/dashboard/reviewer"
-                        className={`transition px-4 py-3 rounded-full ${
-                          pathname === "/dashboard/reviewer"
-                            ? "bg-primary/10 text-primary font-black"
-                            : "hover:bg-zinc-50 hover:text-zinc-900"
-                        }`}
-                      >
-                        Exam Reviewer
-                      </Link>
+
                       <hr className="border-accent-muted/30 my-1" />
                       <button
                         onClick={handleSignOut}
@@ -170,8 +166,31 @@ export default function DashboardLayout({
           </div>
         </header>
 
-        <main className="max-w-7xl mx-auto px-4 py-8"> {children} </main>
-        <OwelChatbot />
+        <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-6 lg:py-8 w-full flex-1"> {children} </main>
+        {/* Floating chatbot: hidden on /dashboard (has its own CTA + modal), visible on other pages */}
+        {pathname !== "/dashboard" && <OwelChatbot />}
+
+        <footer className="relative z-10 bg-[color:var(--theme-component-backdrop)] border-t border-white/5 py-6 px-4">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-3">
+            <div className="text-center md:text-left">
+              <p className="text-[11px] uppercase tracking-[0.3em] text-[color:var(--theme-typography-secondary)] font-black">
+                TANGLAW RESEARCH PROJECT © 2026
+              </p>
+              <p className="text-[10px] text-[color:var(--theme-typography-secondary)] mt-1">
+                Science, Technology, and Society (BSCS 1-2)
+              </p>
+            </div>
+            <div className="flex flex-wrap justify-center gap-4 text-[10px] text-[color:var(--theme-typography-secondary)] uppercase tracking-[0.28em] font-semibold">
+              <Link href="/about" className="hover:text-[color:var(--theme-typography-main)]">
+                The Minds Behind Us
+              </Link>
+              <span className="text-white/20">|</span>
+              <a href="https://pup.edu.ph" target="_blank" rel="noopener noreferrer" className="hover:text-[color:var(--theme-typography-main)]">
+                PUP Manila
+              </a>
+            </div>
+          </div>
+        </footer>
       </div>
     </AuthGuard>
   );

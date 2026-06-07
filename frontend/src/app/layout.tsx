@@ -4,11 +4,13 @@
  */
 import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
-import Link from "next/link";
 import "./globals.css";
 import NatureCanvas from "@/components/nature-canvas";
+import ParticlesBackground from "../../components/ui/particles-background";
 import SiteHeader from "@/components/site-header";
+import SiteFooter from "@/components/site-footer";
 import NextAuthProvider from "@/components/NextAuthProvider";
+import { ThemeProvider } from "next-themes";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -26,6 +28,10 @@ export const metadata: Metadata = {
   title: "TANGLAW | AI-Powered Scholarship Navigation",
   description:
     "TANGLAW is an AI-first scholarship navigator for Filipino learners, combining readiness checks, grant discovery, and guidance into a single academic dashboard.",
+  icons: {
+    icon: [{ url: "/assets/owel-head.png", type: "image/png" }],
+    shortcut: "/assets/owel-head.png",
+  },
 };
 
 export default function RootLayout({
@@ -36,34 +42,16 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${outfit.variable} h-full antialiased`}>
       <body className="relative min-h-full flex flex-col bg-base-light text-text-primary">
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+        <ParticlesBackground />
         <NatureCanvas />
 
         <NextAuthProvider>
           <SiteHeader />
           <main className="flex-grow flex flex-col">{children}</main>
+          <SiteFooter />
         </NextAuthProvider>
-
-        <footer className="bg-[color:var(--theme-component-backdrop)] border-t border-white/5 py-8 px-4 mt-auto">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="text-center md:text-left">
-              <p className="text-[11px] uppercase tracking-[0.3em] text-[color:var(--theme-typography-secondary)] font-black">
-                TANGLAW RESEARCH PROJECT © 2026
-              </p>
-              <p className="text-[10px] text-[color:var(--theme-typography-secondary)] mt-1">
-                Science, Technology, and Society (BSCS 1-2)
-              </p>
-            </div>
-            <div className="flex flex-wrap justify-center gap-4 text-[10px] text-[color:var(--theme-typography-secondary)] uppercase tracking-[0.28em] font-semibold">
-              <Link href="/about" className="hover:text-[color:var(--theme-typography-main)]">
-                The Minds Behind Us
-              </Link>
-              <span className="text-white/20">|</span>
-              <a href="https://pup.edu.ph" target="_blank" rel="noopener noreferrer" className="hover:text-[color:var(--theme-typography-main)]">
-                PUP Manila
-              </a>
-            </div>
-          </div>
-        </footer>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -5,6 +5,7 @@
  */
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { GlowingText } from "../../../../components/ui/glowing-text";
 
 export default function ScholarshipsPage() {
   const router = useRouter();
@@ -16,7 +17,7 @@ export default function ScholarshipsPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-base-light px-4 py-12">
       <div className="max-w-lg rounded-[2rem] border border-accent-muted/30 bg-white p-10 shadow-2xl text-center">
-        <h1 className="font-display text-3xl font-black text-zinc-900 mb-4">Scholarship workspace moved to the secure dashboard</h1>
+        <h1 className="font-display text-3xl font-black text-zinc-900 mb-4"><GlowingText glowType="primary">Scholarship workspace moved to the secure dashboard</GlowingText></h1>
         <p className="text-sm leading-relaxed text-zinc-600 mb-6">
           The scholarship directory is now accessible exclusively after authentication. Sign in to continue to your secure Scholar Hub.
         </p>
