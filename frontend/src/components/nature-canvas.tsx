@@ -129,7 +129,11 @@ export default function NatureCanvas() {
     window.addEventListener("resize", handleResize);
 
     // Animation Loop
+    let isRunning = true;
+
     const draw = () => {
+      if (!isRunning) return;
+
       ctx.clearRect(0, 0, width, height);
 
       // Draw background ambient gradient depending on theme
@@ -198,6 +202,20 @@ export default function NatureCanvas() {
       animationFrameId = requestAnimationFrame(draw);
     };
 
+    // Pause animation when tab is hidden to save CPU/GPU
+    const handleVisibility = () => {
+      if (document.hidden) {
+        isRunning = false;
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+        }
+      } else {
+        isRunning = true;
+        animationFrameId = requestAnimationFrame(draw);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
     draw();
 
     // Trigger color update whenever theme state changes
@@ -211,6 +229,8 @@ export default function NatureCanvas() {
 
     return () => {
       window.removeEventListener("resize", handleResize);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      isRunning = false;
       cancelAnimationFrame(animationFrameId);
     };
   }, [theme, pathname]);

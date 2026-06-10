@@ -153,9 +153,10 @@ const generateMockQuestionBank = (): Question[] => {
   return bank;
 };
 
-const MASTER_QUESTION_BANK = generateMockQuestionBank();
-
 export default function ReadinessForm() {
+  // Lazy-initialized question bank: only generated when component mounts
+  const masterQuestionBank = useMemo(() => generateMockQuestionBank(), []);
+
   // Config states
   const [view, setView] = useState<"setup" | "active" | "feedback">("setup");
   const [selectedType, setSelectedType] = useState<"diagnostics" | "mock">("diagnostics");
@@ -229,12 +230,12 @@ export default function ReadinessForm() {
       else if (selectedDifficulty === "medium") difficultyRange = [2, 3, 4];
       else if (selectedDifficulty === "hard") difficultyRange = [4, 5];
 
-      let pool = MASTER_QUESTION_BANK.filter(
+      let pool = masterQuestionBank.filter(
         (q) => selectedSubjects.includes(q.subject) && difficultyRange.includes(q.difficulty)
       );
 
       if (pool.length === 0) {
-        pool = MASTER_QUESTION_BANK.filter((q) => selectedSubjects.includes(q.subject));
+        pool = masterQuestionBank.filter((q) => selectedSubjects.includes(q.subject));
       }
 
       // Shuffle and take requested count
@@ -250,7 +251,7 @@ export default function ReadinessForm() {
     } else {
       // Mock Exam - Full 250 items sorted by subject
       // Take all 250 questions from Master bank
-      setActiveQuestions(MASTER_QUESTION_BANK);
+      setActiveQuestions(masterQuestionBank);
       setActiveIndex(0);
       setSelectedAnswers({});
       setFlaggedItems([]);
@@ -504,11 +505,11 @@ export default function ReadinessForm() {
                       Select Difficulty Level:
                     </label>
                     <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                      {["easy", "medium", "hard"].map((diff) => (
+                      {(["easy", "medium", "hard"] as const).map((diff) => (
                         <button
                           key={diff}
                           type="button"
-                          onClick={() => setSelectedDifficulty(diff as any)}
+                          onClick={() => setSelectedDifficulty(diff)}
                           className={`p-3 sm:p-4 rounded-xl border text-[11px] sm:text-xs font-black capitalize transition-all cursor-pointer text-center ${
                             selectedDifficulty === diff
                               ? "bg-primary border-primary-hover text-white shadow-sm"

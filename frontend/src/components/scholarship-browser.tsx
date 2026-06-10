@@ -95,19 +95,27 @@ export default function ScholarshipBrowser() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Debounced search term to avoid filtering on every keystroke
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearchTerm(searchTerm), 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   // Reset to page 1 whenever any filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, incomeLimit, scholarshipType, programType]);
+  }, [debouncedSearchTerm, incomeLimit, scholarshipType, programType]);
 
   const filteredScholarships = useMemo(() => {
     return scholarships.filter((item) => {
-      // 1. Text Search
+      // 1. Text Search (using debounced term)
       const matchesSearch =
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.provider.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.overview.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.priorityPrograms.some((p) => p.toLowerCase().includes(searchTerm.toLowerCase()));
+        item.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        item.provider.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        item.overview.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        item.priorityPrograms.some((p) => p.toLowerCase().includes(debouncedSearchTerm.toLowerCase()));
 
       // 2. Income Bracket filter
       let matchesIncome = true;
@@ -134,7 +142,7 @@ export default function ScholarshipBrowser() {
 
       return matchesSearch && matchesIncome && matchesType && matchesProgram;
     });
-  }, [searchTerm, incomeLimit, scholarshipType, programType, scholarships]);
+  }, [debouncedSearchTerm, incomeLimit, scholarshipType, programType, scholarships]);
 
   // Pagination: slice the filtered list to the current page
   const indexOfLastItem = currentPage * itemsPerPage;
