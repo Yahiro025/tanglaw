@@ -5,7 +5,7 @@ import React from "react";
 
 // Mock next/dynamic to render components synchronously in tests
 vi.mock("next/dynamic", () => ({
-  default: (importFn: () => Promise<unknown>, opts?: { loading?: () => React.ReactNode }) => {
+  default: (importFn: () => Promise<{ default: React.ComponentType<unknown> }>, opts?: { loading?: () => React.ReactNode }) => {
     const DynamicComponent = React.lazy(importFn);
     return Object.assign(
       (props: Record<string, unknown>) => (
@@ -67,7 +67,6 @@ vi.mock("lucide-react", () => ({
   Moon: () => <span data-testid="icon-moon">Moon</span>,
   Sun: () => <span data-testid="icon-sun">Sun</span>,
   GripHorizontal: () => <span data-testid="icon-grip-horizontal">Grip</span>,
-  HelpCircle: () => <span data-testid="icon-help-circle">HelpCircle</span>,
 }));
 
 // Mock next-themes

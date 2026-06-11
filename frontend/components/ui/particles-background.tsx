@@ -1,9 +1,12 @@
 'use client';
 
 import React, { useLayoutEffect, useRef, useState, useEffect, useMemo, useCallback } from 'react';
-import Particles from '@tsparticles/react';
+import Particles, { ParticlesProvider } from '@tsparticles/react';
+import { loadSlim } from '@tsparticles/slim';
 import { useTheme } from 'next-themes';
+import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import type { ISourceOptions } from '@tsparticles/engine';
 
 interface ParticlesBackgroundProps {
   size?: number;
@@ -19,6 +22,9 @@ function applyCanvasGlow(glowFilter: string) {
   document.documentElement.style.setProperty(GLOW_CSS_VAR, glowFilter);
 }
 
+const darkColors = ['#ffffff', '#ffd700', '#a78bfa'];
+const lightColors = ['#0f172a', '#1d4ed8', '#7C3AED'];
+
 const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
   size = 4,
   countDesktop = 70,
@@ -29,10 +35,14 @@ const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
   const containerRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+
+  // ParticlesProvider handles engine init internally; we just guard visibility
 
   // ─── Visibility-based pause (WS-1 triple-guard pattern) ──────────────────
   const [isVisible, setIsVisible] = useState(true);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isTestMode = typeof window !== 'undefined' && (window as any).__TEST_MODE__;
 
   const resetIdleTimer = useCallback(() => {
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
@@ -42,6 +52,9 @@ const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
   }, []);
 
   useEffect(() => {
+    // In test mode, keep particles visible and skip performance guards
+    if (isTestMode) return;
+
     const container = containerRef.current;
     if (!container) return;
 
@@ -90,20 +103,16 @@ const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
       window.removeEventListener('touchstart', handleActivity);
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     };
-  }, [resetIdleTimer]);
-
-  // ─── TANGLAW BRAND COLORS ─────────────────────────────────────────────────
-  const darkColors = ['#ffffff', '#ffd700', '#a78bfa'];
-  const lightColors = ['#0f172a', '#1d4ed8', '#7C3AED'];
+  }, [resetIdleTimer, isTestMode]);
 
   // ─── tsParticles options (useMemo for performance) ───────────────────────
-  const options = useMemo(() => ({
+  const options = useMemo<ISourceOptions>(() => ({
     particles: {
       number: {
         value: countDesktop,
       },
       color: { value: isDark ? darkColors : lightColors },
-      shape: { type: 'circle' as const },
+      shape: { type: 'circle' },
       opacity: {
         value: { min: 0.1, max: isDark ? 1.0 : 0.95 },
       },
@@ -114,17 +123,33 @@ const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
       move: {
         enable: true,
         speed: 1.2,
-        direction: 'top' as const,
+        direction: 'top',
         random: true,
         straight: false,
-        outModes: { default: 'out' as const },
+        outModes: { default: 'out' },
       },
     },
     interactivity: {
+      detectsOn: 'window',
       events: {
-        onHover: { enable: false },
-        onClick: { enable: false },
+        onHover: {
+          enable: true,
+          mode: 'repulse',
+        },
+        onClick: {
+          enable: true,
+          mode: 'push',
+        },
         resize: true,
+      },
+      modes: {
+        repulse: {
+          distance: 120,
+          duration: 0.4,
+        },
+        push: {
+          quantity: 4,
+        },
       },
     },
     detectRetina: true,
@@ -138,7 +163,7 @@ const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
         options: { particles: { number: { value: countMobile } } },
       },
     ],
-  }), [isDark, countDesktop, countTablet, countMobile, size, darkColors, lightColors]);
+  }), [isDark, countDesktop, countTablet, countMobile, size]);
 
   // ─── CSS glow variable ───────────────────────────────────────────────────
   useLayoutEffect(() => {
@@ -149,11 +174,17 @@ const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
     );
   }, [isDark]);
 
+  // Skip rendering on dashboard routes
+  if (pathname?.startsWith('/dashboard')) {
+    return null;
+  }
+
   return (
     <div
       ref={containerRef}
       className={cn(
         'fixed inset-0 w-full h-full pointer-events-none z-[1] transition-opacity duration-700',
+        isVisible ? 'opacity-100' : 'opacity-0',
         className
       )}
       style={{
@@ -161,11 +192,14 @@ const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
       }}
     >
       {isVisible && (
-        <Particles
-          id="tanglaw-particles"
-          options={options}
-          className="w-full h-full"
-        />
+        <ParticlesProvider init={loadSlim}>
+          <Particles
+            id="tanglaw-particles"
+            options={options}
+            className="w-full h-full block"
+            style={{ display: 'block', width: '100%', height: '100%' }}
+          />
+        </ParticlesProvider>
       )}
     </div>
   );
