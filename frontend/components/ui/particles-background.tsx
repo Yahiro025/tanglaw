@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useLayoutEffect, useRef } from 'react';
+import React, { useLayoutEffect, useRef, useCallback } from 'react';
+import Script from 'next/script';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 
@@ -41,11 +42,52 @@ const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
   // Light Mode (Verdant Sage background): Deep Navy, Royal Blue, Vivid Violet
   const lightColors = ['#0f172a', '#1d4ed8', '#7C3AED'];
 
+  const initParticles = useCallback(() => {
+    const container = containerRef.current;
+    if (!container || !window.particlesJS) return;
+
+    window.particlesJS(container.id, {
+      particles: {
+        number: {
+          value:
+            window.innerWidth > 1024
+              ? countDesktop
+              : window.innerWidth > 768
+                ? countTablet
+                : countMobile,
+        },
+        color: { value: isDark ? darkColors : lightColors },
+        shape: { type: 'circle' },
+        opacity: {
+          value: isDark ? 1.0 : 0.95,
+          random: true,
+        },
+        size: {
+          value: size + 2,
+          random: true,
+        },
+        line_linked: { enable: false },
+        move: {
+          enable: true,
+          speed: 1.2,
+          direction: 'top',
+          random: true,
+          straight: false,
+          out_mode: 'out',
+        },
+      },
+      interactivity: {
+        detect_on: 'canvas',
+        events: { onhover: { enable: false }, onclick: { enable: false }, resize: true },
+      },
+      retina_detect: true,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDark]);
+
   useLayoutEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-
-    let isMounted = true;
 
     // Update CSS variable for canvas glow synchronously — enhanced for maximum luminosity
     applyCanvasGlow(
@@ -57,63 +99,14 @@ const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
     // Clean up existing canvas to prevent stacking when theme changes
     container.innerHTML = '';
 
-    const initParticles = () => {
-      if (!isMounted || !window.particlesJS) return;
-      window.particlesJS(container.id, {
-        particles: {
-          number: {
-            value:
-              window.innerWidth > 1024
-                ? countDesktop
-                : window.innerWidth > 768
-                  ? countTablet
-                  : countMobile,
-          },
-          color: { value: isDark ? darkColors : lightColors },
-          shape: { type: 'circle' },
-          opacity: {
-            value: isDark ? 1.0 : 0.95,
-            random: true,
-          },
-          size: {
-            value: size + 2,
-            random: true,
-          },
-          line_linked: { enable: false },
-          move: {
-            enable: true,
-            speed: 1.2,
-            direction: 'top',
-            random: true,
-            straight: false,
-            out_mode: 'out',
-          },
-        },
-        interactivity: {
-          detect_on: 'canvas',
-          events: { onhover: { enable: false }, onclick: { enable: false }, resize: true },
-        },
-        retina_detect: true,
-      });
-    };
-
-    // Load script only if it doesn't exist
-    if (!window.particlesJS) {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js';
-      script.onload = () => {
-        if (isMounted) initParticles();
-      };
-      document.body.appendChild(script);
-    } else {
+    // If particlesJS is already loaded, init immediately
+    if (window.particlesJS) {
       initParticles();
     }
 
     return () => {
-      isMounted = false;
+      // Cleanup handled by particles.js itself
     };
-    // Use isDark (a stable boolean) rather than activeColors (a new array every render)
-    // to avoid unnecessary effect re-runs on non-theme renders.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDark, size, countDesktop, countTablet, countMobile]);
 
@@ -128,7 +121,13 @@ const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
       style={{
         filter: `var(${GLOW_CSS_VAR})`,
       }}
-    />
+    >
+      <Script
+        src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"
+        strategy="lazyOnload"
+        onLoad={() => initParticles()}
+      />
+    </div>
   );
 };
 

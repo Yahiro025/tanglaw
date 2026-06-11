@@ -29,12 +29,12 @@
  * INLINING NOTE:
  *   REGEX_SCAN_COMMAND and REDOS_CHECK_PATTERNS are module-level constants
  *   used in SYSTEM/INSTRUCTIONS props (evaluated at import time) — safe.
- *   No handleSteps — behaviour driven entirely by systemPrompt + instructionsPrompt.
+ *   Has handleSteps v1.1.0 — scan/read/fix/re-scan/verify workflow with
+ *   systemPrompt + instructionsPrompt driving detailed methodology.
  */
 
 import { AgentDefinition } from './types/agent-definition'
-
-const FREE_MODEL = 'deepseek/deepseek-v4-pro'  // Primary; falls back to deepseek-v4-flash when unavailable
+import { resolveModel } from './model-config'
 
 /**
  * Shell script that validates regex patterns in all changed .ts/.tsx/.js files.
@@ -134,7 +134,7 @@ SCOPE:
   • Dynamic regexes: new RegExp(variable + suffix)  ← flag for human review
 
 FIX PROTOCOL:
-  1. Run the REGEX_SCAN_COMMAND via basher to get all issues
+  1. Run the REGEX_SCAN_COMMAND via run_terminal_command to get all issues
   2. For each issue: read the file, understand the intent, fix the pattern
   3. Use str_replace — surgical, targeted changes only
   4. Add a comment: // REGEX: [what this pattern does and why the fix is correct]
@@ -148,7 +148,7 @@ NEVER:
 const REGEX_GUARD_INSTRUCTIONS = `
 For your regex guard pass:
 
-1. Run the full scan via basher:
+1. Run the full scan via run_terminal_command:
    (The full shell script is included in your BASHER_SCAN section below)
 
 2. Triage each finding:
@@ -179,7 +179,7 @@ For your regex guard pass:
    REGEX GUARD NEEDS HUMAN REVIEW — [list patterns too complex to auto-fix]
 
 ──── BASHER_SCAN ────────────────────────────────────────────────
-Run this exact command via basher:
+Run this exact command via run_terminal_command:
 
 ${REGEX_SCAN_COMMAND}
 ────────────────────────────────────────────────────────────────`
@@ -196,7 +196,7 @@ const definition: AgentDefinition = {
     'ALSO spawn proactively on ALL AI-generated code — LLMs frequently produce ' +
     'runtime-invalid regex that TypeScript\'s type checker silently accepts.',
 
-  model: FREE_MODEL,
+  model: resolveModel(),
 
   reasoningOptions: {
     enabled: true,
@@ -206,13 +206,32 @@ const definition: AgentDefinition = {
 
   toolNames: [
     'read_files',
-    'code_searcher',
+    'code_search',
     'str_replace',
     'write_file',
-    'basher',
-    'glob',
+    'run_terminal_command',
+    'find_files',
     'end_turn',
   ],
+
+  handleSteps: function* ({ prompt }) {
+    // [MetaBuff: Regex Guard] v1.1.0 — scan, read, fix, re-scan, verify
+
+    // Phase 0: SCAN — find regex patterns in changed files
+    yield { toolName: 'run_terminal_command', input: { command: 'echo "=== REGEX GUARD v1.1.0: Starting scan ===" && TS_CHANGED=$(git diff HEAD --name-only 2>/dev/null | grep -E "\\.(ts|tsx|js|jsx)$" || true) && TS_NEW=$(git ls-files --others --exclude-standard 2>/dev/null | grep -E "\\.(ts|tsx|js|jsx)$" || true) && ALL_FILES=$(printf "%s\\n%s" "$TS_CHANGED" "$TS_NEW" | grep -v "^$" | sort -u) && if [ -z "$ALL_FILES" ]; then echo "REGEX GUARD: No files to scan."; else echo "Scanning: $ALL_FILES"; for FILE in $ALL_FILES; do [ -f "$FILE" ] || continue; grep -nP "(?<![\x27\"\\\\=!<>])\\/(?:[^\\\\/\\n\\r]|\\\\.)+\\/[gimsuy]*" "$FILE" 2>/dev/null | head -20 || true; done; echo "REGEX GUARD: Scan complete."; fi' } }
+
+    // Phase 1: Triage — analyze scan results
+    yield { toolName: 'think_deeply', input: { thought: `Regex guard results for: ${prompt}. Read your instructionsPrompt for the full scan pipeline. Categorize findings: ❌ INVALID (must fix), ⚠️ ReDoS (fix or document), ⚠️ Suspicious escape (investigate). Use read_files to examine flagged files.` } }
+
+    // Phase 2: FIX — apply surgical regex fixes
+    yield { toolName: 'think_deeply', input: { thought: `Fix all ❌ INVALID regex patterns now. Use str_replace for surgical edits — never change regex intent, only fix syntax/safety. Add // REGEX: comments explaining each fix. Document ⚠️ ReDoS patterns that are false positives.` } }
+
+    // Phase 3: RE-SCAN — verify fixes
+    yield { toolName: 'run_terminal_command', input: { command: 'echo "=== REGEX GUARD: Re-scan after fixes ===" && TS_CHANGED=$(git diff HEAD --name-only 2>/dev/null | grep -E "\\.(ts|tsx|js|jsx)$" || true) && if [ -z "$TS_CHANGED" ]; then echo "No files to re-scan."; else for FILE in $TS_CHANGED; do [ -f "$FILE" ] || continue; grep -nP "(?<![\x27\"\\\\=!<>])\\/(?:[^\\\\/\\n\\r]|\\\\.)+\\/[gimsuy]*" "$FILE" 2>/dev/null | head -20 || true; done; echo "Re-scan complete."; fi' } }
+
+    // Phase 4: VERIFY — final typecheck
+    yield { toolName: 'run_terminal_command', input: { command: '(npx tsc --noEmit 2>&1) | head -10' } }
+  },
 
   spawnableAgents: [],  // Standalone — no sub-agents needed
 
@@ -223,7 +242,7 @@ const definition: AgentDefinition = {
 
   stepPrompt:
     'Continue the regex audit. Fix all ❌ errors and ⚠️ ReDoS warnings. ' +
-    'Call end_turn only when the basher scan reports REGEX GUARD PASSED ' +
+    'Call end_turn only when the run_terminal_command scan reports REGEX GUARD PASSED ' +
     'with 0 errors remaining.',
 }
 

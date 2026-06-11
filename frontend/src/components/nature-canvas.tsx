@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { usePathname } from "next/navigation";
 
 interface Particle {
@@ -128,32 +128,77 @@ export default function NatureCanvas() {
 
     window.addEventListener("resize", handleResize);
 
+    // ─── Offscreen Canvas Caches ──────────────────────────────────────────────
+    // Cache the background gradient so it isn't recalculated 60 times a second.
+    const bgCache = document.createElement("canvas");
+    bgCache.width = width;
+    bgCache.height = height;
+    const bgCacheCtx = bgCache.getContext("2d")!;
+
+    const renderBgCache = () => {
+      bgCache.width = width;
+      bgCache.height = height;
+      const grad = bgCacheCtx.createRadialGradient(width / 2, height / 2, 10, width / 2, height / 2, Math.max(width, height));
+      if (theme === "light") {
+        grad.addColorStop(0, "rgba(247, 249, 239, 0.95)");
+        grad.addColorStop(1, "rgba(203, 223, 144, 0.9)");
+      } else {
+        grad.addColorStop(0, "rgba(21, 31, 56, 0.95)");
+        grad.addColorStop(1, "rgba(11, 19, 43, 0.95)");
+      }
+      bgCacheCtx.fillStyle = grad;
+      bgCacheCtx.fillRect(0, 0, width, height);
+    };
+    renderBgCache();
+
+    // Particle glow cache: keyed by r,g,b,alpha,size rounded to reduce cache misses
+    const particleGlowCache = new Map<string, HTMLCanvasElement>();
+    const getParticleGlowCanvas = (r: number, g: number, b: number, alpha: number, size: number): HTMLCanvasElement => {
+      const key = `${Math.round(r)},${Math.round(g)},${Math.round(b)},${alpha.toFixed(2)},${Math.round(size)}`;
+      const cached = particleGlowCache.get(key);
+      if (cached) return cached;
+
+      const off = document.createElement("canvas");
+      off.width = size * 2;
+      off.height = size * 2;
+      const offCtx = off.getContext("2d")!;
+      const radialGrad = offCtx.createRadialGradient(size, size, 0, size, size, size);
+      radialGrad.addColorStop(0, `rgba(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)}, ${alpha})`);
+      radialGrad.addColorStop(0.3, `rgba(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)}, ${alpha * 0.6})`);
+      radialGrad.addColorStop(0.6, `rgba(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)}, ${alpha * 0.2})`);
+      radialGrad.addColorStop(1, "rgba(0,0,0,0)");
+      offCtx.fillStyle = radialGrad;
+      offCtx.beginPath();
+      offCtx.arc(size, size, size, 0, Math.PI * 2);
+      offCtx.fill();
+
+      particleGlowCache.set(key, off);
+      return off;
+    };
+
     // Animation Loop
     let isRunning = true;
+    let lastBgColor = theme;
 
     const draw = () => {
       if (!isRunning) return;
 
       ctx.clearRect(0, 0, width, height);
 
-      // Draw background ambient gradient depending on theme
-      const grad = ctx.createRadialGradient(width / 2, height / 2, 10, width / 2, height / 2, Math.max(width, height));
-      if (theme === "light") {
-        grad.addColorStop(0, "rgba(247, 249, 239, 0.95)"); // F7F9EF (base light)
-        grad.addColorStop(1, "rgba(203, 223, 144, 0.9)");  // CBDF90 (canvas green)
-      } else {
-        grad.addColorStop(0, "rgba(21, 31, 56, 0.95)");   // 151F38 (base dark light)
-        grad.addColorStop(1, "rgba(11, 19, 43, 0.95)");   // 0B132B (canvas dark)
+      // Re-render background cache on theme change or resize
+      if (lastBgColor !== theme || bgCache.width !== width || bgCache.height !== height) {
+        lastBgColor = theme;
+        renderBgCache();
       }
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, width, height);
+      // Use cached background via drawImage — avoids createRadialGradient in 60FPS loop
+      ctx.drawImage(bgCache, 0, 0);
 
       const palette = getColors(theme);
 
       // Render & Update particles
       particles.forEach((p) => {
         // Smoothly interpolate color coordinates to follow theme updates
-        const colorSpeed = 0.05; // speed of color profile shifting
+        const colorSpeed = 0.05;
         p.r += (p.targetR - p.r) * colorSpeed;
         p.g += (p.targetG - p.g) * colorSpeed;
         p.b += (p.targetB - p.b) * colorSpeed;
@@ -162,24 +207,9 @@ export default function NatureCanvas() {
         p.swayOffset += p.swaySpeed;
         const currentX = p.x + Math.sin(p.swayOffset) * p.swayAmount;
 
-        // Draw soft glowing orb
-        const radialGrad = ctx.createRadialGradient(
-          currentX,
-          p.y,
-          0,
-          currentX,
-          p.y,
-          p.size
-        );
-        radialGrad.addColorStop(0, `rgba(${Math.round(p.r)}, ${Math.round(p.g)}, ${Math.round(p.b)}, ${p.alpha})`);
-        radialGrad.addColorStop(0.3, `rgba(${Math.round(p.r)}, ${Math.round(p.g)}, ${Math.round(p.b)}, ${p.alpha * 0.6})`);
-        radialGrad.addColorStop(0.6, `rgba(${Math.round(p.r)}, ${Math.round(p.g)}, ${Math.round(p.b)}, ${p.alpha * 0.2})`);
-        radialGrad.addColorStop(1, "rgba(0,0,0,0)");
-
-        ctx.fillStyle = radialGrad;
-        ctx.beginPath();
-        ctx.arc(currentX, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
+        // Draw from cached particle glow canvas via drawImage — avoids createRadialGradient per particle
+        const glowCanvas = getParticleGlowCanvas(p.r, p.g, p.b, p.alpha, p.size);
+        ctx.drawImage(glowCanvas, currentX - p.size, p.y - p.size);
 
         // Update positions
         p.y += p.vy;
@@ -188,7 +218,6 @@ export default function NatureCanvas() {
         if (p.y < -p.size) {
           p.y = height + p.size;
           p.x = Math.random() * width;
-          // Assign new random theme color
           const newColor = palette[Math.floor(Math.random() * palette.length)];
           p.r = p.targetR = newColor.r;
           p.g = p.targetG = newColor.g;
@@ -196,7 +225,11 @@ export default function NatureCanvas() {
         }
 
         // Randomly modulate alpha for a prominent twinkling glow effect
-        p.alpha = p.baseAlpha * (0.70 + Math.sin(p.swayOffset * 3) * 0.30);
+        const newAlpha = p.baseAlpha * (0.70 + Math.sin(p.swayOffset * 3) * 0.30);
+        // Only invalidate particle cache when alpha changes significantly
+        if (Math.abs(p.alpha - newAlpha) > 0.02) {
+          p.alpha = newAlpha;
+        }
       });
 
       animationFrameId = requestAnimationFrame(draw);
@@ -216,6 +249,25 @@ export default function NatureCanvas() {
     };
     document.addEventListener("visibilitychange", handleVisibility);
 
+    // IntersectionObserver: pause rendering when canvas is scrolled out of viewport
+    const intersectionObserver = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          if (!isRunning) {
+            isRunning = true;
+            animationFrameId = requestAnimationFrame(draw);
+          }
+        } else {
+          isRunning = false;
+          if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+          }
+        }
+      },
+      { threshold: 0.01 }
+    );
+    intersectionObserver.observe(canvas);
+
     draw();
 
     // Trigger color update whenever theme state changes
@@ -230,6 +282,7 @@ export default function NatureCanvas() {
     return () => {
       window.removeEventListener("resize", handleResize);
       document.removeEventListener("visibilitychange", handleVisibility);
+      intersectionObserver.disconnect();
       isRunning = false;
       cancelAnimationFrame(animationFrameId);
     };

@@ -1,0 +1,60 @@
+{
+  "description": "MetaBuff session-start hooks — auto-inject Superpowers methodology and skill context on session initialization",
+  "version": "1.0.0",
+  "hooks": {
+    "SessionStart": {
+      "description": "Runs at the start of every coding session to inject Superpowers methodology and cross-session memory",
+      "events": ["startup", "clear", "compact"],
+      "commands": [
+        {
+          "name": "load-superpowers-methodology",
+          "description": "Load Superpowers methodology skills into session context",
+          "command": "cat .agents/skills/ecc/superpowers/SKILL.md 2>/dev/null || echo 'Superpowers methodology not found'",
+          "onFailure": "continue"
+        },
+        {
+          "name": "load-known-issues",
+          "description": "Load inter-session memory from previous sessions",
+          "command": "cat .agents/known-issues.md 2>/dev/null || echo 'No prior session data'",
+          "onFailure": "continue"
+        },
+        {
+          "name": "load-tdd-iron-law",
+          "description": "Load TDD Iron Law for enforcement during implementation",
+          "command": "cat .agents/skills/ecc/superpowers/tdd-iron-law/SKILL.md 2>/dev/null || true",
+          "onFailure": "continue"
+        },
+        {
+          "name": "load-formalized-review",
+          "description": "Load formalized code review protocols",
+          "command": "cat .agents/skills/ecc/superpowers/formalized-code-review/SKILL.md 2>/dev/null || true",
+          "onFailure": "continue"
+        }
+      ]
+    },
+    "PreImplementation": {
+      "description": "Runs before any implementation phase — enforces brainstorming gate for complex tasks",
+      "events": ["before_spawn:codebuff/base", "before_spawn:ecc-code-architect", "before_spawn:ecc-planner"],
+      "commands": [
+        {
+          "name": "enforce-brainstorming-gate",
+          "description": "Ensure design document exists before implementation for complex tasks",
+          "command": "cat .agents/skills/ecc/superpowers/brainstorming-gate/SKILL.md 2>/dev/null || true",
+          "onFailure": "continue"
+        }
+      ]
+    },
+    "PreFinish": {
+      "description": "Runs before session completion — enforces finishing workflow",
+      "events": ["before_end_turn"],
+      "commands": [
+        {
+          "name": "enforce-finishing-workflow",
+          "description": "Verify tests, typecheck, and structured completion before ending",
+          "command": "cat .agents/skills/ecc/superpowers/finishing-workflow/SKILL.md 2>/dev/null || true",
+          "onFailure": "continue"
+        }
+      ]
+    }
+  }
+}

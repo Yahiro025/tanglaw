@@ -2,6 +2,58 @@
 
 This directory contains the **MetaBuff agent orchestration system** — a set of AI coding agents that work together to decompose, implement, validate, and test complex coding tasks.
 
+## ✦ v3.1.0 — Anthropic Skills Integration ✦
+
+MetaBuff v3.1.0 integrates the [anthropics/skills](https://github.com/anthropics/skills) standard
+by Anthropic — a standardized, portable skill format for AI agents with YAML frontmatter,
+progressive disclosure, and "why over must" instructional design.
+
+| Anthropic Concept | MetaBuff Implementation |
+|----|----|
+| YAML Frontmatter Standard | `template/SKILL.md` for all new MetaBuff skills |
+| Progressive Disclosure | Metadata always loaded; body loaded on keyword match |
+| "Why over Must" Philosophy | Enhanced prompts explain reasoning behind instructions |
+| Anti-Pattern Prevention | ❌ WRONG vs ✅ CORRECT catalog injected into agent context |
+| Verification Loops | Run → Inspect → Fix → Re-verify in CoT STEP 5 |
+| Skill Creator | AI-assisted skill creation with eval benchmarks |
+| Webapp Testing | Playwright reconnaissance-first browser testing |
+| MCP Builder | Structured MCP server development protocol |
+
+### Key Tailored Differences from Upstream Anthropic Skills
+
+- **Coding-focused**: Document skills (docx/pptx/xlsx/pdf) are NOT imported — MetaBuff is a coding agent
+- **Hot-load integrated**: Skills discovered via O(1) inverted index cache, not filesystem reads
+- **Pipeline-integrated**: Skills inject via `withECCContext()` in complexity-aware pipeline
+
+MetaBuff v3.0.0 integrates the [obra/superpowers](https://github.com/obra/superpowers) methodology
+by Jesse Vincent — a structured approach to agentic software development with enforced TDD,
+formalized code review, brainstorming gates, and structured finishing workflows.
+
+| Superpowers Concept | MetaBuff Implementation |
+|----|----|
+| Brainstorming Gate | CoT v3 STEP 0: design-doc-before-code for complex/mega tasks |
+| Writing Plans | Granular checkbox plans with verification per step |
+| Subagent-Driven Development | Mega pipeline: two-stage review (spec compliance → code quality) |
+| TDD Iron Law | Skill injection + pipeline enforcement (red-green-refactor) |
+| Formalized Code Review | SHA-bounded, no performative agreement, severity-tagged |
+| Finishing Workflow | Validator v1.2.0: full test pass + structured completion |
+| Session-start Hooks | hooks.json: auto-inject methodology on session start |
+
+### Key Tailored Differences from Upstream Superpowers
+
+- **Auto-triggered gates**: Brainstorming is triggered by complexity analysis, not manual approval
+- **Pipeline-integrated TDD**: Iron Law enforced via skill injection, not external hooks
+- **Severity-tagged reviews**: [CRITICAL|HIGH|MEDIUM|LOW] instead of pass/fail only
+- **Structured completion**: merge/PR/keep/discard options with workspace auto-detection
+
+## Model Auto-Detection
+
+All agents use `.agents/model-config.ts` shared resolver (`resolveModel()`) for model selection:
+
+1. `METABUFF_MODEL` env var → 2. `.agents/model-config.json` → 3. Default: `deepseek/deepseek-v4-pro`
+
+Supported models: `deepseek/deepseek-v4-pro`, `moonshot/mimo-2.5-pro`, `moonshot/kimi-k2.6`.
+
 ## Architecture Overview
 
 ```
@@ -63,7 +115,7 @@ const definition: AgentDefinition = {
   displayName: 'My Agent',
   spawnerPrompt: 'Short description for spawning this agent.',
   systemPrompt: 'System prompt that sets the agent\'s personality and rules.',
-  model: 'deepseek/deepseek-v4-flash',
+  model: 'deepseek/deepseek-v4-pro',
   reasoningOptions: { enabled: true, exclude: false, effort: 'medium' },
   toolNames: ['read_files', 'str_replace', 'write_file', 'spawn_agents', 'end_turn'],
   spawnableAgents: ['codebuff/base@0.0.1'],
@@ -99,16 +151,22 @@ const definition = {
 
 ### Files that follow this rule
 
+**All agents now have handleSteps (2026-06-10 fix):**
+
 | File | Has `handleSteps` | Status |
 |------|:---:|:---:|
 | `metabuff.ts` | ✅ | ✅ Inlined |
 | `metabuff-mega.ts` | ✅ | ✅ Inlined |
-| `metabuff-validator.ts` | ❌ | ✅ N/A |
-| `metabuff-reasoner.ts` | ❌ | ✅ N/A |
-| `metabuff-regex-guard.ts` | ❌ | ✅ N/A — REGEX_SCAN_COMMAND is a module-level const used only in instructionsPrompt (safe) |
-| `metabuff-testgen.ts` | ❌ | ✅ N/A |
-| `metabuff-arch.ts` | ❌ | ✅ N/A |
-| `metabuff-security.ts` | ❌ | ✅ N/A |
+| `metabuff-reasoner.ts` | ✅ | ✅ Pattern B — 6-step Socratic generator |
+| `metabuff-validator.ts` | ✅ | ✅ Pattern B — 10-step audit generator |
+| `metabuff-arch.ts` | ✅ | ✅ Pattern A — orient, design, verify |
+| `metabuff-security.ts` | ✅ | ✅ Pattern A — audit, fix, verify |
+| `metabuff-testgen.ts` | ✅ | ✅ Pattern A — discover, write, run, fix |
+| `metabuff-regex-guard.ts` | ✅ | ✅ Pattern A — scan, triage, fix, re-scan |
+| `thinker-with-files-gemini.ts` | ✅ | ✅ Pattern A — task decomposition |
+| All 63 `ecc-*.ts` agents | ✅ | ✅ Shared template via `createHandleSteps()` |
+
+**Removed agents:** `researcher-web.ts`, `researcher-docs.ts` (unused, unsupported Gemini model).
 
 ## Anti-Hallucination Protocol (CoT v2)
 
@@ -137,3 +195,12 @@ All MetaBuff implementation agents use CoT v2, which adds a mandatory **Socratic
 | `MAX_DECOMP_TASKS` | 12 | Soft limit — 2 waves of 6 = 12 effective specialists |
 | `BASHER_TIMEOUT` | 60s (simple/complex), 120s (mega) | Prevent infinite hangs |
 | Reasoner effort | `'high'` | Only for algorithm tasks — avoids unnecessary cost on standard tasks |
+
+## handleSteps Requirement (Freebuff Free Mode)
+
+Freebuff's free tier **requires `handleSteps`** (a generator-based execution function) for all custom agents. Prompt-only agents (pure `systemPrompt` + `instructionsPrompt`) without `handleSteps` are rejected with HTTP 403 `free_mode_invalid_agent_model`.
+
+As of 2026-06-10, all 70+ MetaBuff agents have handleSteps via:
+- **Pattern A** (minimal shim): `createHandleSteps()` shared template for 63 ECC agents + metabuff-arch, security, testgen, regex-guard, thinker-with-files-gemini
+- **Pattern B** (explicit generator): Custom multi-phase generators for metabuff-reasoner (6-step Socratic) and metabuff-validator (10-step audit)
+- **Orchestrators**: metabuff and metabuff-mega have their own comprehensive handleSteps generators

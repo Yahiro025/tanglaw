@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useRef, useId, useEffect, CSSProperties, ReactNode } from 'react';
-import { animate, useMotionValue, AnimationPlaybackControls } from 'framer-motion';
+import React, { useRef, useId, CSSProperties, ReactNode } from 'react';
 import { useTheme } from 'next-themes';
 
 interface ResponsiveImage { src: string; alt?: string; srcSet?: string; }
@@ -49,34 +48,12 @@ export function EtheralShadow({
     const activeColor = isDark ? darkColor : lightColor;
 
     const animationEnabled = animation && animation.scale > 0;
-    const feColorMatrixRef = useRef<SVGFEColorMatrixElement>(null);
-    const hueRotateMotionValue = useMotionValue(180);
-    const hueRotateAnimation = useRef<AnimationPlaybackControls | null>(null);
 
     const displacementScale = animation ? mapRange(animation.scale, 1, 100, 20, 100) : 0;
     const animationDuration = animation ? mapRange(animation.speed, 1, 100, 1000, 50) : 1;
 
-    useEffect(() => {
-        if (feColorMatrixRef.current && animationEnabled) {
-            if (hueRotateAnimation.current) hueRotateAnimation.current.stop();
-            hueRotateMotionValue.set(0);
-            hueRotateAnimation.current = animate(hueRotateMotionValue, 360, {
-                duration: animationDuration / 25,
-                repeat: Infinity,
-                repeatType: "loop",
-                ease: "linear",
-                onUpdate: (value: number) => {
-                    if (feColorMatrixRef.current) feColorMatrixRef.current.setAttribute("values", String(value));
-                }
-            });
-            return () => {
-                if (hueRotateAnimation.current) hueRotateAnimation.current.stop();
-            };
-        }
-    }, [animationEnabled, animationDuration, hueRotateMotionValue]);
-
     return (
-        <div className={`fixed inset-0 pointer-events-none ${className || ''}`} style={{ overflow: "hidden", zIndex: 0, ...style }}>
+        <div className={`fixed inset-0 pointer-events-none ${className || ''}`} style={{ overflow: "hidden", zIndex: 0, willChange: "filter", transform: "translateZ(0)", ...style }}>
             
             
             <div style={{ position: "absolute", inset: -displacementScale, filter: animationEnabled ? `url(#${id}) blur(4px)` : "none" }}>
@@ -85,7 +62,15 @@ export function EtheralShadow({
                         <defs>
                             <filter id={id}>
                                 <feTurbulence result="undulation" numOctaves="2" baseFrequency={`${mapRange(animation.scale, 0, 100, 0.001, 0.0005)},${mapRange(animation.scale, 0, 100, 0.004, 0.002)}`} seed="0" type="turbulence" />
-                                <feColorMatrix ref={feColorMatrixRef} in="undulation" type="hueRotate" values="180" />
+                                <feColorMatrix in="undulation" type="hueRotate" values="180">
+                                    <animate 
+                                        attributeName="values" 
+                                        from="0" 
+                                        to="360" 
+                                        dur={`${animationDuration / 25}s`} 
+                                        repeatCount="indefinite" 
+                                    />
+                                </feColorMatrix>
                                 <feColorMatrix in="dist" result="circulation" type="matrix" values="4 0 0 0 1  4 0 0 0 1  4 0 0 0 1  1 0 0 0 0" />
                                 <feDisplacementMap in="SourceGraphic" in2="circulation" scale={displacementScale} result="dist" />
                                 <feDisplacementMap in="dist" in2="undulation" scale={displacementScale} result="output" />

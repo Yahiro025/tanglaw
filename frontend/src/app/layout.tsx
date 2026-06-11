@@ -5,8 +5,7 @@
 import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
-import NatureCanvas from "@/components/nature-canvas";
-import ParticlesBackground from "../../components/ui/particles-background";
+import { DynamicNatureCanvas, DynamicParticlesBackground } from "@/components/dynamic-backgrounds";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
 import NextAuthProvider from "@/components/NextAuthProvider";
@@ -43,8 +42,8 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${outfit.variable} h-full antialiased`}>
       <body className="relative min-h-full flex flex-col bg-base-light text-text-primary">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
-        <ParticlesBackground />
-        <NatureCanvas />
+        <DynamicParticlesBackground />
+        <DynamicNatureCanvas />
 
         <NextAuthProvider>
           <SiteHeader />
