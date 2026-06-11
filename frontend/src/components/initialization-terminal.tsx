@@ -53,7 +53,8 @@ export default function InitializationTerminal() {
       {/* ── Progress Unit ── */}
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
         className="border-technical bg-white p-6 flex items-center justify-between shadow-sm relative overflow-hidden rounded-xl"
       >
         <div className="flex items-center gap-6">
@@ -88,7 +89,8 @@ export default function InitializationTerminal() {
       <motion.div 
         layout
         initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: true }}
         className="grid gap-0 lg:grid-cols-[1fr_340px] items-stretch border-technical shadow-2xl bg-white overflow-hidden relative rounded-xl"
       >
         <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-primary z-20 rounded-tl-lg" />
@@ -119,7 +121,8 @@ export default function InitializationTerminal() {
                 {activeStep.key === "IDENTITY" && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
                     transition={{ delay: 0.1 }}
                   >
                     <input

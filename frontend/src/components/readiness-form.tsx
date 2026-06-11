@@ -2,21 +2,25 @@
 
 /**
  * Interactive Readiness Check and Consolidated Mock Exam component.
- * Allows quick diagnostics or a full-scale 250-item mock exam simulation.
+ * Thin orchestrator — child components are code-split via next/dynamic.
  */
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, RotateCcw, Timer, Award, CheckCircle2, AlertTriangle, BookMarked, Flag, Check, ArrowRight, BookOpen, Clock } from "lucide-react";
+import { Clock, Flag } from "lucide-react";
 
-interface Question {
-  id: number;
-  subject: "Mathematics" | "Science" | "English" | "Filipino" | "Logical Reasoning";
-  difficulty: number; // 1 to 5
-  questionText: string;
-  options: string[];
-  correctAnswer: number; // Index in options
-}
+// ─── Code-split child components ──────────────────────────────────────────
+const ReadinessSetup = dynamic(() => import("./readiness-setup"), {
+  loading: () => <div className="h-[600px] animate-pulse rounded-[2rem] bg-[color:var(--theme-surface)]" />,
+});
+const ReadinessQuestion = dynamic(() => import("./readiness-question"), {
+  loading: () => <div className="h-[400px] animate-pulse rounded-[2rem] bg-[color:var(--theme-surface)]" />,
+});
+const ReadinessFeedback = dynamic(() => import("./readiness-feedback"), {
+  loading: () => <div className="h-[500px] animate-pulse rounded-[2rem] bg-[color:var(--theme-surface)]" />,
+});
 
+// ─── Types ─────────────────────────────────────────────────────────────────
 const SUBJECTS = [
   "Mathematics",
   "Science",
@@ -27,12 +31,17 @@ const SUBJECTS = [
 
 type SubjectType = typeof SUBJECTS[number];
 
-// Programmatic Question Generator to populate a solid 250-item bank (50 per subject)
-const generateMockQuestionBank = (): Question[] => {
-  const bank: Question[] = [];
-  let currentId = 1;
+interface Question {
+  id: number;
+  subject: SubjectType;
+  difficulty: number;
+  questionText: string;
+  options: string[];
+  correctAnswer: number;
+}
 
-  const sampleData: Record<SubjectType, { questions: string[]; options: string[][]; correctAnswers: number[] }> = {
+// ─── Question Bank Data ───────────────────────────────────────────────
+const sampleData: Record<SubjectType, { questions: string[]; options: string[][]; correctAnswers: number[] }> = {
     "Mathematics": {
       questions: [
         "If a line passes through the points (2, 3) and (5, 9), what is its slope?",
@@ -120,8 +129,18 @@ const generateMockQuestionBank = (): Question[] => {
     },
   };
 
-  for (const subject of SUBJECTS) {
+export default function ReadinessForm() {
+  // ─── Per-subject question cache (WS-6: on-demand generation) ─────────────
+  const questionCache = useRef<Map<SubjectType, Question[]>>(new Map());
+
+  function generateSubjectQuestions(subject: SubjectType): Question[] {
+    const cached = questionCache.current.get(subject);
+    if (cached) return cached;
+
     const data = sampleData[subject];
+    const questions: Question[] = [];
+    const baseId = SUBJECTS.indexOf(subject) * 50 + 1;
+
     for (let i = 0; i < 50; i++) {
       const isSampleIndex = i < data.questions.length;
       const questionText = isSampleIndex
@@ -139,8 +158,8 @@ const generateMockQuestionBank = (): Question[] => {
 
       const correctAnswer = isSampleIndex ? data.correctAnswers[i] : (i % 4);
 
-      bank.push({
-        id: currentId++,
+      questions.push({
+        id: baseId + i,
         subject,
         difficulty: 1 + (i % 5),
         questionText,
@@ -148,14 +167,19 @@ const generateMockQuestionBank = (): Question[] => {
         correctAnswer,
       });
     }
+
+    questionCache.current.set(subject, questions);
+    return questions;
   }
 
-  return bank;
-};
-
-export default function ReadinessForm() {
-  // Lazy-initialized question bank: only generated when component mounts
-  const masterQuestionBank = useMemo(() => generateMockQuestionBank(), []);
+  // Lazy-initialized question bank (still needed for mock exam — generates all 250)
+  const masterQuestionBank = useMemo(() => {
+    const bank: Question[] = [];
+    for (const subject of SUBJECTS) {
+      bank.push(...generateSubjectQuestions(subject));
+    }
+    return bank;
+  }, []);
 
   // Config states
   const [view, setView] = useState<"setup" | "active" | "feedback">("setup");
@@ -171,7 +195,7 @@ export default function ReadinessForm() {
   const [flaggedItems, setFlaggedItems] = useState<number[]>([]);
   
   // Timer States
-  const [timeLeft, setTimeLeft] = useState<number>(45); // seconds per question for Diagnostics, total time for simulation
+  const [timeLeft, setTimeLeft] = useState<number>(45);
   const [activeSubject, setActiveSubject] = useState<SubjectType>("Mathematics");
 
   // Timer Effect
@@ -182,7 +206,6 @@ export default function ReadinessForm() {
       if (selectedType === "diagnostics") {
         handleNextQuestion();
       } else {
-        // Mock exam time up - submit
         setView("feedback");
       }
       return;
@@ -193,6 +216,7 @@ export default function ReadinessForm() {
     }, 1000);
 
     return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft, view, selectedType]);
 
   // Sync active subject in mock exam when active question changes
@@ -224,7 +248,6 @@ export default function ReadinessForm() {
         return;
       }
 
-      // Filter pool based on difficulty level and subjects
       let difficultyRange = [3];
       if (selectedDifficulty === "easy") difficultyRange = [1, 2];
       else if (selectedDifficulty === "medium") difficultyRange = [2, 3, 4];
@@ -238,7 +261,6 @@ export default function ReadinessForm() {
         pool = masterQuestionBank.filter((q) => selectedSubjects.includes(q.subject));
       }
 
-      // Shuffle and take requested count
       const shuffled = [...pool].sort(() => 0.5 - Math.random());
       const selected = shuffled.slice(0, Math.min(itemCount, pool.length));
 
@@ -246,16 +268,14 @@ export default function ReadinessForm() {
       setActiveIndex(0);
       setSelectedAnswers({});
       setFlaggedItems([]);
-      setTimeLeft(45); // 45 seconds per question
+      setTimeLeft(45);
       setView("active");
     } else {
-      // Mock Exam - Full 250 items sorted by subject
-      // Take all 250 questions from Master bank
       setActiveQuestions(masterQuestionBank);
       setActiveIndex(0);
       setSelectedAnswers({});
       setFlaggedItems([]);
-      setTimeLeft(180 * 60); // 3 Hours in seconds
+      setTimeLeft(180 * 60);
       setActiveSubject("Mathematics");
       setView("active");
     }
@@ -272,7 +292,7 @@ export default function ReadinessForm() {
     if (activeIndex < activeQuestions.length - 1) {
       setActiveIndex((prev) => prev + 1);
       if (selectedType === "diagnostics") {
-        setTimeLeft(45); // reset timer per question
+        setTimeLeft(45);
       }
     } else {
       setView("feedback");
@@ -360,21 +380,21 @@ export default function ReadinessForm() {
       return {
         level: "Highly Prepared",
         color: "bg-emerald-100 border-emerald-400 text-emerald-800",
-        icon: <CheckCircle2 className="h-10 w-10 text-emerald-600" />,
+        icon: <span className="text-emerald-600">✓</span>,
         text: "Exceptional! Your aptitude score demonstrates absolute core readiness to excel in complex scholarship grants like DOST-SEI, CHED Merit, or private foundation reviews."
       };
     } else if (scorePercentage >= 50) {
       return {
         level: "Needs Minor Review",
         color: "bg-amber-100 border-amber-400 text-amber-800",
-        icon: <AlertTriangle className="h-10 w-10 text-amber-600" />,
+        icon: <span className="text-amber-600">⚠</span>,
         text: "Good attempt! You meet basic competencies. A bit of focused review in weaker subject segments will solidify your competitiveness."
       };
     } else {
       return {
         level: "Needs Intensive Improvement",
-        color: "bg-accent-rose/50 border-accent-rose text-[color:var(--theme-text-body)]",
-        icon: <AlertTriangle className="h-10 w-10 text-red-600" />,
+        color: "bg-accent-rose/50 border-accent-rose",
+        icon: <span className="text-red-600">⚠</span>,
         text: "Don't worry! This is a roadmap indicator. Focus on targeted study modules to strengthen your primary vocabulary, mathematical formulas, and scientific facts."
       };
     }
@@ -405,264 +425,46 @@ export default function ReadinessForm() {
         
         {/* ── 1. SETUP CONFIGURATION LAYER ─────────────────────────────────── */}
         {view === "setup" && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
-            className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 w-full max-w-full"
-          >
-            {/* Option 1: Gamified Quick Diagnostics — staggered reveal */}
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.5, ease: [0.21, 1.02, 0.43, 1.01], delay: 0.1 }}
-              className="lg:col-span-8 space-y-5 lg:space-y-6"
-            >
-              <div className="rounded-[2rem] border border-accent-muted/40 bg-[color:var(--theme-surface)] p-5 sm:p-6 lg:p-8 shadow-xl">
-                <div className="mb-6 sm:mb-8">
-                  <h2 className="text-xl sm:text-2xl font-black text-text-primary tracking-tight break-words">Option 1: Gamified Quick Diagnostics</h2>
-                  <p className="text-xs sm:text-sm text-[color:var(--theme-text-body)] mt-2 leading-relaxed">
-                    Configure a customizable timed evaluation to analyze specific subjects and map strengths quickly.
-                  </p>
-                </div>
-
-                <div className="space-y-6">
-                  {/* Subject Checkboxes with touch targets */}
-                  <div className="space-y-3">
-                    <label className="text-sm font-bold text-text-primary block">
-                      Select Assessment Subjects:
-                    </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
-                      {SUBJECTS.map((subj) => {
-                        const isChecked = selectedSubjects.includes(subj);
-                        return (
-                          <button
-                            key={subj}
-                            type="button"
-                            onClick={() => handleSubjectChange(subj)}                              className={`p-3 sm:p-4 rounded-xl border text-[11px] sm:text-xs font-bold transition-all duration-300 cursor-pointer text-left flex items-center justify-between gap-2 sm:gap-3 ${
-                              isChecked
-                                ? "bg-primary border-primary-hover text-white shadow-sm shadow-[var(--theme-glow-primary)]"
-                                : "bg-[color:var(--theme-canvas)] border-accent-periwinkle/60 text-[color:var(--theme-text-muted)] hover:border-accent-periwinkle"
-                            }`}
-                          >
-                            <span className="break-words text-balance">{subj}</span>
-                            {isChecked && <Check className="h-4 w-4 text-white" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Question Volume — Range Slider */}
-                  <div className="space-y-3">
-                    <label className="text-sm font-bold text-text-primary block">
-                      Select Question Volume:
-                    </label>
-                    <div className="rounded-xl border border-accent-periwinkle/40 bg-[color:var(--theme-canvas)] px-4 py-5 space-y-4">
-                      {/* Value indicator */}
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-[color:var(--theme-text-muted)] font-semibold">Items</span>
-                        <span className="bg-primary text-white px-3 py-1 rounded-full font-black text-xs">
-                          Selected: {itemCount} Items
-                        </span>
-                      </div>
-                      {/* Slider */}
-                      <div className="relative">
-                        <input
-                          type="range"
-                          min={10}
-                          max={25}
-                          step={5}
-                          value={itemCount}
-                          onChange={(e) => setItemCount(Number(e.target.value) as 10 | 15 | 20 | 25)}
-                          className="readiness-slider w-full h-2 rounded-full appearance-none cursor-pointer bg-[color:var(--theme-borders-system)]/25 accent-[color:var(--theme-primary)]"
-                        />
-                        {/* Tick marks */}
-                        <div className="flex justify-between px-0.5 mt-2">
-                          {[10, 15, 20, 25].map((val) => (
-                            <button
-                              key={val}
-                              type="button"
-                              onClick={() => setItemCount(val as 10 | 15 | 20 | 25)}
-                              className={`text-[10px] font-bold transition-colors cursor-pointer px-1 ${
-                                itemCount === val
-                                  ? "text-[color:var(--theme-primary)]"
-                                  : "text-[color:var(--theme-text-muted)] hover:text-[color:var(--theme-primary)]"
-                              }`}
-                            >
-                              {val}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Difficulty scaling */}
-                  <div className="space-y-3">
-                    <label className="text-sm font-bold text-text-primary block">
-                      Select Difficulty Level:
-                    </label>
-                    <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                      {(["easy", "medium", "hard"] as const).map((diff) => (
-                        <button
-                          key={diff}
-                          type="button"
-                          onClick={() => setSelectedDifficulty(diff)}
-                          className={`p-3 sm:p-4 rounded-xl border text-[11px] sm:text-xs font-black capitalize transition-all cursor-pointer text-center ${
-                            selectedDifficulty === diff
-                              ? "bg-primary border-primary-hover text-white shadow-sm"
-                              : "bg-[color:var(--theme-canvas)] border-accent-periwinkle/60 text-[color:var(--theme-text-muted)] hover:border-accent-periwinkle"
-                          }`}
-                        >
-                          {diff}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Launch button */}
-                  <button
-                    onClick={() => {
-                      setSelectedType("diagnostics");
-                      handleStartExam("diagnostics");
-                    }}
-                    className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white py-4 rounded-full font-black border-2 border-accent-muted shadow-md shadow-[var(--theme-glow-primary)] cursor-pointer transition-all duration-300 hover:scale-[1.01]"
-                  >
-                    <Play className="h-5 w-5" /> Start Diagnostics Check
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Option 2: Comprehensive Mock Exam — staggered reveal */}
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.5, ease: [0.21, 1.02, 0.43, 1.01], delay: 0.25 }}
-              className="lg:col-span-4"
-            >
-              <div className="rounded-[2rem] border-2 border-primary/20 bg-primary/5 p-5 sm:p-6 lg:p-8 shadow-xl flex flex-col justify-between space-y-6 sm:space-y-8 h-auto lg:h-full">
-                <div className="space-y-4">
-                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-3xl bg-primary text-white shadow-lg">
-                    <BookOpen className="h-6 w-6" />
-                  </div>
-                  <h3 className="text-xl font-black text-primary">Option 2: Comprehensive Mock Exam</h3>
-                  <p className="text-xs leading-relaxed text-[color:var(--theme-text-body)]">
-                    Simulate real-world examination environments under timed conditions. Challenges a standard board assessment block.
-                  </p>
-                  <ul className="space-y-2 text-xs text-[color:var(--theme-text-body)] pl-4 list-disc opacity-90">
-                    <li>Fixed 250 items total</li>
-                    <li>Exactly 50 items per subject</li>
-                    <li>3 Hours countdown timer</li>
-                    <li>Subject matrix sidebar navigation</li>
-                    <li>Full diagnostic review breakdown</li>
-                  </ul>
-                </div>
-
-                <button
-                  onClick={() => {
-                    setSelectedType("mock");
-                    handleStartExam("mock");
-                  }}
-                  className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white py-4 rounded-full font-black border-2 border-accent-muted shadow-lg shadow-[var(--theme-glow-primary)] cursor-pointer transition-all duration-300 hover:scale-[1.01]"
-                >
-                  Launch Full Mock Exam <ArrowRight className="h-4 w-4" />
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
+          <ReadinessSetup
+            selectedSubjects={selectedSubjects}
+            onSubjectChange={handleSubjectChange}
+            itemCount={itemCount}
+            onItemCountChange={setItemCount}
+            selectedDifficulty={selectedDifficulty}
+            onDifficultyChange={setSelectedDifficulty}
+            onStartDiagnostics={() => {
+              setSelectedType("diagnostics");
+              handleStartExam("diagnostics");
+            }}
+            onStartMockExam={() => {
+              setSelectedType("mock");
+              handleStartExam("mock");
+            }}
+          />
         )}
 
         {/* ── 2. ACTIVE QUIZ/SIMULATION BOARD ──────────────────────────────── */}
         {view === "active" && activeQuestions.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
             exit={{ opacity: 0, y: -16 }}
             className="w-full"
           >
             {selectedType === "diagnostics" ? (
-              // Option 1 Layout: Simple diagnostic focus card
-              <div className="max-w-3xl mx-auto rounded-[2rem] border border-accent-muted/40 bg-[color:var(--theme-surface)] shadow-2xl overflow-hidden">
-                <div className="bg-[color:var(--theme-canvas)] px-6 py-4 flex items-center justify-between border-b border-accent-periwinkle">
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-bold text-[color:var(--theme-text-muted)] uppercase tracking-widest">
-                      Question {activeIndex + 1} of {activeQuestions.length}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs bg-[color:var(--theme-canvas)] border border-accent-periwinkle/80 px-2 py-0.5 rounded-full font-bold text-text-primary">
-                        {activeQuestions[activeIndex].subject}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 bg-[color:var(--theme-canvas)] px-3 py-1.5 rounded-full border border-accent-periwinkle">
-                    <Timer className={`h-4 w-4 ${timeLeft < 10 ? "text-red-500 animate-pulse" : "text-text-primary"}`} />
-                    <span className={`text-sm font-black ${timeLeft < 10 ? "text-red-500" : "text-text-primary"}`}>
-                      {timeLeft}s
-                    </span>
-                  </div>
-                </div>
-
-                <div className="w-full bg-[color:var(--theme-borders-system)]/25 h-1">
-                  <div
-                    className={`h-full transition-all duration-1000 ${timeLeft < 10 ? "bg-red-500" : "bg-primary-hover"}`}
-                    style={{ width: `${(timeLeft / 45) * 100}%` }}
-                  />
-                </div>
-
-                <div className="p-6 sm:p-8">
-                  <h3 className="text-lg font-bold text-text-primary mb-6 leading-relaxed">
-                    {activeQuestions[activeIndex].questionText}
-                  </h3>
-
-                  <div className="space-y-3">
-                    {activeQuestions[activeIndex].options.map((opt, idx) => {
-                      const isSelected = selectedAnswers[activeIndex] === idx;
-                      return (
-                        <button
-                          key={idx}
-                          onClick={() => handleSelectOption(idx)}
-                          className={`w-full text-left p-3.5 sm:p-4 rounded-xl border-2 transition-all flex items-center gap-3 cursor-pointer ${
-                            isSelected
-                              ? "bg-primary border-primary-hover text-white font-bold shadow-sm"
-                              : "bg-[color:var(--theme-surface)] border-accent-muted/30 text-[color:var(--theme-text-body)] hover:border-accent-periwinkle hover:bg-[color:var(--theme-canvas)]"
-                          }`}
-                        >
-                          <span className={`h-6 w-6 rounded-full flex items-center justify-center border text-xs font-bold ${
-                            isSelected
-                              ? "bg-white text-primary"
-                              : "border-white/10 bg-[color:var(--theme-canvas)]/90 text-[color:var(--theme-text-muted)]"
-                          }`}>
-                            {String.fromCharCode(65 + idx)}
-                          </span>
-                          {opt}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="bg-[color:var(--theme-canvas)] border-t border-white/10 px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
-                  <button
-                    onClick={handlePrevQuestion}
-                    disabled={activeIndex === 0}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-white rounded-xl text-xs font-bold border border-accent-muted text-zinc-700 hover:bg-base-pastel disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={handleNextQuestion}
-                    disabled={selectedAnswers[activeIndex] === undefined}
-                    className="flex items-center gap-1.5 bg-primary text-white px-5 py-2.5 rounded-xl text-xs font-bold border border-accent-muted shadow-sm hover:bg-primary-hover transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    {activeIndex < activeQuestions.length - 1 ? "Next Item" : "Finish Assessment"}
-                  </button>
-                </div>
-              </div>
+              <ReadinessQuestion
+                question={activeQuestions[activeIndex]}
+                questionIndex={activeIndex}
+                totalQuestions={activeQuestions.length}
+                selectedAnswer={selectedAnswers[activeIndex]}
+                onSelectOption={handleSelectOption}
+                onNext={handleNextQuestion}
+                onPrev={handlePrevQuestion}
+                timeLeft={timeLeft}
+                canGoNext={selectedAnswers[activeIndex] !== undefined}
+                canGoPrev={activeIndex > 0}
+              />
             ) : (
               // Option 2 Layout: Massive Mock Exam split viewport (sidebar navigation + matrix)
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -872,99 +674,15 @@ export default function ReadinessForm() {
 
         {/* ── 3. EVALUATION AND SCORE RESULTS FEEDBACK ──────────────────────── */}
         {view === "feedback" && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            className="max-w-4xl mx-auto space-y-6"
-          >
-            <div className="rounded-[2rem] border border-accent-muted/40 bg-[color:var(--theme-surface)] shadow-2xl overflow-hidden">
-              {/* Score summary header banner */}
-              <div className="bg-[color:var(--theme-canvas)] p-8 text-center border-b border-accent-periwinkle">
-                <div className="inline-flex p-4 bg-[color:var(--theme-surface)] rounded-full shadow-md border-2 border-accent-periwinkle mb-4">
-                  <Award className="h-12 w-12 text-primary-hover animate-bounce" />
-                </div>
-                <h2 className="text-2xl font-black text-text-primary tracking-tight">Readiness Check Analysis</h2>
-                <p className="text-xs text-[color:var(--theme-text-muted)] font-black uppercase tracking-widest mt-1">
-                  TANGLAW Scholarship Competency Analyzer
-                </p>
-              </div>
-
-              <div className="p-6 sm:p-8 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-                  <div className="text-center p-6 bg-base-light/35 border border-accent-periwinkle rounded-[2rem]">
-                    <span className="text-xs font-bold text-[color:var(--theme-text-muted)] block uppercase mb-1">Cumulative Score</span>
-                    <span className="text-4xl font-black text-text-primary">
-                      {score} <span className="text-lg text-[color:var(--theme-text-muted)] font-normal">/ {activeQuestions.length}</span>
-                    </span>
-                    <span className="block text-xs text-[color:var(--theme-text-body)] font-semibold mt-1">
-                      ({scorePercentage}% accuracy)
-                    </span>
-                  </div>
-
-                  <div className="md:col-span-2 p-6 rounded-[2rem] border-2 flex gap-4 items-start bg-[color:var(--theme-canvas)] border-accent-periwinkle">
-                    <div className="mt-1 flex-shrink-0">
-                      {readinessDetails.icon}
-                    </div>
-                    <div>
-                      <h4 className="font-black text-sm text-text-primary">
-                        Readiness Summary: <span className="underline decoration-accent-muted underline-offset-2">{readinessDetails.level}</span>
-                      </h4>
-                      <p className="text-xs text-[color:var(--theme-text-body)] mt-2 leading-relaxed">
-                        {readinessDetails.text}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Score breakdown per subject with horizontal progress bars */}
-                <div className="rounded-[2rem] border border-accent-muted/30 p-6 space-y-4">
-                  <h3 className="text-sm font-black uppercase tracking-widest text-text-primary">Subject-by-Subject Breakdown</h3>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    {Object.entries(subjectScores).map(([subj, stats]) => {
-                      if (stats.total === 0) return null;
-                      const accuracy = stats.answered > 0 ? Math.round((stats.correct / stats.answered) * 100) : 0;
-                      
-                      return (
-                        <div key={subj} className="space-y-1.5">
-                          <div className="flex justify-between text-xs font-bold text-text-primary">
-                            <span>{subj}</span>
-                            <span>{stats.correct} / {stats.total} ({accuracy}%)</span>
-                          </div>
-                          <div className="h-2.5 bg-base-pastel rounded-full overflow-hidden">
-                            <div className="h-full bg-primary transition-all duration-500" style={{ width: `${accuracy}%` }} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Tailored Study Recommendations based on scores */}
-                <div className="bg-[color:var(--theme-canvas)]/50 border border-accent-periwinkle rounded-[2rem] p-6">
-                  <h3 className="text-sm font-bold text-text-primary mb-3 flex items-center gap-1.5">
-                    <BookMarked className="h-4 w-4 text-primary" /> Recommended Study Areas:
-                  </h3>
-                  <ul className="text-xs text-[color:var(--theme-text-body)] space-y-2">
-                    {studyRecommendations.map((rec, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <span className="h-2 w-2 rounded-full bg-accent-rose mt-1 flex-shrink-0" />
-                        <span>{rec}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Reattempt config reset button */}
-                <button
-                  onClick={handleRestart}
-                  className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white py-3.5 rounded-full font-black border-2 border-accent-muted shadow-md cursor-pointer transition-transform hover:scale-[1.01]"
-                >
-                  <RotateCcw className="h-4 w-4" /> Start New Assessment Check
-                </button>
-              </div>
-            </div>
-          </motion.div>
+          <ReadinessFeedback
+            score={score}
+            total={activeQuestions.length}
+            scorePercentage={scorePercentage}
+            subjectScores={subjectScores}
+            readinessDetails={readinessDetails}
+            studyRecommendations={studyRecommendations}
+            onRestart={handleRestart}
+          />
         )}
         
       </AnimatePresence>

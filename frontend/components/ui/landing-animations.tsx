@@ -48,7 +48,8 @@ export function MascotWithGlow() {
           filter: "blur(60px)",
           willChange: "transform, opacity",
         }}
-        animate={{ scale: [1, 1.12, 1], opacity: [0.6, 0.9, 0.6] }}
+        whileInView={{ scale: [1, 1.12, 1], opacity: [0.6, 0.9, 0.6] }}
+        viewport={{ once: false, margin: "-200px" }}
         transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
       />
       {/* Inner bright core glow */}
@@ -59,11 +60,13 @@ export function MascotWithGlow() {
           filter: "blur(30px)",
           willChange: "transform, opacity",
         }}
-        animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.7, 0.4] }}
+        whileInView={{ scale: [1, 1.2, 1], opacity: [0.4, 0.7, 0.4] }}
+        viewport={{ once: false, margin: "-200px" }}
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
       />
       <motion.div
-        animate={{ y: [0, -20, 0] }}
+        whileInView={{ y: [0, -20, 0] }}
+        viewport={{ once: false }}
         transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
         className="relative z-10 w-full"
       >

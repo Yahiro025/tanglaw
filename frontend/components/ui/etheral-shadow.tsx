@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useId, CSSProperties, ReactNode } from 'react';
+import React, { useRef, useId, useState, useEffect, CSSProperties, ReactNode } from 'react';
 import { useTheme } from 'next-themes';
 
 interface ResponsiveImage { src: string; alt?: string; srcSet?: string; }
@@ -43,6 +43,33 @@ export function EtheralShadow({
     const id = useInstanceId();
     const { resolvedTheme } = useTheme();
     const isDark = resolvedTheme === 'dark';
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    // ─── Visibility-based pause for SVG animate (WS-1) ─────────────────────
+    const [animationPlayState, setAnimationPlayState] = useState<'running' | 'paused'>('running');
+
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                setAnimationPlayState(entry.isIntersecting ? 'running' : 'paused');
+            },
+            { threshold: 0.01 }
+        );
+        observer.observe(container);
+
+        const handleVisibility = () => {
+            setAnimationPlayState(document.hidden ? 'paused' : 'running');
+        };
+        document.addEventListener('visibilitychange', handleVisibility);
+
+        return () => {
+            observer.disconnect();
+            document.removeEventListener('visibilitychange', handleVisibility);
+        };
+    }, []);
     
     // Dynamically set the shadow color based on the active theme
     const activeColor = isDark ? darkColor : lightColor;
@@ -53,12 +80,12 @@ export function EtheralShadow({
     const animationDuration = animation ? mapRange(animation.speed, 1, 100, 1000, 50) : 1;
 
     return (
-        <div className={`fixed inset-0 pointer-events-none ${className || ''}`} style={{ overflow: "hidden", zIndex: 0, willChange: "filter", transform: "translateZ(0)", ...style }}>
+        <div ref={containerRef} className={`fixed inset-0 pointer-events-none ${className || ''}`} style={{ overflow: "hidden", zIndex: 0, willChange: "filter", transform: "translateZ(0)", ...style }}>
             
             
             <div style={{ position: "absolute", inset: -displacementScale, filter: animationEnabled ? `url(#${id}) blur(4px)` : "none" }}>
                 {animationEnabled && (
-                    <svg style={{ position: "absolute", width: 0, height: 0 }}>
+                    <svg style={{ position: "absolute", width: 0, height: 0, animationPlayState }}>
                         <defs>
                             <filter id={id}>
                                 <feTurbulence result="undulation" numOctaves="2" baseFrequency={`${mapRange(animation.scale, 0, 100, 0.001, 0.0005)},${mapRange(animation.scale, 0, 100, 0.004, 0.002)}`} seed="0" type="turbulence" />

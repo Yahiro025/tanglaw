@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
-import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 interface GlowingTextProps {
@@ -47,20 +46,11 @@ export function GlowingText({ children, className, glowType = 'primary' }: Glowi
   };
 
   return (
-    <motion.span
-      className={cn('transition-all duration-700 ease-in-out', className)}
+    <span
+      className={cn('transition-all duration-700 ease-in-out animate-glow-pulse', className)}
       style={{ textShadow: getGlowStyles() }}
-      animate={{
-        // Subtle opacity pulse — makes the glow "breathe" without affecting text readability
-        opacity: [0.92, 1, 0.92],
-      }}
-      transition={{
-        duration: 3,
-        repeat: Infinity,
-        ease: 'easeInOut',
-      }}
     >
       {children}
-    </motion.span>
+    </span>
   );
 }

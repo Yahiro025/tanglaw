@@ -10,7 +10,6 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Menu, X } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
 import ThemeChanger from "@/components/theme-changer";
 
 export default function SiteHeader() {
@@ -141,25 +140,16 @@ export default function SiteHeader() {
           </button>
 
           {/* Mobile backdrop + dropdown panel */}
-          <AnimatePresence>
-            {menuOpen && (
-              <>
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="fixed inset-0 z-40 md:hidden bg-black/35"
-                  onClick={() => setMenuOpen(false)}
-                  aria-hidden="true"
-                />
-                <motion.div
-                  initial={{ opacity: 0, y: -12, scale: 0.97 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -12, scale: 0.97 }}
-                  transition={{ duration: 0.22, ease: "easeOut" }}
-                  className="absolute top-24 left-0 right-0 z-50 md:hidden border-b border-white/10 bg-[color:var(--theme-component-backdrop)] shadow-2xl shadow-black/30 origin-top"
-                >
+          {menuOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-40 md:hidden bg-black/35 transition-opacity duration-200"
+                onClick={() => setMenuOpen(false)}
+                aria-hidden="true"
+              />
+              <div
+                className="absolute top-24 left-0 right-0 z-50 md:hidden border-b border-white/10 bg-[color:var(--theme-component-backdrop)] shadow-2xl shadow-black/30 origin-top transition-all duration-200 opacity-100 translate-y-0"
+              >
                 <nav className="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex flex-col gap-3 text-[11px] uppercase tracking-[0.34em] text-[color:var(--theme-typography-secondary)] font-black">
                   <Link
                     href="/"
@@ -219,10 +209,9 @@ export default function SiteHeader() {
                     </>
                   )}
                 </nav>
-              </motion.div>
-              </>
-            )}
-          </AnimatePresence>
+              </div>
+            </>
+          )}
 
           <ThemeChanger />
         </div>

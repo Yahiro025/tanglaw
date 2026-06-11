@@ -24,7 +24,8 @@ export default function OwelBriefing({ step, report }: OwelBriefingProps) {
   return (
     <motion.div 
       initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
       className="border-technical bg-[color:var(--theme-surface)] p-8 shadow-2xl relative overflow-hidden group rounded-xl"
     >
       <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-primary rounded-tl-lg" />

@@ -9,7 +9,6 @@ import Link from "next/link";
 import { LogOut, Sparkles, Menu, X } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { AnimatePresence, motion } from "framer-motion";
 import AuthGuard from "@/components/AuthGuard";
 import ThemeChanger from "@/components/theme-changer";
 import { EtheralShadow } from "../../../components/ui/etheral-shadow";
@@ -90,25 +89,16 @@ export default function DashboardLayout({
               </button>
 
               {/* Mobile backdrop + dropdown panel */}
-              <AnimatePresence>
-                {menuOpen && (
-                  <>
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="fixed inset-0 z-40 sm:hidden bg-black/35"
-                      onClick={() => setMenuOpen(false)}
-                      aria-hidden="true"
-                    />
-                    <motion.div
-                      initial={{ opacity: 0, y: -12, scale: 0.97 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -12, scale: 0.97 }}
-                      transition={{ duration: 0.22, ease: "easeOut" }}
-                      className="absolute top-full left-0 right-0 z-50 sm:hidden border-b border-accent-muted/40 bg-[color:var(--theme-surface)] shadow-2xl shadow-black/15 origin-top"
-                    >
+              {menuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40 sm:hidden bg-black/35 transition-opacity duration-200"
+                    onClick={() => setMenuOpen(false)}
+                    aria-hidden="true"
+                  />
+                  <div
+                    className="absolute top-full left-0 right-0 z-50 sm:hidden border-b border-accent-muted/40 bg-[color:var(--theme-surface)] shadow-2xl shadow-black/15 origin-top transition-all duration-200 opacity-100 translate-y-0"
+                  >
                     <nav className="max-w-7xl mx-auto px-4 py-5 flex flex-col gap-3 text-[11px] uppercase font-bold tracking-widest text-[color:var(--theme-text-body)]">
                       <Link
                         href="/dashboard"                          className={`transition px-4 py-3 rounded-full ${
@@ -149,10 +139,9 @@ export default function DashboardLayout({
                         Sign Out
                       </button>
                     </nav>
-                  </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
+                  </div>
+                </>
+              )}
 
               <ThemeChanger />
               <button

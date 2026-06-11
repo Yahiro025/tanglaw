@@ -2,7 +2,10 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import type { NextAuthOptions } from "next-auth";
 
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-const nextAuthSecret = process.env.NEXTAUTH_SECRET ?? "development-secret";
+const nextAuthSecret = process.env.NEXTAUTH_SECRET;
+if (!nextAuthSecret) {
+  throw new Error("Missing NEXTAUTH_SECRET environment variable. This is required for session security.");
+}
 
 if (!backendUrl) {
   throw new Error("Missing NEXT_PUBLIC_BACKEND_URL environment variable for NextAuth.");

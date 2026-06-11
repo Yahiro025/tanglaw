@@ -1,15 +1,9 @@
 'use client';
 
-import React, { useLayoutEffect, useRef, useCallback } from 'react';
-import Script from 'next/script';
+import React, { useLayoutEffect, useRef, useState, useEffect, useMemo, useCallback } from 'react';
+import Particles from '@tsparticles/react';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
-
-declare global {
-  interface Window {
-    particlesJS: any;
-  }
-}
 
 interface ParticlesBackgroundProps {
   size?: number;
@@ -36,97 +30,143 @@ const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
   const isDark = resolvedTheme === 'dark';
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // TANGLAW BRAND COLORS
-  // Dark Mode (Deep Navy background): Glowing White, Star Gold, Soft Owel Purple
-  const darkColors = ['#ffffff', '#ffd700', '#a78bfa'];
-  // Light Mode (Verdant Sage background): Deep Navy, Royal Blue, Vivid Violet
-  const lightColors = ['#0f172a', '#1d4ed8', '#7C3AED'];
+  // ─── Visibility-based pause (WS-1 triple-guard pattern) ──────────────────
+  const [isVisible, setIsVisible] = useState(true);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const initParticles = useCallback(() => {
-    const container = containerRef.current;
-    if (!container || !window.particlesJS) return;
+  const resetIdleTimer = useCallback(() => {
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    idleTimerRef.current = setTimeout(() => {
+      setIsVisible(false);
+    }, 5000);
+  }, []);
 
-    window.particlesJS(container.id, {
-      particles: {
-        number: {
-          value:
-            window.innerWidth > 1024
-              ? countDesktop
-              : window.innerWidth > 768
-                ? countTablet
-                : countMobile,
-        },
-        color: { value: isDark ? darkColors : lightColors },
-        shape: { type: 'circle' },
-        opacity: {
-          value: isDark ? 1.0 : 0.95,
-          random: true,
-        },
-        size: {
-          value: size + 2,
-          random: true,
-        },
-        line_linked: { enable: false },
-        move: {
-          enable: true,
-          speed: 1.2,
-          direction: 'top',
-          random: true,
-          straight: false,
-          out_mode: 'out',
-        },
-      },
-      interactivity: {
-        detect_on: 'canvas',
-        events: { onhover: { enable: false }, onclick: { enable: false }, resize: true },
-      },
-      retina_detect: true,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDark]);
-
-  useLayoutEffect(() => {
+  useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    // Update CSS variable for canvas glow synchronously — enhanced for maximum luminosity
+    // IntersectionObserver: pause when off-screen
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          resetIdleTimer();
+        } else {
+          setIsVisible(false);
+        }
+      },
+      { threshold: 0.01 }
+    );
+    observer.observe(container);
+
+    // Tab visibility
+    const handleVisibility = () => {
+      if (document.hidden) {
+        setIsVisible(false);
+      } else {
+        setIsVisible(true);
+        resetIdleTimer();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    // Idle detection: reset on user activity
+    const handleActivity = () => {
+      setIsVisible(true);
+      resetIdleTimer();
+    };
+    window.addEventListener('mousemove', handleActivity, { passive: true });
+    window.addEventListener('scroll', handleActivity, { passive: true });
+    window.addEventListener('touchstart', handleActivity, { passive: true });
+
+    // Start idle timer
+    resetIdleTimer();
+
+    return () => {
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('scroll', handleActivity);
+      window.removeEventListener('touchstart', handleActivity);
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    };
+  }, [resetIdleTimer]);
+
+  // ─── TANGLAW BRAND COLORS ─────────────────────────────────────────────────
+  const darkColors = ['#ffffff', '#ffd700', '#a78bfa'];
+  const lightColors = ['#0f172a', '#1d4ed8', '#7C3AED'];
+
+  // ─── tsParticles options (useMemo for performance) ───────────────────────
+  const options = useMemo(() => ({
+    particles: {
+      number: {
+        value: countDesktop,
+      },
+      color: { value: isDark ? darkColors : lightColors },
+      shape: { type: 'circle' as const },
+      opacity: {
+        value: { min: 0.1, max: isDark ? 1.0 : 0.95 },
+      },
+      size: {
+        value: { min: size + 1, max: size + 4 },
+      },
+      links: { enable: false },
+      move: {
+        enable: true,
+        speed: 1.2,
+        direction: 'top' as const,
+        random: true,
+        straight: false,
+        outModes: { default: 'out' as const },
+      },
+    },
+    interactivity: {
+      events: {
+        onHover: { enable: false },
+        onClick: { enable: false },
+        resize: true,
+      },
+    },
+    detectRetina: true,
+    responsive: [
+      {
+        maxWidth: 1024,
+        options: { particles: { number: { value: countTablet } } },
+      },
+      {
+        maxWidth: 768,
+        options: { particles: { number: { value: countMobile } } },
+      },
+    ],
+  }), [isDark, countDesktop, countTablet, countMobile, size, darkColors, lightColors]);
+
+  // ─── CSS glow variable ───────────────────────────────────────────────────
+  useLayoutEffect(() => {
     applyCanvasGlow(
       isDark
         ? 'drop-shadow(0 0 12px rgba(255,235,200,0.80)) drop-shadow(0 0 40px rgba(255,235,200,0.45)) drop-shadow(0 0 80px rgba(255,215,0,0.20))'
         : 'drop-shadow(0 0 14px rgba(29,78,216,0.75)) drop-shadow(0 0 40px rgba(124,58,237,0.35)) drop-shadow(0 0 80px rgba(29,78,216,0.15))'
     );
-
-    // Clean up existing canvas to prevent stacking when theme changes
-    container.innerHTML = '';
-
-    // If particlesJS is already loaded, init immediately
-    if (window.particlesJS) {
-      initParticles();
-    }
-
-    return () => {
-      // Cleanup handled by particles.js itself
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDark, size, countDesktop, countTablet, countMobile]);
+  }, [isDark]);
 
   return (
     <div
-      id="tanglaw-particles"
       ref={containerRef}
       className={cn(
-        "fixed inset-0 w-full h-full pointer-events-none z-[1] transition-opacity duration-700",
+        'fixed inset-0 w-full h-full pointer-events-none z-[1] transition-opacity duration-700',
         className
       )}
       style={{
         filter: `var(${GLOW_CSS_VAR})`,
       }}
     >
-      <Script
-        src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"
-        strategy="lazyOnload"
-        onLoad={() => initParticles()}
-      />
+      {isVisible && (
+        <Particles
+          id="tanglaw-particles"
+          options={options}
+          className="w-full h-full"
+        />
+      )}
     </div>
   );
 };
