@@ -25,12 +25,60 @@ interface Particle {
   targetR: number;
   targetG: number;
   targetB: number;
+  // Trail history for particle trails
+  trail: { x: number; y: number }[];
+  // Original position for spring-back
+  originalX: number;
+  originalY: number;
+}
+
+interface BurstParticle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  size: number;
+  alpha: number;
+  life: number;
+  maxLife: number;
+  r: number;
+  g: number;
+  b: number;
+}
+
+/** Simple LRU cache backed by Map insertion order. */
+class LRUCache<K, V> {
+  private cache = new Map<K, V>();
+  constructor(private maxSize: number) {}
+
+  get(key: K): V | undefined {
+    const value = this.cache.get(key);
+    if (value === undefined) return undefined;
+    // Move to end (most recently used)
+    this.cache.delete(key);
+    this.cache.set(key, value);
+    return value;
+  }
+
+  set(key: K, value: V): void {
+    if (this.cache.has(key)) {
+      this.cache.delete(key);
+    }
+    this.cache.set(key, value);
+    if (this.cache.size > this.maxSize) {
+      const firstKey = this.cache.keys().next().value as K | undefined;
+      if (firstKey !== undefined) {
+        this.cache.delete(firstKey);
+      }
+    }
+  }
 }
 
 export default function NatureCanvas() {
   const pathname = usePathname();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const themeRef = useRef<"light" | "dark">("light");
+  const reducedMotionRef = useRef(false);
 
   // Determine current theme — writes to ref only (animation loop reads from ref)
   const checkTheme = () => {
@@ -39,8 +87,15 @@ export default function NatureCanvas() {
     themeRef.current = stored === "dark" ? "dark" : "light";
   };
 
+  // Check reduced motion preference
+  const checkReducedMotion = () => {
+    if (typeof window === "undefined") return;
+    reducedMotionRef.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  };
+
   useEffect(() => {
     checkTheme();
+    checkReducedMotion();
 
     // Listen to storage event (works across tabs)
     window.addEventListener("storage", checkTheme);
@@ -51,10 +106,15 @@ export default function NatureCanvas() {
     const observer = new MutationObserver(checkTheme);
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ["style"] });
 
+    // Reduced motion observer
+    const motionObserver = window.matchMedia("(prefers-reduced-motion: reduce)");
+    motionObserver.addEventListener("change", checkReducedMotion);
+
     return () => {
       window.removeEventListener("storage", checkTheme);
       window.removeEventListener("tanglaw-theme-change", checkTheme);
       observer.disconnect();
+      motionObserver.removeEventListener("change", checkReducedMotion);
     };
   }, []);
 
@@ -76,6 +136,13 @@ export default function NatureCanvas() {
     // Frame rate cap: target ~30fps to halve GPU load
     const FRAME_INTERVAL = 1000 / 30;
     let lastFrameTime = 0;
+
+    // Responsive particle count based on viewport width
+    const getParticleCount = () => {
+      if (width >= 1024) return 75;
+      if (width >= 768) return 55;
+      return 35;
+    };
 
     // Particle colors depending on theme — reads from ref to avoid stale closures
     const getColors = (currentTheme: "light" | "dark") => {
@@ -102,7 +169,8 @@ export default function NatureCanvas() {
     };
 
     const particles: Particle[] = [];
-    const count = 55; // drifting orbs — increased for richer glow density
+    const burstParticles: BurstParticle[] = [];
+    const count = getParticleCount();
 
     // Initialize particles
     for (let i = 0; i < count; i++) {
@@ -110,10 +178,12 @@ export default function NatureCanvas() {
       const color = palette[Math.floor(Math.random() * palette.length)];
       const size = 18 + Math.random() * 34; // glowing orbs — larger for more presence
       const baseAlpha = 0.18 + Math.random() * 0.22;
+      const x = Math.random() * width;
+      const y = Math.random() * height;
 
       particles.push({
-        x: Math.random() * width,
-        y: Math.random() * height,
+        x,
+        y,
         vx: (Math.random() - 0.5) * 0.25,
         vy: -(0.15 + Math.random() * 0.35), // slowly float upwards
         size,
@@ -130,6 +200,9 @@ export default function NatureCanvas() {
         targetR: color.r,
         targetG: color.g,
         targetB: color.b,
+        trail: [],
+        originalX: x,
+        originalY: y,
       });
     }
 
@@ -171,7 +244,8 @@ export default function NatureCanvas() {
     renderBgCache();
 
     // Particle glow cache: keyed by r,g,b,alpha,size rounded to reduce cache misses
-    const particleGlowCache = new Map<string, HTMLCanvasElement>();
+    // Capped at 1500 entries to prevent unbounded memory growth (~20MB max).
+    const particleGlowCache = new LRUCache<string, HTMLCanvasElement>(1500);
     const getParticleGlowCanvas = (r: number, g: number, b: number, alpha: number, size: number): HTMLCanvasElement => {
       const key = `${Math.round(r)},${Math.round(g)},${Math.round(b)},${alpha.toFixed(2)},${Math.round(size)}`;
       const cached = particleGlowCache.get(key);
@@ -218,8 +292,39 @@ export default function NatureCanvas() {
       mouse.x = -1000;
       mouse.y = -1000;
     };
+    const isInteractiveElement = (target: EventTarget | null): boolean => {
+      if (!target || !(target instanceof HTMLElement)) return false;
+      const tag = target.tagName.toLowerCase();
+      return tag === "button" || tag === "a" || tag === "input" || tag === "textarea" || tag === "select" || tag === "label" || target.closest("button, a, input, textarea, select, label") !== null;
+    };
+
+    const handleClick = (e: MouseEvent) => {
+      if (reducedMotionRef.current) return;
+      if (isInteractiveElement(e.target)) return;
+      const palette = getColors(themeRef.current);
+      const burstCount = 8 + Math.floor(Math.random() * 5);
+      for (let i = 0; i < burstCount; i++) {
+        const angle = (Math.PI * 2 * i) / burstCount + Math.random() * 0.5;
+        const speed = 2 + Math.random() * 3;
+        const color = palette[Math.floor(Math.random() * palette.length)];
+        burstParticles.push({
+          x: e.clientX,
+          y: e.clientY,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          size: 4 + Math.random() * 8,
+          alpha: 1,
+          life: 0,
+          maxLife: 40 + Math.random() * 20,
+          r: color.r,
+          g: color.g,
+          b: color.b,
+        });
+      }
+    };
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
     window.addEventListener("mouseleave", handleMouseLeave);
+    window.addEventListener("click", handleClick);
 
     const draw = (timestamp: number) => {
       if (!isRunning) return;
@@ -243,8 +348,50 @@ export default function NatureCanvas() {
       ctx.drawImage(bgCache, 0, 0);
 
       const palette = getColors(currentTheme);
-      const hasWind = mouse.active && (Math.abs(mouse.windX) > 0.5 || Math.abs(mouse.windY) > 0.5);
+      const isReducedMotion = reducedMotionRef.current;
+      const hasWind = !isReducedMotion && mouse.active && (Math.abs(mouse.windX) > 0.5 || Math.abs(mouse.windY) > 0.5);
 
+      // ─── Static render for reduced motion ──────────────────────────────────
+      if (isReducedMotion) {
+        particles.forEach((p) => {
+          // Smoothly interpolate color coordinates to follow theme updates
+          const colorSpeed = 0.05;
+          p.r += (p.targetR - p.r) * colorSpeed;
+          p.g += (p.targetG - p.g) * colorSpeed;
+          p.b += (p.targetB - p.b) * colorSpeed;
+
+          const currentX = p.x + Math.sin(p.swayOffset) * p.swayAmount * p.depth;
+          const drawSize = p.size * p.depth;
+          const drawAlpha = p.alpha * (0.7 + 0.3 * p.depth);
+          const glowCanvas = getParticleGlowCanvas(p.r, p.g, p.b, drawAlpha, drawSize);
+          ctx.drawImage(glowCanvas, currentX - drawSize, p.y - drawSize);
+        });
+
+        // Still draw burst particles in reduced motion (they are temporary and low-motion)
+        for (let i = burstParticles.length - 1; i >= 0; i--) {
+          const bp = burstParticles[i];
+          bp.life++;
+          bp.x += bp.vx;
+          bp.y += bp.vy;
+          bp.vx *= 0.95;
+          bp.vy *= 0.95;
+          bp.alpha = 1 - (bp.life / bp.maxLife);
+          if (bp.life >= bp.maxLife) {
+            burstParticles.splice(i, 1);
+            continue;
+          }
+          ctx.save();
+          ctx.globalAlpha = bp.alpha * 0.8;
+          const glowCanvas = getParticleGlowCanvas(bp.r, bp.g, bp.b, bp.alpha, bp.size);
+          ctx.drawImage(glowCanvas, bp.x - bp.size, bp.y - bp.size);
+          ctx.restore();
+        }
+
+        animationFrameId = requestAnimationFrame(draw);
+        return;
+      }
+
+      // ─── Full animation render ─────────────────────────────────────────────
       // Render & Update particles
       particles.forEach((p) => {
         // Smoothly interpolate color coordinates to follow theme updates
@@ -261,7 +408,7 @@ export default function NatureCanvas() {
         let drawSize = p.size * p.depth;
         let drawAlpha = p.alpha * (0.7 + 0.3 * p.depth);
 
-        // Mouse proximity glow, gentle repulse, and wind effect
+        // Mouse proximity glow, repulse, and wind effect
         if (mouse.active) {
           const dx = mouse.x - currentX;
           const dy = mouse.y - p.y;
@@ -271,13 +418,13 @@ export default function NatureCanvas() {
           if (distSq < interactRadiusSq && distSq > 0.1) {
             const factor = 1 - distSq / interactRadiusSq;
             // Glow boost: brighter and larger near cursor
-            drawAlpha *= 1 + factor * 0.5;
-            drawSize *= 1 + factor * 0.2;
-            // Gentle repulse: push away from cursor
-            const repulse = factor * 0.008;
+            drawAlpha *= 1 + factor * 0.8;
+            drawSize *= 1 + factor * 0.4;
+            // Repulse: push away from cursor (stronger than before)
+            const repulse = factor * 0.02;
             const invDist = 1 / Math.sqrt(distSq);
-            p.vx += dx * invDist * repulse;
-            p.vy += dy * invDist * repulse;
+            p.vx -= dx * invDist * repulse;
+            p.vy -= dy * invDist * repulse;
           }
           // Wind drift: particles shift in the direction of mouse movement
           const windRadius = 280 * p.depth;
@@ -289,9 +436,40 @@ export default function NatureCanvas() {
           }
         }
 
-        // Friction to dampen accumulated velocity from repulse
-        p.vx *= 0.998;
-        p.vy *= 0.998;
+        // Spring-back: particles gently return toward their original position
+        const springStrength = 0.006;
+        const homeDx = p.originalX - p.x;
+        const homeDy = p.originalY - p.y;
+        p.vx += homeDx * springStrength;
+        p.vy += homeDy * springStrength;
+
+        // Friction to dampen accumulated velocity
+        p.vx *= 0.995;
+        p.vy *= 0.995;
+
+        // Apply velocity to position (BUG FIX: original code never applied vx to x)
+        p.x += p.vx * p.depth;
+        p.y += p.vy * p.depth;
+
+        // Update trail using the new visual position
+        const newCurrentX = p.x + Math.sin(p.swayOffset) * p.swayAmount * p.depth;
+        p.trail.push({ x: newCurrentX, y: p.y });
+        if (p.trail.length > 8) p.trail.shift();
+
+        // Draw trail
+        if (p.trail.length > 2) {
+          ctx.save();
+          ctx.globalAlpha = 0.12 * p.depth;
+          ctx.strokeStyle = `rgba(${Math.round(p.r)}, ${Math.round(p.g)}, ${Math.round(p.b)}, 0.4)`;
+          ctx.lineWidth = 2 * p.depth;
+          ctx.beginPath();
+          ctx.moveTo(p.trail[0].x, p.trail[0].y);
+          for (let i = 1; i < p.trail.length; i++) {
+            ctx.lineTo(p.trail[i].x, p.trail[i].y);
+          }
+          ctx.stroke();
+          ctx.restore();
+        }
 
         // Draw from cached particle glow canvas via drawImage
         const glowCanvas = getParticleGlowCanvas(p.r, p.g, p.b, drawAlpha, drawSize);
@@ -317,18 +495,27 @@ export default function NatureCanvas() {
           }
         }
 
-        // Update positions
-        p.y += p.vy * p.depth;
-
         // If a particle moves off screen, wrap it around
         const baseSize = p.size * p.depth;
         if (p.y < -baseSize * 2) {
           p.y = height + drawSize * 2;
           p.x = Math.random() * width;
+          // Reset original position to a visible spot so spring-back pulls upward
+          p.originalX = p.x;
+          p.originalY = Math.random() * height;
           const newColor = palette[Math.floor(Math.random() * palette.length)];
           p.r = p.targetR = newColor.r;
           p.g = p.targetG = newColor.g;
           p.b = p.targetB = newColor.b;
+          p.trail = [];
+        }
+        if (p.x < -baseSize * 2) {
+          p.x = width + baseSize * 2;
+          p.originalX = p.x;
+        }
+        if (p.x > width + baseSize * 2) {
+          p.x = -baseSize * 2;
+          p.originalX = p.x;
         }
 
         // Randomly modulate alpha for a prominent twinkling glow effect
@@ -338,6 +525,80 @@ export default function NatureCanvas() {
           p.alpha = newAlpha;
         }
       });
+
+      // Draw connection lines between nearby particles
+      const maxConnections = 3;
+      const connectionDist = 100;
+      for (let i = 0; i < particles.length; i++) {
+        const p1 = particles[i];
+        const x1 = p1.x + Math.sin(p1.swayOffset) * p1.swayAmount * p1.depth;
+        const y1 = p1.y;
+        let connections = 0;
+
+        for (let j = i + 1; j < particles.length && connections < maxConnections; j++) {
+          const p2 = particles[j];
+          const x2 = p2.x + Math.sin(p2.swayOffset) * p2.swayAmount * p2.depth;
+          const y2 = p2.y;
+          const dx = x1 - x2;
+          const dy = y1 - y2;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < connectionDist) {
+            const opacity = (1 - dist / connectionDist) * 0.15;
+            ctx.save();
+            ctx.globalAlpha = opacity;
+            const lineColor = currentTheme === "light" ? "rgba(27, 64, 121, 0.4)" : "rgba(255, 255, 255, 0.4)";
+            ctx.strokeStyle = lineColor;
+            ctx.lineWidth = 0.5;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+            ctx.restore();
+            connections++;
+          }
+        }
+      }
+
+      // Draw burst particles
+      for (let i = burstParticles.length - 1; i >= 0; i--) {
+        const bp = burstParticles[i];
+        bp.life++;
+        bp.x += bp.vx;
+        bp.y += bp.vy;
+        bp.vx *= 0.95;
+        bp.vy *= 0.95;
+        bp.alpha = 1 - (bp.life / bp.maxLife);
+        if (bp.life >= bp.maxLife) {
+          burstParticles.splice(i, 1);
+          continue;
+        }
+        ctx.save();
+        ctx.globalAlpha = bp.alpha * 0.8;
+        const burstGrad = ctx.createRadialGradient(bp.x, bp.y, 0, bp.x, bp.y, bp.size);
+        burstGrad.addColorStop(0, `rgba(${bp.r}, ${bp.g}, ${bp.b}, ${bp.alpha})`);
+        burstGrad.addColorStop(0.5, `rgba(${bp.r}, ${bp.g}, ${bp.b}, ${bp.alpha * 0.4})`);
+        burstGrad.addColorStop(1, `rgba(${bp.r}, ${bp.g}, ${bp.b}, 0)`);
+        ctx.fillStyle = burstGrad;
+        ctx.beginPath();
+        ctx.arc(bp.x, bp.y, bp.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // Mouse cursor glow
+      if (mouse.active) {
+        const cursorRadius = 60;
+        const cursorGrad = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, cursorRadius);
+        const cursorColor = currentTheme === "light" ? "184, 201, 232" : "100, 200, 255";
+        cursorGrad.addColorStop(0, `rgba(${cursorColor}, 0.12)`);
+        cursorGrad.addColorStop(0.5, `rgba(${cursorColor}, 0.04)`);
+        cursorGrad.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = cursorGrad;
+        ctx.beginPath();
+        ctx.arc(mouse.x, mouse.y, cursorRadius, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       // Decay mouse wind velocity each frame so it dies out when movement stops
       mouse.windX *= 0.96;
@@ -404,6 +665,7 @@ export default function NatureCanvas() {
       window.removeEventListener("storage", updateTargetColors);
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseleave", handleMouseLeave);
+      window.removeEventListener("click", handleClick);
       if (resizeTimeout) clearTimeout(resizeTimeout);
       intersectionObserver.disconnect();
       isRunning = false;
