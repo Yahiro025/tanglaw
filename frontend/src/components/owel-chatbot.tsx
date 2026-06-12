@@ -455,7 +455,7 @@ export default function OwelChatbot({ variant = "floating" }: { variant?: "float
         {!isOpen && (
           <button
             onClick={handleOpen}
-            className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-transparent text-primary shadow-2xl hover:scale-105 transition-transform duration-300 focus:outline-none"
+            className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-transparent text-primary shadow-2xl hover:scale-105 transition-transform duration-200 focus:outline-none"
             aria-label="Open Owel chat"
           >
             <Image
@@ -473,7 +473,7 @@ export default function OwelChatbot({ variant = "floating" }: { variant?: "float
       {isOpen && !isMobile && (
         <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 font-sans">
           <div
-            className={`relative flex flex-col rounded-[2rem] bg-[color:var(--theme-surface)]/95 shadow-2xl backdrop-blur-xl overflow-hidden border border-white/5 shadow-[var(--theme-glow-ai)] transition-shadow duration-300 ${
+            className={`relative flex flex-col rounded-[2rem] bg-[color:var(--theme-surface)]/95 shadow-2xl backdrop-blur-xl overflow-hidden border border-white/5 shadow-[var(--theme-glow-ai)] transition-shadow duration-200 ${
               isResizing ? "select-none" : ""
             }`}
             style={{
@@ -516,7 +516,7 @@ export default function OwelChatbot({ variant = "floating" }: { variant?: "float
         <div className="fixed inset-0 z-50 font-sans">
           {/* Backdrop */}
           <div
-            className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${
+            className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${
               sheetVisible ? "opacity-100" : "opacity-0"
             }`}
             onClick={handleClose}
@@ -525,7 +525,7 @@ export default function OwelChatbot({ variant = "floating" }: { variant?: "float
 
           {/* Sheet */}
           <div
-            className={`absolute inset-x-0 bottom-0 bg-[color:var(--theme-surface)] rounded-t-2xl max-h-[85vh] flex flex-col shadow-2xl transition-transform duration-300 ease-out ${
+            className={`absolute inset-x-0 bottom-0 bg-[color:var(--theme-surface)] rounded-t-2xl max-h-[85vh] flex flex-col shadow-2xl transition-transform duration-200 ease-out ${
               sheetVisible ? "translate-y-0" : "translate-y-full"
             }`}
           >

@@ -22,7 +22,7 @@ const ScholarshipCard = React.memo(function ScholarshipCard({
 
   return (
     <article
-      className="bg-[color:var(--theme-surface)]/80 border-2 border-accent-muted/40 rounded-[2rem] p-4 sm:p-6 flex flex-col transition-all duration-300 group hover:shadow-xl hover:border-accent-muted hover:-translate-y-1"
+      className="bg-[color:var(--theme-surface)]/80 border-2 border-accent-muted/40 rounded-[2rem] p-4 sm:p-6 flex flex-col transition-all duration-200 group hover:shadow-xl hover:border-accent-muted hover:-translate-y-1"
     >
       {/* ── Always Visible Section ── */}
       <div className="space-y-4">
@@ -68,7 +68,7 @@ const ScholarshipCard = React.memo(function ScholarshipCard({
         </span>
         <motion.div
           animate={{ rotate: isExpanded ? 180 : 0 }}
-          transition={{ duration: 0.25, ease: "easeInOut" }}
+          transition={{ duration: 0.15, ease: "easeInOut" }}
         >
           <ChevronDown className="h-4 w-4" />
         </motion.div>
@@ -83,7 +83,7 @@ const ScholarshipCard = React.memo(function ScholarshipCard({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
             className="overflow-hidden"
           >
             <div className="pt-5 space-y-5">

@@ -61,7 +61,7 @@ const ReadinessQuestion = React.memo(function ReadinessQuestion({
 
       <div className="w-full bg-[color:var(--theme-borders-system)]/25 h-1">
         <div
-          className={`h-full transition-all duration-1000 ${timeLeft < 10 ? "bg-red-500" : "bg-primary-hover"}`}
+          className={`h-full transition-all duration-500 ${timeLeft < 10 ? "bg-red-500" : "bg-primary-hover"}`}
           style={{ width: `${(timeLeft / 45) * 100}%` }}
         />
       </div>

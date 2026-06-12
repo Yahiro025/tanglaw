@@ -38,6 +38,7 @@ const ReadinessFeedback = React.memo(function ReadinessFeedback({
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.98 }}
+      transition={{ duration: 0.25 }}
       className="max-w-4xl mx-auto space-y-6"
     >
       <div className="rounded-[2rem] border border-accent-muted/40 bg-[color:var(--theme-surface)] shadow-2xl overflow-hidden">
@@ -94,7 +95,7 @@ const ReadinessFeedback = React.memo(function ReadinessFeedback({
                       <span>{stats.correct} / {stats.total} ({accuracy}%)</span>
                     </div>
                     <div className="h-2.5 bg-base-pastel rounded-full overflow-hidden">
-                      <div className="h-full bg-primary transition-all duration-500" style={{ width: `${accuracy}%` }} />
+                      <div className="h-full bg-primary transition-all duration-300" style={{ width: `${accuracy}%` }} />
                     </div>
                   </div>
                 );

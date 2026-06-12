@@ -6,9 +6,14 @@
  */
 import React, { useState } from "react";
 import { Mail, MapPin, Building2, Send, CheckCircle2 } from "lucide-react";
+import dynamic from "next/dynamic";
 import ScrollReveal from "@/components/scroll-reveal";
-import { EtheralShadow } from "../../../components/ui/etheral-shadow";
 import { GlowingText } from "../../../components/ui/glowing-text";
+
+const EtheralShadow = dynamic(
+  () => import("../../../components/ui/etheral-shadow").then((mod) => mod.EtheralShadow),
+  { ssr: false }
+);
 
 export default function ContactPage() {
   const [name, setName] = useState("");
@@ -23,17 +28,15 @@ export default function ContactPage() {
     if (!name || !email || !messageText) {
       alert("Please fill out the required fields (Name, Email, Message).");
       return;
-    }
-
-    setLoading(true);
-    setTimeout(() => {
+    }    setLoading(true);
+      setTimeout(() => {
       setLoading(false);
       setSubmitted(true);
       setName("");
       setGroup("");
       setEmail("");
       setMessageText("");
-    }, 1200);
+    }, 600);
   };
 
   return (

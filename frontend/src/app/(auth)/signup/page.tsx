@@ -9,8 +9,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { UserPlus, ArrowLeft, CheckCircle2, ShieldAlert } from "lucide-react";
 import { motion } from "framer-motion";
-import { EtheralShadow } from "../../../../components/ui/etheral-shadow";
+import dynamic from "next/dynamic";
 import { GlowingText } from "../../../../components/ui/glowing-text";
+
+const EtheralShadow = dynamic(
+  () => import("../../../../components/ui/etheral-shadow").then((mod) => mod.EtheralShadow),
+  { ssr: false }
+);
 import { signupAccount } from "@/lib/backend";
 import { signIn } from "next-auth/react";
 
@@ -169,7 +174,7 @@ export default function SignupPage() {
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={showOAuth ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.15 }}
                 className="overflow-hidden"
                 onMouseEnter={() => setShowOAuth(true)}
                 onMouseLeave={() => setShowOAuth(false)}

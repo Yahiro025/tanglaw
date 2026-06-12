@@ -9,10 +9,20 @@ import Link from "next/link";
 import { LogOut, Sparkles, Menu, X } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
+import dynamic from "next/dynamic";
 import AuthGuard from "@/components/AuthGuard";
 import ThemeChanger from "@/components/theme-changer";
-import { EtheralShadow } from "../../../components/ui/etheral-shadow";
-import OwelChatbot from "@/components/owel-chatbot";
+
+const EtheralShadow = dynamic(
+  () => import("../../../components/ui/etheral-shadow").then((mod) => mod.EtheralShadow),
+  { ssr: false }
+);
+const OwelChatbot = dynamic(() => import("@/components/owel-chatbot"), {
+  ssr: false,
+  loading: () => (
+    <div className="fixed bottom-6 right-6 z-40 h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-primary/20 animate-pulse" />
+  ),
+});
 
 export default function DashboardLayout({
   children,
@@ -92,12 +102,12 @@ export default function DashboardLayout({
               {menuOpen && (
                 <>
                   <div
-                    className="fixed inset-0 z-40 sm:hidden bg-black/35 transition-opacity duration-200"
+                    className="fixed inset-0 z-40 sm:hidden bg-black/35 transition-opacity duration-150"
                     onClick={() => setMenuOpen(false)}
                     aria-hidden="true"
                   />
                   <div
-                    className="absolute top-full left-0 right-0 z-50 sm:hidden border-b border-accent-muted/40 bg-[color:var(--theme-surface)] shadow-2xl shadow-black/15 origin-top transition-all duration-200 opacity-100 translate-y-0"
+                    className="absolute top-full left-0 right-0 z-50 sm:hidden border-b border-accent-muted/40 bg-[color:var(--theme-surface)] shadow-2xl shadow-black/15 origin-top transition-all duration-150 opacity-100 translate-y-0"
                   >
                     <nav className="max-w-7xl mx-auto px-4 py-5 flex flex-col gap-3 text-[11px] uppercase font-bold tracking-widest text-[color:var(--theme-text-body)]">
                       <Link

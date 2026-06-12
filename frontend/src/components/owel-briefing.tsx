@@ -42,7 +42,7 @@ export default function OwelBriefing({ step, report }: OwelBriefingProps) {
             alt="Owel Alpha Unit"
             width={48}
             height={48}
-            className="object-cover grayscale-[0.1] group-hover:grayscale-0 transition-all duration-500"
+            className="object-cover grayscale-[0.1] group-hover:grayscale-0 transition-all duration-300"
           />
         </motion.div>
         

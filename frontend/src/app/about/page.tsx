@@ -7,9 +7,14 @@ import Image from "next/image";
 import { Users, BookOpen, Linkedin, ChevronLeft, ChevronRight } from "lucide-react";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
+import dynamic from "next/dynamic";
 import ScrollReveal from "@/components/scroll-reveal";
-import { EtheralShadow } from "../../../components/ui/etheral-shadow";
 import { GlowingText } from "../../../components/ui/glowing-text";
+
+const EtheralShadow = dynamic(
+  () => import("../../../components/ui/etheral-shadow").then((mod) => mod.EtheralShadow),
+  { ssr: false }
+);
 
 const TEAM_DESCRIPTION = "A student-led research initiative that blends academic insight with scholarship navigation. We built TANGLAW to make grants easier to find, understand, and act on.";
 
@@ -272,7 +277,7 @@ function CarouselSection() {
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
+        transition={{ duration: 0.35 }}
         className="text-center mb-10"
       >
         <p className="text-[10px] uppercase tracking-[0.34em] text-[color:var(--theme-typography-secondary)] font-black">Our solution</p>
@@ -299,9 +304,9 @@ function CarouselSection() {
               viewport={{ once: true, margin: "-80px" }}
               transition={{
                 type: "spring",
-                stiffness: 100,
-                damping: 20,
-                delay: 0.08 * index,
+                stiffness: 200,
+                damping: 25,
+                delay: 0.05 * index,
               }}
               className="
                 snap-start shrink-0 grow-0 basis-[340px]
@@ -311,7 +316,7 @@ function CarouselSection() {
                 bg-[color:var(--theme-surface)]/90
                 px-8 py-10
                 shadow-2xl shadow-black/20
-                transition-all duration-300
+                transition-all                        duration-200
                 cursor-pointer
                 flex flex-col
                 hover:-translate-y-1 hover:border-white/20
@@ -351,7 +356,7 @@ function CarouselSection() {
             flex items-center justify-center
             hover:bg-[color:var(--theme-surface)]
             active:scale-95
-            transition-all duration-200
+            transition-all duration-150
             shadow-xl shadow-black/30
           "
           aria-label="Previous pillar"
@@ -387,7 +392,7 @@ function CarouselSection() {
             flex items-center justify-center
             hover:bg-[color:var(--theme-surface)]
             active:scale-95
-            transition-all duration-200
+            transition-all duration-150
             shadow-xl shadow-black/30
           "
           aria-label="Next pillar"
@@ -490,7 +495,7 @@ export default function AboutPage() {
                   <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                     {DOCUMENTATION_TEAM.map((member, idx) => (
                       <ScrollReveal key={member.username} delay={0.05 * idx} direction="up">
-                        <div className="group flex flex-col items-center text-center h-full rounded-3xl border border-white/10 bg-[color:var(--theme-canvas)]/80 p-5 transition-all duration-300 hover:-translate-y-1 hover:bg-[color:var(--theme-canvas)]/95 shadow-md">
+                        <div className="group flex flex-col items-center text-center h-full rounded-3xl border border-white/10 bg-[color:var(--theme-canvas)]/80 p-5                transition-all duration-200 hover:-translate-y-1 hover:bg-[color:var(--theme-canvas)]/95 shadow-md">
                           <div className="relative h-24 w-24 mb-4 rounded-full overflow-hidden border-2 border-primary/40 bg-[color:var(--theme-surface)] shadow-inner">
                             <Image
                               src={`/team/${PHOTO_2_0[member.username] ?? `${member.username}.jpg`}`}
@@ -508,7 +513,7 @@ export default function AboutPage() {
                               group-focus-within:opacity-100
                               pointer-events-none group-hover:pointer-events-auto
                               group-focus-within:pointer-events-auto
-                              transition-all duration-300 ease-in-out
+                              transition-all duration-200 ease-in-out
                             ">
                               <a
                                 href={member.linkedin || "#"}
@@ -536,7 +541,7 @@ export default function AboutPage() {
                   <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     {DEVELOPMENT_TEAM.map((member, idx) => (
                       <ScrollReveal key={member.username} delay={0.05 * idx} direction="up">
-                        <div className="group flex flex-col items-center text-center h-full rounded-3xl border border-white/10 bg-[color:var(--theme-canvas)]/80 p-5 transition-all duration-300 hover:-translate-y-1 hover:bg-[color:var(--theme-canvas)]/95 shadow-md">
+                        <div className="group flex flex-col items-center text-center h-full rounded-3xl border border-white/10 bg-[color:var(--theme-canvas)]/80 p-5                transition-all duration-200 hover:-translate-y-1 hover:bg-[color:var(--theme-canvas)]/95 shadow-md">
                           <div className="relative h-24 w-24 mb-4 rounded-full overflow-hidden border-2 border-primary/40 bg-[color:var(--theme-surface)] shadow-inner">
                             <Image
                               src={`/team/${PHOTO_2_0[member.username] ?? `${member.username}.jpg`}`}
@@ -554,7 +559,7 @@ export default function AboutPage() {
                               group-focus-within:opacity-100
                               pointer-events-none group-hover:pointer-events-auto
                               group-focus-within:pointer-events-auto
-                              transition-all duration-300 ease-in-out
+                              transition-all duration-200 ease-in-out
                             ">
                               <a
                                 href={member.linkedin || "#"}

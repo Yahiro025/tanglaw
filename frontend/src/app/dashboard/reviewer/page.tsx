@@ -270,7 +270,7 @@ export default function ReviewerPage() {
                 </span>
               </div>
               <div className="h-2 bg-gray-100 border-technical">
-                <div className="h-full bg-primary transition-all duration-500" style={{ width: `${progressValue}%` }} />
+                <div className="h-full bg-primary transition-all duration-300" style={{ width: `${progressValue}%` }} />
               </div>
               <p className="text-[9px] font-mono text-[color:var(--theme-text-muted)] uppercase">[{answeredCount} / {totalCount} UNITS COMMITTED]</p>
             </div>

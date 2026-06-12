@@ -23,8 +23,15 @@ import Image from "next/image";
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { BookOpen, ShieldCheck, Sparkles, MessageCircle, X } from "lucide-react";
-import OwelChatbot from "@/components/owel-chatbot";
+import dynamic from "next/dynamic";
 import { GlowingText } from "../../../components/ui/glowing-text";
+
+const OwelChatbot = dynamic(() => import("@/components/owel-chatbot"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-48 rounded-[2rem] bg-[color:var(--theme-surface)]/50 animate-pulse" />
+  ),
+});
 
 export default function DashboardHomePage() {
   const [chatOpen, setChatOpen] = useState(false);
@@ -116,7 +123,7 @@ export default function DashboardHomePage() {
           {/* ── 3a. Scholarship Directory Card ── */}
           <motion.article
             whileHover={{ y: -6, scale: 1.01 }}
-            transition={{ type: "spring", stiffness: 220, damping: 18 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
             className="group rounded-[2rem] border border-accent-muted/30 bg-[color:var(--theme-surface)] p-5 sm:p-6 shadow-2xl flex flex-col justify-between"
           >
             <div>
@@ -139,7 +146,7 @@ export default function DashboardHomePage() {
           {/* ── 3b. Readiness Check Card ── */}
           <motion.article
             whileHover={{ y: -6, scale: 1.01 }}
-            transition={{ type: "spring", stiffness: 220, damping: 18 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
             className="group rounded-[2rem] border border-accent-muted/30 bg-[color:var(--theme-surface)] p-5 sm:p-6 shadow-2xl flex flex-col justify-between"
           >
             <div>
@@ -166,14 +173,14 @@ export default function DashboardHomePage() {
       {/* ── Owel Chat Modal ──────────────────────────────────────────────── */}
       {/* Always-mounted wrapper: chatbot state persists across open/close cycles */}
       <div
-        className={`fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 transition-all duration-300 ${
+        className={`fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 transition-all duration-200 ${
           chatOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
         aria-hidden={!chatOpen}
       >
         {/* Backdrop with blur */}
         <div
-          className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${
+          className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-200 ${
             chatOpen ? "opacity-100" : "opacity-0"
           }`}
           onClick={() => setChatOpen(false)}
@@ -183,7 +190,7 @@ export default function DashboardHomePage() {
         {/* Modal panel */}
         <motion.div
           animate={chatOpen ? { opacity: 1, scale: 1, y: 0 } : { opacity: 0, scale: 0.96, y: 12 }}
-          transition={{ duration: 0.25, ease: [0.21, 1.02, 0.43, 1.01] }}
+          transition={{ duration: 0.15, ease: [0.21, 1.02, 0.43, 1.01] }}
           className="relative w-full max-w-lg mx-2 sm:mx-0"
         >
           <button

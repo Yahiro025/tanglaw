@@ -85,7 +85,7 @@ export default function HomeClient() {
       <section className="mx-auto max-w-7xl px-4 pb-24 sm:px-6 lg:px-8">
         <div className="grid gap-6 md:grid-cols-3">
           {FEATURES.map((item, idx) => (
-            <FeatureCard key={item.title} delay={0.15 * idx} direction="up" {...item} />
+            <FeatureCard key={item.title} delay={0.08 * idx} direction="up" {...item} />
           ))}
         </div>
       </section>

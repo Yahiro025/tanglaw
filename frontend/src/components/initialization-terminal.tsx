@@ -34,17 +34,16 @@ export default function InitializationTerminal() {
 
   const handleNext = () => {
     if (currentStep < STEPS.length - 1) {
-      setIsAnalyzing(true);
-      setTimeout(() => {
-        setIsAnalyzing(false);
-        setCurrentIndex((prev) => prev + 1);
-      }, 800);
+      setIsAnalyzing(true);        setTimeout(() => {
+          setIsAnalyzing(false);
+          setCurrentIndex((prev) => prev + 1);
+        }, 400);
     } else {
       // Finalize and redirect
       setIsAnalyzing(true);
       setTimeout(() => {
         router.push("/dashboard");
-      }, 1500);
+      }, 800);
     }
   };
 
@@ -71,7 +70,7 @@ export default function InitializationTerminal() {
                 <motion.div 
                   initial={{ width: 0 }}
                   animate={{ width: `${progress}%` }}
-                  transition={{ type: "spring", stiffness: 100, damping: 20 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 25 }}
                   className="absolute h-full bg-primary"
                 />
               </div>
@@ -103,7 +102,7 @@ export default function InitializationTerminal() {
               initial={{ opacity: 0, x: -20, filter: "blur(4px)" }}
               animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
               exit={{ opacity: 0, x: 20, filter: "blur(4px)" }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              transition={{ type: "spring", stiffness: 400, damping: 35 }}
               className="space-y-10"
             >
               <div className="space-y-4">
@@ -123,7 +122,7 @@ export default function InitializationTerminal() {
                     initial={{ opacity: 0, y: 10 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    transition={{ delay: 0.1 }}
+                    transition={{ delay: 0.05 }}
                   >
                     <input
                       type="text"
@@ -143,7 +142,7 @@ export default function InitializationTerminal() {
                         key={p}
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: idx * 0.05 }}
+                        transition={{ delay: idx * 0.03 }}
                         whileHover={{ x: 4, backgroundColor: "var(--theme-surface)" }}
                         whileTap={{ scale: 0.99 }}
                         onClick={() => setFormData({ ...formData, program: p })}
@@ -164,7 +163,7 @@ export default function InitializationTerminal() {
                         key={t}
                         initial={{ opacity: 0, y: 5 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.05 }}
+                        transition={{ delay: idx * 0.03 }}
                         whileHover={{ backgroundColor: "var(--theme-surface)" }}
                         onClick={() => setFormData({ ...formData, income: t })}
                         className={`p-5 text-[9px] font-black uppercase tracking-widest text-left border-b border-technical last:border-b-0 transition-all ${

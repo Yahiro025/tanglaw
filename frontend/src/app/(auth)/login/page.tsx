@@ -10,8 +10,13 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { LogIn, ArrowRight, CheckCircle2, ShieldAlert } from "lucide-react";
 import { motion } from "framer-motion";
-import { EtheralShadow } from "../../../../components/ui/etheral-shadow";
+import dynamic from "next/dynamic";
 import { GlowingText } from "../../../../components/ui/glowing-text";
+
+const EtheralShadow = dynamic(
+  () => import("../../../../components/ui/etheral-shadow").then((mod) => mod.EtheralShadow),
+  { ssr: false }
+);
 
 export default function LoginPage() {
   const router = useRouter();
@@ -147,7 +152,7 @@ export default function LoginPage() {
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={showOAuth ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.15 }}
                 className="overflow-hidden"
                 onMouseEnter={() => setShowOAuth(true)}
                 onMouseLeave={() => setShowOAuth(false)}

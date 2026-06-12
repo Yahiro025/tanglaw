@@ -588,7 +588,7 @@ export default function ReadinessForm() {
                         <span>{progressValue}%</span>
                       </div>
                       <div className="h-2.5 bg-base-pastel rounded-full overflow-hidden">
-                        <div className="h-full bg-primary transition-all duration-300" style={{ width: `${progressValue}%` }} />
+                        <div className="h-full bg-primary transition-all duration-200" style={{ width: `${progressValue}%` }} />
                       </div>
                     </div>
                   </div>

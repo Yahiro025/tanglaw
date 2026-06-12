@@ -2,9 +2,14 @@
 
 import React from "react";
 import { motion } from "framer-motion";
+import dynamic from "next/dynamic";
 import ScrollReveal from "@/components/scroll-reveal";
 import { EtheralShadow } from "./etheral-shadow";
-import { OwelMascot } from "./owel-mascot";
+
+const OwelMascot = dynamic(
+  () => import("./owel-mascot").then((mod) => mod.OwelMascot),
+  { ssr: false, loading: () => <div className="w-full aspect-square max-w-[520px] animate-pulse rounded-full bg-white/10" /> }
+);
 
 export function LandingBackground() {
   return (
@@ -28,7 +33,7 @@ export function HeroButton({
 }) {
   const baseClass =
     variant === "primary"
-      ? "inline-flex items-center justify-center rounded-full bg-primary px-8 py-3 text-sm font-bold uppercase tracking-[0.24em] text-white shadow-2xl shadow-black/20 transition-all duration-300 hover:bg-primary-hover cursor-pointer shadow-[var(--theme-glow-primary)]"
+      ?      "inline-flex items-center justify-center rounded-full bg-primary px-8 py-3 text-sm font-bold uppercase tracking-[0.24em] text-white shadow-2xl shadow-black/20 transition-all duration-200 hover:bg-primary-hover cursor-pointer shadow-[var(--theme-glow-primary)]"
       : "inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-8 py-3 text-sm font-bold uppercase tracking-[0.24em] text-[color:var(--theme-typography-main)] shadow-2xl shadow-black/15 transition duration-200 hover:bg-white/10 cursor-pointer";
 
   return (
@@ -51,7 +56,7 @@ export function MascotWithGlow() {
         }}
         whileInView={{ scale: [1, 1.12, 1], opacity: [0.6, 0.9, 0.6] }}
         viewport={{ once: false, margin: "-200px" }}
-        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
       />
       {/* Inner bright core glow */}
       <motion.div
@@ -63,12 +68,12 @@ export function MascotWithGlow() {
         }}
         whileInView={{ scale: [1, 1.2, 1], opacity: [0.4, 0.7, 0.4] }}
         viewport={{ once: false, margin: "-200px" }}
-        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+        transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
       />
       <motion.div
         whileInView={{ y: [0, -20, 0] }}
         viewport={{ once: false }}
-        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
         className="relative z-10 w-full"
       >
         <OwelMascot />

@@ -47,7 +47,7 @@ export default function ReadinessSetup({
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-60px" }}
-        transition={{ duration: 0.5, ease: [0.21, 1.02, 0.43, 1.01], delay: 0.1 }}
+        transition={{ duration: 0.3, ease: [0.21, 1.02, 0.43, 1.01], delay: 0.05 }}
         className="lg:col-span-8 space-y-5 lg:space-y-6"
       >
         <div className="rounded-[2rem] border border-accent-muted/40 bg-[color:var(--theme-surface)] p-5 sm:p-6 lg:p-8 shadow-xl">
@@ -170,7 +170,7 @@ export default function ReadinessSetup({
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-60px" }}
-        transition={{ duration: 0.5, ease: [0.21, 1.02, 0.43, 1.01], delay: 0.25 }}
+        transition={{ duration: 0.3, ease: [0.21, 1.02, 0.43, 1.01], delay: 0.1 }}
         className="lg:col-span-4"
       >
         <div className="rounded-[2rem] border-2 border-primary/20 bg-primary/5 p-5 sm:p-6 lg:p-8 shadow-xl flex flex-col justify-between space-y-6 sm:space-y-8 h-auto lg:h-full">

@@ -143,12 +143,12 @@ export default function SiteHeader() {
           {menuOpen && (
             <>
               <div
-                className="fixed inset-0 z-40 md:hidden bg-black/35 transition-opacity duration-200"
+                className="fixed inset-0 z-40 md:hidden bg-black/35 transition-opacity duration-150"
                 onClick={() => setMenuOpen(false)}
                 aria-hidden="true"
               />
               <div
-                className="absolute top-24 left-0 right-0 z-50 md:hidden border-b border-white/10 bg-[color:var(--theme-component-backdrop)] shadow-2xl shadow-black/30 origin-top transition-all duration-200 opacity-100 translate-y-0"
+                className="absolute top-24 left-0 right-0 z-50 md:hidden border-b border-white/10 bg-[color:var(--theme-component-backdrop)] shadow-2xl shadow-black/30 origin-top transition-all duration-150 opacity-100 translate-y-0"
               >
                 <nav className="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex flex-col gap-3 text-[11px] uppercase tracking-[0.34em] text-[color:var(--theme-typography-secondary)] font-black">
                   <Link
