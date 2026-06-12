@@ -14,7 +14,9 @@
  */
 
 import { AgentDefinition } from './types/agent-definition'
-import { resolveModel } from './model-config'
+import { createHandleSteps } from './handle-steps-template'
+
+const FREE_MODEL = require('./model-config').resolveModel()
 
 /** Common insecure patterns to search for and eliminate */
 const SECURITY_RED_FLAGS = [
@@ -47,7 +49,7 @@ const definition: AgentDefinition = {
     'Spawn for security-critical work: authentication, authorization, input validation, ' +
     'secrets management, SQL injection prevention, or any feature touching user data.',
 
-  model: resolveModel(),
+  model: FREE_MODEL,
 
   reasoningOptions: {
     enabled: true,
@@ -64,32 +66,9 @@ const definition: AgentDefinition = {
     'run_terminal_command',
     'spawn_agents',
     'think_deeply',
+    'find_files',
     'end_turn',
   ],
-
-  handleSteps: function* ({ prompt }) {
-    // [MetaBuff: Security] v1.1.0 — scan, read, audit, fix, verify
-
-    // Phase 0: SCAN — search for security red flags
-    yield { toolName: 'code_search', input: { searchQueries: [{ pattern: `password.*=.*["\\']`, flags: `-g *.ts -g *.tsx -g *.js` }, { pattern: `secret.*=.*["\\']`, flags: `-g *.ts -g *.tsx` }, { pattern: `api_key.*=.*["\\']`, flags: `-g *.ts -g *.tsx` }, { pattern: 'eval\\(|innerHTML|dangerouslySetInnerHTML', flags: `-g *.ts -g *.tsx` }] } }
-
-    // Phase 1: READ — load files flagged by the scan
-    const secFiles = prompt.match(/[\w.\/-]+\.(ts|tsx|js)/g) ?? []
-    const secPaths = [...new Set([...secFiles, 'backend/src/middleware/auth.ts', 'backend/src/controllers/authController.ts'])].slice(0, 6)
-    if (secPaths.length > 0) {
-      yield { toolName: 'read_files', input: { paths: secPaths } }
-    }
-
-    // Phase 2: AUDIT — analyze vulnerabilities in context
-    yield { toolName: 'think_deeply', input: { thought: `Security audit for: ${prompt}. Based on the code you scanned and read, check for: missing auth checks, hardcoded secrets, raw SQL, unsanitized user input, weak crypto, missing rate limiting, exposed error details.` } }
-
-    // Phase 3: FIX — apply security patches
-    yield { toolName: 'think_deeply', input: { thought: `Fix vulnerabilities for: ${prompt}. Apply surgical str_replace patches. Add missing input validation at boundaries. Replace hardcoded secrets with env vars. Add missing authorization checks. Add // SECURITY: comments explaining each fix.` } }
-
-    // Phase 4: VERIFY — run tests and typecheck
-    yield { toolName: 'run_terminal_command', input: { command: 'echo "=== TESTS ===" && (npx vitest run 2>&1 || npx jest 2>&1) | tail -30' } }
-    yield { toolName: 'run_terminal_command', input: { command: '(npx tsc --noEmit 2>&1) | head -20' } }
-  },
 
   spawnableAgents: [
     'thinker-with-files-gemini',
@@ -124,8 +103,8 @@ NEVER:
 For your assigned security subtask:
 
 1. Audit the codebase for known vulnerabilities:
-${SECURITY_RED_FLAGS.map((_, i) => `   code_search searchQueries: [{ pattern: "${SECURITY_RED_FLAGS[i].replace(/"/g, '\\"')}" }]`).join('\n')}
-   (and run code_search for the remaining patterns relevant to your subtask)
+${SECURITY_RED_FLAGS.map((_, i) => `   code_searcher searchQueries: [{ pattern: "${SECURITY_RED_FLAGS[i].replace(/"/g, '\\"')}" }]`).join('\n')}
+   (and run code_searcher for the remaining patterns relevant to your subtask)
 
 2. Read all files related to authentication and authorization:
    - Auth middleware, guards, decorators
@@ -133,7 +112,7 @@ ${SECURITY_RED_FLAGS.map((_, i) => `   code_search searchQueries: [{ pattern: "$
    - User model and session handling
 
 3. Check secrets management:
-   - Search for hardcoded credentials: use code_search with pattern "password.*=.*\\""
+   - Search for hardcoded credentials: use code_searcher with pattern "password.*=.*\\""
    - Verify .env.example exists and .env is in .gitignore
    - Confirm all secret reads go through process.env or a secrets manager
 
@@ -154,6 +133,8 @@ ${SECURITY_RED_FLAGS.map((_, i) => `   code_search searchQueries: [{ pattern: "$
     'Continue the security work. ' +
     'Fix all vulnerabilities you have identified. ' +
     'Call end_turn only when all red flags are resolved and tests pass.',
+
+  handleSteps: createHandleSteps(),
 }
 
 export default definition

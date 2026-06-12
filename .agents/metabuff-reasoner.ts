@@ -28,13 +28,13 @@
  *   • metabuff-mega.ts — for subtasks tagged specialist: 'reason'
  *
  * INLINING NOTE:
- *   Has handleSteps v1.1.0 — 6-step Socratic protocol with code discovery
- *   and implementation phases. systemPrompt + instructionsPrompt provide
- *   detailed methodology that the agent reads on every step.
+ *   Uses createHandleSteps() template for structured 6-phase workflow.
+ *   Reasoning behaviour is driven by systemPrompt + instructionsPrompt.
  */
 
 import { AgentDefinition } from './types/agent-definition'
-import { resolveModel } from './model-config'
+
+const FREE_MODEL = require('./model-config').resolveModel()
 
 const REASONER_SYSTEM = `You are MetaBuff's deep reasoning specialist.
 You are invoked for tasks that require genuine algorithmic thinking — not code lookup or boilerplate.
@@ -51,8 +51,8 @@ REASONING STANDARDS (apply to every task):
   • Test-first       — write the test you'd use to verify correctness before the impl
 
 GROUNDING RULES (same as all MetaBuff agents — stricter enforcement here):
-  ✗ Do not hallucinate standard-library methods — verify via code_search or run_terminal_command
-  ✗ Do not assume language semantics — test edge cases in run_terminal_command node/python/go
+  ✗ Do not hallucinate standard-library methods — verify via code_searcher or basher
+  ✗ Do not assume language semantics — test edge cases in basher node/python/go
   ✗ Do not leave proofs as TODO — incomplete reasoning is a shipped bug
   ✗ Do not choose O(n²) when O(n log n) is achievable without complexity trade-offs
   ✗ Do not write a loop that could be off-by-one without proving the bounds
@@ -97,7 +97,7 @@ STEP 4 — SELECT
 STEP 5 — IMPLEMENT
   1. Read all relevant existing code FIRST:
      • read_files for every file you plan to touch
-     • code_search for every function, type, or symbol you plan to call
+     • code_searcher for every function, type, or symbol you plan to call
   2. Write the TEST CASE before the implementation:
      • The test should fail on a naive/wrong implementation
      • The test should pass only if the algorithm is correct
@@ -108,7 +108,7 @@ STEP 5 — IMPLEMENT
   4. After each function: state its preconditions and postconditions as comments
 
 STEP 6 — PROVE
-  1. Run the tests via run_terminal_command:
+  1. Run the tests via basher:
      bun test [test-file] OR npx vitest run [test-file] OR npx jest [test-file]
   2. Manually trace the algorithm with your HARDEST edge case:
      (empty input / single element / max-size / all-same / already sorted / reversed)
@@ -117,7 +117,7 @@ STEP 6 — PROVE
   5. If any step fails → fix BEFORE calling end_turn
 
 GROUNDING REMINDER (before every tool call):
-  code_search for every function, type, or library method you plan to use.
+  code_searcher for every function, type, or library method you plan to use.
   Never write an import you haven't confirmed exists in this project.`
 
 const definition: AgentDefinition = {
@@ -132,7 +132,7 @@ const definition: AgentDefinition = {
     'solution is known to be wrong. Uses maximum reasoning effort and a 6-step ' +
     'Socratic protocol (understand → challenge → explore → select → implement → prove).',
 
-  model: resolveModel(),
+  model: FREE_MODEL,
 
   reasoningOptions: {
     enabled: true,
@@ -143,7 +143,7 @@ const definition: AgentDefinition = {
   toolNames: [
     'read_files',
     'code_search',
-    'find_files',      // [FIX v1.0.1] was 'file_picker' — correct Freebuff tool name is 'find_files'
+    'find_files',      // [FIX v1.0.1, 'think_deeply', 'run_terminal_command'] was 'file_picker' — correct Freebuff tool name is 'find_files'
     'str_replace',
     'write_file',
     'run_terminal_command',
@@ -156,75 +156,6 @@ const definition: AgentDefinition = {
   spawnableAgents: [
     'thinker-with-files-gemini',  // escalation for especially thorny problems
   ],
-
-  handleSteps: function* ({ prompt }) {
-    // [MetaBuff: Reasoner] 6-step Socratic protocol v1.1.0 — now with real code discovery + implementation phases
-
-    // Steps 1-4: Pure reasoning (Socratic protocol)
-
-    // Phase 1: UNDERSTAND
-    yield { toolName: 'think_deeply', input: { thought: `STEP 1 UNDERSTAND: ${prompt}. Restate the problem, identify inputs/outputs/constraints, list every assumption. What would a WRONG implementation look like?` } }
-
-    // Phase 2: CHALLENGE
-    yield { toolName: 'think_deeply', input: { thought: `STEP 2 CHALLENGE: State the naive solution in one sentence. Identify 2+ failure modes (correctness, performance, safety). State baseline time/space complexity.` } }
-
-    // Phase 3: EXPLORE
-    yield { toolName: 'think_deeply', input: { thought: `STEP 3 EXPLORE: Generate 2-3 fundamentally different approaches. For each: core idea, time/space complexity, strengths and weaknesses. Consider: iterative vs recursive, greedy vs DP, exact vs approximate.` } }
-
-    // Phase 4: SELECT
-    yield { toolName: 'think_deeply', input: { thought: `STEP 4 SELECT: Choose best approach and justify with explicit trade-off analysis. "I chose [X] over [Y] and [Z] because [specific reason]." State what you are trading off.` } }
-
-    // ═══ NEW v1.1.0: GROUND — discover and read codebase files before implementing ═══
-    // Extract keyword patterns from the prompt for code_search
-    const reasonKeywords = prompt.toLowerCase().match(/[a-z]{4,}/g)
-      ?.filter(w => !['this','that','with','from','have','will','your','into','when','them','they','what'].includes(w))
-      ?.slice(0, 8) ?? ['function', 'algorithm', 'compute']
-
-    yield {
-      toolName: 'code_search',
-      input: {
-        searchQueries: [
-          { pattern: reasonKeywords.join('|'), flags: '-g *.ts -g *.tsx -g *.js', maxResults: 15 },
-          { pattern: 'export (function|class|const|interface|type)', flags: '-g *.ts -g *.tsx', maxResults: 10 },
-        ],
-      },
-    }
-
-    // Read files discovered via prompt patterns
-    const reasonFiles = prompt.match(/[\w.\/-]+\.(ts|tsx|js|jsx)/g) ?? []
-    const pascalNames = prompt.match(/\b[A-Z][a-z]+(?:[A-Z][a-z]+)+\b/g) ?? []
-    const kebabPaths = pascalNames.map(c => {
-      const kebab = c.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
-      return `frontend/src/components/${kebab}.tsx`
-    }).slice(0, 3)
-    const reasonPaths = [...new Set([...reasonFiles, ...kebabPaths, 'package.json'])].slice(0, 8)
-
-    if (reasonPaths.length > 0) {
-      yield { toolName: 'read_files', input: { paths: reasonPaths } }
-    }
-    // ═══ END NEW ═══════════════════════════════════════════════════════════════════
-
-    // Phase 5: IMPLEMENT (now with real code context from the GROUND phase)
-    yield { toolName: 'think_deeply', input: { thought: `STEP 5 IMPLEMENT: You have now read the relevant codebase files. Write the TEST CASE before the implementation. Implement using str_replace for surgical edits. Add inline complexity annotations (// O(n), // Invariant: ..., // Edge case: ...). State preconditions and postconditions as comments.` } }
-
-    // ═══ NEW v1.1.0: Apply implementation via str_replace / write_file ═══
-    yield {
-      toolName: 'think_deeply',
-      input: {
-        thought: [
-          `Execute your chosen implementation now.`,
-          `Use str_replace for targeted edits to existing files.`,
-          `Use write_file only for new files.`,
-          `Match the existing code style and conventions exactly.`,
-        ].join('\n'),
-      },
-    }
-    // ═══ END NEW ═════════════════════════════════════════════════════════════
-
-    // Phase 6: PROVE
-    yield { toolName: 'run_terminal_command', input: { command: '(npx vitest run 2>&1 || npx jest 2>&1) | tail -20' } }
-    yield { toolName: 'run_terminal_command', input: { command: '(npx tsc --noEmit 2>&1) | head -20' } }
-  },
 
   includeMessageHistory: true,
 

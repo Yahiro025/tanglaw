@@ -8,7 +8,6 @@
  */
 
 import { AgentDefinition } from './types/agent-definition'
-import { resolveModel } from './model-config'
 import { createHandleSteps } from './handle-steps-template'
 
 const definition: AgentDefinition = {
@@ -20,14 +19,19 @@ const definition: AgentDefinition = {
     'Database code reviewer specializing in schema design, query performance, migrations, and Supabase. ' +
     'Use for reviewing Prisma schema changes, SQL migrations, query patterns, and RLS policies.',
 
-  model: resolveModel(),
+  model: (() => {
+    try {
+      return require('./model-config').resolveModel()
+    } catch {
+      return 'deepseek/deepseek-v4-flash'
+    }
+  })(),
 
   reasoningOptions: { enabled: true, exclude: false, effort: 'medium' },
 
-  toolNames: ['read_files', 'code_search', 'str_replace', 'run_terminal_command', 'find_files', 'spawn_agents', 'end_turn'],
+  toolNames: ['read_files', 'code_search', 'str_replace', 'run_terminal_command', 'find_files', 'spawn_agents', 'end_turn', 'think_deeply'],
 
   spawnableAgents: [],
-  handleSteps: createHandleSteps(),
 
   systemPrompt:
     'You are an expert database code reviewer specializing in schema design, query performance, and migrations. ' +
@@ -69,6 +73,8 @@ const definition: AgentDefinition = {
 - Missing RLS on tables with user data
 - Using service_role key in client-side code
 - Large transactions holding locks too long`,
+
+  handleSteps: createHandleSteps(),
 }
 
 export default definition

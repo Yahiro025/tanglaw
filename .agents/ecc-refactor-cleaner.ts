@@ -8,7 +8,6 @@
  */
 
 import { AgentDefinition } from './types/agent-definition'
-import { resolveModel } from './model-config'
 import { createHandleSteps } from './handle-steps-template'
 
 const definition: AgentDefinition = {
@@ -21,7 +20,13 @@ const definition: AgentDefinition = {
     'Use PROACTIVELY for removing unused code, duplicates, and refactoring. ' +
     'Identifies dead code and safely removes it with verification at each step.',
 
-  model: resolveModel(),
+  model: (() => {
+    try {
+      return require('./model-config').resolveModel()
+    } catch {
+      return 'deepseek/deepseek-v4-flash'
+    }
+  })(),
 
   reasoningOptions: {
     enabled: true,
@@ -37,11 +42,9 @@ const definition: AgentDefinition = {
     'run_terminal_command',
     'find_files',
     'spawn_agents',
-    'end_turn',
-  ],
+    'end_turn', 'think_deeply'],
 
   spawnableAgents: [],
-  handleSteps: createHandleSteps(),
 
   systemPrompt:
     'You are an expert refactoring specialist focused on code cleanup and consolidation. ' +
@@ -109,6 +112,8 @@ After each batch:
 - Build succeeds
 - No regressions
 - Bundle size reduced`,
+
+  handleSteps: createHandleSteps(),
 }
 
 export default definition

@@ -26,7 +26,7 @@
  *   • [SAFETY] Regex check added to AUDIT CHECKLIST — flags regex-containing
  *     changed files so metabuff-regex-guard can be spawned if needed.
  *   • [QUAL] Ghost import detection strengthened — now checks both named imports
- *     and default imports via code_searcher before marking clean.
+ *     and default imports via code_search before marking clean.
  *   • [QUAL] Consistency assertion: checks that exported function signatures
  *     match any callers that were also modified in this session.
  *   • [QUAL] metabuff-regex-guard added to spawnableAgents — validator can
@@ -34,7 +34,9 @@
  */
 
 import { AgentDefinition } from './types/agent-definition'
-import { resolveModel } from './model-config'
+import { createHandleSteps } from './handle-steps-template'
+
+const FREE_MODEL = require('./model-config').resolveModel()
 
 const VALIDATOR_SYSTEM_PROMPT = `You are MetaBuff's Superpowers-enhanced anti-hallucination validator.
 Your ONLY job is to audit changes made by other agents and fix any problems.
@@ -44,9 +46,9 @@ You are skeptical. You assume errors exist until proven otherwise.
 
 AUDIT CHECKLIST (run every time — check each box explicitly):
   □ Read every modified file in full               — use read_files
-  □ Confirm each import statement is valid         — use code_searcher to verify symbols exist
-  □ Confirm every function/type called exists      — use code_searcher to look up definitions
-  □ Search for "TODO", "FIXME", "placeholder"      — use code_searcher
+  □ Confirm each import statement is valid         — use code_search to verify symbols exist
+  □ Confirm every function/type called exists      — use code_search to look up definitions
+  □ Search for "TODO", "FIXME", "placeholder"      — use code_search
   □ Check for regex literals or new RegExp() calls — if found, spawn metabuff-regex-guard
   □ Check caller/callee consistency                — if a function signature changed, verify callers match
   □ Run the test suite                             — spawn a basher agent
@@ -90,7 +92,7 @@ OUTPUT FORMAT:
 const VALIDATOR_INSTRUCTIONS = `
 Audit all changes made in this session. Use these tools (all available in toolNames):
   - basher          → run terminal commands (git diff, typecheck, tests)
-  - code_searcher   → search for patterns (TODO, FIXME, symbol lookup, regex literals)
+  - code_search   → search for patterns (TODO, FIXME, symbol lookup, regex literals)
   - read_files      → read file contents
   - str_replace     → edit files (prefer this)
   - write_file      → create new files
@@ -105,7 +107,7 @@ STEPS:
 
 2. Use read_files to load the current state of each changed file.
 
-3. Use code_searcher to run the self-consistency checklist from your system prompt:
+3. Use code_search to run the self-consistency checklist from your system prompt:
    a. For every import: verify the imported name exists in that module
    b. For every function call: verify the function exists and its signature matches
    c. Search for TODO/FIXME/placeholder strings
@@ -118,7 +120,7 @@ STEPS:
 
 5. CONSISTENCY CHECK:
    If any changed file exports a function/type, check whether callers in other changed
-   files still match the updated signature. Use code_searcher to find callers.
+   files still match the updated signature. Use code_search to find callers.
    Fix any mismatches with str_replace.
 
 6. TDD IRON LAW CHECK (v1.2.0 — Superpowers):
@@ -168,7 +170,7 @@ const definition: AgentDefinition = {
     'Catches ghost imports, phantom edits, broken tests, incomplete TODOs, ' +
     'runtime-invalid regex patterns, and function signature mismatches.',
 
-  model: resolveModel(),
+  model: FREE_MODEL,
 
   reasoningOptions: {
     enabled: true,
@@ -188,31 +190,6 @@ const definition: AgentDefinition = {
     // 'suggest_followups' removed — not a valid Freebuff tool, caused agent-load validation error
   ],
 
-  handleSteps: function* ({ prompt }) {
-    // [MetaBuff: Validator] Pattern B — Superpowers 10-step audit checklist generator
-
-    // Phase 1: Get the diff
-    const { toolResult: gitDiff } = (yield { toolName: 'run_terminal_command', input: { command: 'git diff HEAD' } }) as { toolResult: string }
-
-    // Phase 2: Read changed files and begin audits
-    yield { toolName: 'think_deeply', input: { thought: `Validate all changes for: ${prompt}. Git diff: ${(gitDiff ?? 'no diff').slice(0, 500)}. Read every changed file before conducting audits.` } }
-
-    // Audits 1-3: Ghost imports, phantom edits, TODOs
-    yield { toolName: 'think_deeply', input: { thought: `AUDIT 1/10: Check every import in changed files — verify each imported symbol exists via code_search. AUDIT 2/10: Re-read changed files to confirm all edits landed correctly. AUDIT 3/10: Scan for TODO/FIXME/HACK/placeholder in changed files.` } }
-    yield { toolName: 'code_search', input: { searchQueries: [{ pattern: 'TODO|FIXME|HACK|placeholder', flags: '-g *.ts -g *.tsx' }] } }
-
-    // Audits 4-6: Regex, consistency, TDD
-    yield { toolName: 'think_deeply', input: { thought: `AUDIT 4/10: Scan changed files for regex literals — if found, flag for regex-guard. AUDIT 5/10: Verify function signatures match callers — code_search for changed exports. AUDIT 6/10: Do new behaviors have tests? Would tests FAIL without the implementation?` } }
-
-    // Audit 7-8: Full test suite + typecheck
-    yield { toolName: 'run_terminal_command', input: { command: '(bun test 2>&1 || npx vitest run 2>&1 || npx jest 2>&1) | tail -30' } }
-    yield { toolName: 'run_terminal_command', input: { command: '(bun run typecheck 2>/dev/null || npx tsc --noEmit 2>&1) | tail -10' } }
-
-    // Audits 9-10: TODO count + finishing workflow
-    yield { toolName: 'run_terminal_command', input: { command: 'echo "Remaining TODOs:" && (git diff HEAD | grep -c "TODO\\|FIXME\\|HACK" 2>/dev/null || echo "0") && echo "Workspace:" && ([ -d .git ] && echo "GIT_REPO" || echo "NON_GIT")' } }
-    yield { toolName: 'think_deeply', input: { thought: `AUDIT 10/10: Finishing workflow. Count remaining TODOs. Detect workspace type. Choose completion: ✅ MERGE READY / ⚠ NEEDS REVIEW / ⏳ WIP / ❌ DISCARD. Fix all CRITICAL and HIGH issues found.` } }
-  },
-
   spawnableAgents: [
     'ecc-code-architect',           // [FIX BUG-10] was 'metabuff' — spawning the full orchestrator for fixes
                                     // triggered the whole complexity pipeline, risking validator→mega→validator loops
@@ -229,6 +206,8 @@ const definition: AgentDefinition = {
     'Continue auditing. ' +
     'If you have found and fixed all issues, output your final VALIDATION PASSED/FAILED summary and call end_turn. ' +
     'Do not call end_turn while there are unresolved issues or while a regex scan is pending.',
+
+  handleSteps: createHandleSteps(),
 }
 
 export default definition

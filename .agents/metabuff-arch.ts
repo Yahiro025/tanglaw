@@ -13,7 +13,9 @@
  */
 
 import { AgentDefinition } from './types/agent-definition'
-import { resolveModel } from './model-config'
+import { createHandleSteps } from './handle-steps-template'
+
+const FREE_MODEL = require('./model-config').resolveModel()
 
 const definition: AgentDefinition = {
   id: 'metabuff-arch',
@@ -24,7 +26,7 @@ const definition: AgentDefinition = {
     'Spawn for architecture concerns: data model design, API contract definition, ' +
     'component structure, dependency analysis, or system-level design decisions.',
 
-  model: resolveModel(),
+  model: FREE_MODEL,
 
   reasoningOptions: {
     enabled: true,
@@ -41,44 +43,14 @@ const definition: AgentDefinition = {
     'run_terminal_command',
     'spawn_agents',
     'think_deeply',
+    'find_files',
     'end_turn',
   ],
 
   spawnableAgents: [
     'thinker-with-files-gemini',
+    'researcher-web',
   ],
-
-  handleSteps: function* ({ prompt }) {
-    // [MetaBuff: Arch] v1.1.0 — orient, discover, read, design, implement, verify
-
-    // Phase 0: ORIENT — understand the architecture task
-    yield { toolName: 'think_deeply', input: { thought: `Architecture task: ${prompt}. Read the existing architecture first — find schema files, API routes, component structure, type definitions. Identify what exists before proposing changes. NEVER write code before understanding the codebase.` } }
-
-    // Phase 1: DISCOVER — search for existing architecture patterns
-    yield {
-      toolName: 'code_search',
-      input: {
-        searchQueries: [
-          { pattern: 'interface|type\\s+\\w+|Schema|export\\s+(const|function|class|interface|type)', flags: '-g *.ts', maxResults: 10 },
-          { pattern: prompt.match(/\b[A-Z][a-zA-Z]+\b/g)?.join('|') ?? 'Component', flags: '-g *.ts -g *.tsx', maxResults: 8 },
-        ],
-      },
-    }
-
-    // Phase 2: READ — load discovered architecture files
-    const archFiles = prompt.match(/[\w.\/-]+\.(ts|tsx|js|prisma)/g) ?? []
-    const archPaths = [...new Set([...archFiles, 'backend/prisma/schema.prisma', 'frontend/package.json', 'backend/package.json'])].slice(0, 8)
-    yield { toolName: 'read_files', input: { paths: archPaths } }
-
-    // Phase 3: DESIGN — formulate architecture changes
-    yield { toolName: 'think_deeply', input: { thought: `Design changes for: ${prompt}. Based on the code you just read, define types first, then interfaces, then implementations. Verify no circular imports. Use code_search to verify every import exists. Produce an ADR-style design.` } }
-
-    // Phase 4: IMPLEMENT — apply architectural changes
-    yield { toolName: 'think_deeply', input: { thought: `Implement your architecture design. Use str_replace for surgical edits — create/update type files first, then update interfaces, then update implementations. Add JSDoc comments to all public types.` } }
-
-    // Phase 5: VERIFY
-    yield { toolName: 'run_terminal_command', input: { command: 'echo "=== TYPE CHECK ===" && (npx tsc --noEmit 2>&1) | head -30' } }
-  },
 
   systemPrompt: `You are MetaBuff's architecture specialist.
 You think about systems before touching files.
@@ -122,12 +94,14 @@ For your assigned architectural subtask:
    - Add JSDoc comments to all public types you create
 
 5. Verify consistency:
-   - code_search for every new type you defined to make sure it's used correctly
+   - code_searcher for every new type you defined to make sure it's used correctly
    - Make sure no circular imports were introduced (check imports in changed files)`,
 
   stepPrompt:
     'Continue the architectural work. ' +
     'If you have completed the design and implementation, verify consistency and call end_turn.',
+
+  handleSteps: createHandleSteps(),
 }
 
 export default definition

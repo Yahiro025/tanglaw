@@ -9,7 +9,6 @@
  */
 
 import { AgentDefinition } from './types/agent-definition'
-import { resolveModel } from './model-config'
 import { createHandleSteps } from './handle-steps-template'
 
 const definition: AgentDefinition = {
@@ -22,7 +21,13 @@ const definition: AgentDefinition = {
     'Use PROACTIVELY after writing code that handles user input, authentication, API endpoints, or sensitive data. ' +
     'Flags secrets, SSRF, injection, unsafe crypto, and OWASP Top 10 vulnerabilities.',
 
-  model: resolveModel(),
+  model: (() => {
+    try {
+      return require('./model-config').resolveModel()
+    } catch {
+      return 'deepseek/deepseek-v4-flash'
+    }
+  })(),
 
   reasoningOptions: {
     enabled: true,
@@ -38,11 +43,9 @@ const definition: AgentDefinition = {
     'run_terminal_command',
     'find_files',
     'spawn_agents',
-    'end_turn',
-  ],
+    'end_turn', 'think_deeply'],
 
   spawnableAgents: [],
-  handleSteps: createHandleSteps(),
 
   systemPrompt:
     'You are a security vulnerability detection and remediation specialist combining ECC OWASP methodology with MetaBuff threat scanning. ' +
@@ -143,6 +146,8 @@ npm audit --audit-level=high
 - **Always** after changes to: auth, input handling, DB queries, payments, file/external API integrations
 - **Immediately** during: incidents, CVE reports, before releases
 - **Success Metrics**: No critical/high issues, no secrets in code, current dependencies`,
+
+  handleSteps: createHandleSteps(),
 }
 
 export default definition

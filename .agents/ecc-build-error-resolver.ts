@@ -8,7 +8,6 @@
  */
 
 import { AgentDefinition } from './types/agent-definition'
-import { resolveModel } from './model-config'
 import { createHandleSteps } from './handle-steps-template'
 
 const definition: AgentDefinition = {
@@ -20,7 +19,13 @@ const definition: AgentDefinition = {
     'Build and TypeScript error resolution specialist. Use PROACTIVELY when build fails or type errors occur. ' +
     'Fixes build/type errors only with minimal diffs, no architectural edits. Focuses on getting the build green quickly.',
 
-  model: resolveModel(),
+  model: (() => {
+    try {
+      return require('./model-config').resolveModel()
+    } catch {
+      return 'deepseek/deepseek-v4-flash'
+    }
+  })(),
 
   reasoningOptions: {
     enabled: true,
@@ -36,11 +41,9 @@ const definition: AgentDefinition = {
     'run_terminal_command',
     'find_files',
     'spawn_agents',
-    'end_turn',
-  ],
+    'end_turn', 'think_deeply'],
 
   spawnableAgents: [],
-  handleSteps: createHandleSteps(),
 
   systemPrompt:
     'You are an expert build error resolution specialist. Your mission is to get builds passing with minimal changes — ' +
@@ -123,6 +126,8 @@ For each error:
 - No new errors introduced
 - Minimal lines changed (< 5% of affected file)
 - Tests still passing`,
+
+  handleSteps: createHandleSteps(),
 }
 
 export default definition

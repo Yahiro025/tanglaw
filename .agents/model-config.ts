@@ -1,32 +1,71 @@
-/**
- * Model Auto-Detection — Shared Resolver
- * ─────────────────────────────────────
- * Resolves the active model for all MetaBuff agents at definition time.
- *
- * Resolution order:
- *   1. METABUFF_MODEL env var (set before launching Freebuff)
- *   2. .agents/model-config.json user-editable config
- *   3. Default: deepseek/deepseek-v4-pro
- *
- * Supports: DeepSeek V4 Pro, MiMo 2.5 Pro, Kimi K2.6
- */
-
 export const FREE_MODELS = {
+  flash: 'deepseek/deepseek-v4-flash',
   deepseek: 'deepseek/deepseek-v4-pro',
-  mimo: 'moonshot/mimo-2.5-pro',
-  kimi: 'moonshot/kimi-k2.6',
-} as const
+  mimo: 'google/gemini-2.5-pro',
+  kimi: 'moonshot/moonshot-128k',
+}
+
+export const MODEL_CAPS: Record<string, any> = {
+  [FREE_MODELS.flash]: {
+    vision: false,
+    context: 32000,
+    hallucination: 'low',
+    speed: 'fast',
+    longHorizon: false,
+    coT: false,
+    notes: 'Fast, concise routing default',
+  },
+  [FREE_MODELS.deepseek]: {
+    vision: false,
+    context: 128000,
+    hallucination: 'high',
+    speed: 'medium',
+    longHorizon: false,
+    coT: false,
+    notes: '94% hallucination rate on AA-Omniscience — ground rules are critical',
+  },
+  [FREE_MODELS.mimo]: {
+    vision: true,
+    context: 128000,
+    hallucination: 'low',
+    speed: 'slow',
+    longHorizon: false,
+    coT: true,
+    notes: 'Vision capable, native CoT',
+  },
+  [FREE_MODELS.kimi]: {
+    vision: false,
+    context: 262000,
+    hallucination: 'medium',
+    speed: 'medium',
+    longHorizon: true,
+    coT: false,
+    notes: 'Long-horizon specialist',
+  },
+}
 
 export function resolveModel(): string {
   try {
-    if (process.env.METABUFF_MODEL && Object.values(FREE_MODELS).includes(process.env.METABUFF_MODEL as any)) {
-      return process.env.METABUFF_MODEL
+    const fs = require('fs')
+    const path = require('path')
+    const configPath = path.join(__dirname, 'model-config.json')
+    if (fs.existsSync(configPath)) {
+      const config = JSON.parse(fs.readFileSync(configPath, 'utf8'))
+      if (config.model) return config.model
     }
   } catch {}
-  try {
-    const fs = require('fs')
-    const config = JSON.parse(fs.readFileSync('.agents/model-config.json', 'utf-8'))
-    if (config.model && Object.values(FREE_MODELS).includes(config.model)) return config.model
-  } catch {}
-  return FREE_MODELS.deepseek
+  return FREE_MODELS.flash
+}
+
+export function resolveModelCaps(): any {
+  const model = resolveModel()
+  return MODEL_CAPS[model] || MODEL_CAPS[FREE_MODELS.flash]
+}
+
+export function sessionHasVision(): boolean {
+  return resolveModelCaps().vision
+}
+
+export function sessionIsLongHorizon(): boolean {
+  return resolveModelCaps().longHorizon
 }

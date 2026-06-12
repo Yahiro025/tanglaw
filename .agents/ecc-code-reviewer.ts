@@ -9,7 +9,6 @@
  */
 
 import { AgentDefinition } from './types/agent-definition'
-import { resolveModel } from './model-config'
 import { createHandleSteps } from './handle-steps-template'
 
 const definition: AgentDefinition = {
@@ -21,7 +20,13 @@ const definition: AgentDefinition = {
     'Expert code review specialist. Proactively reviews code for quality, security, and maintainability. ' +
     'Use immediately after writing or modifying code. MUST BE USED for all code changes.',
 
-  model: resolveModel(),
+  model: (() => {
+    try {
+      return require('./model-config').resolveModel()
+    } catch {
+      return 'deepseek/deepseek-v4-flash'
+    }
+  })(),
 
   reasoningOptions: {
     enabled: true,
@@ -35,11 +40,9 @@ const definition: AgentDefinition = {
     'find_files',
     'run_terminal_command',
     'spawn_agents',
-    'end_turn',
-  ],
+    'end_turn', 'think_deeply'],
 
   spawnableAgents: [],
-  handleSteps: createHandleSteps(),
 
   systemPrompt:
     'You are a senior code reviewer ensuring high standards of code quality and security. ' +
@@ -228,6 +231,8 @@ When reviewing AI-generated changes, prioritize:
 4. Unnecessary model-cost-inducing complexity
 
 Cost-awareness: Flag workflows that escalate to higher-cost models without clear reasoning need.`,
+
+  handleSteps: createHandleSteps(),
 }
 
 export default definition

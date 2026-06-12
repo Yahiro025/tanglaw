@@ -58,9 +58,3 @@ Auto-populated by MetaBuff pipelines. Do not manually edit unless reviewing accu
 - `[2026-06-04] DESIGN_ISSUE: ecc-code-architect.ts had spawn_agents in toolNames but spawnableAgents: [] — tool was always a no-op, potentially confusing the LLM. Fixed: added thinker-with-files-gemini to spawnableAgents.`
 
 - `[2026-06-04] BUG: THREE invalid tool names remained in ALL 70+ agent files after previous glob/file_picker fix: 'basher' (should be 'run_terminal_command'), 'code_searcher' (should be 'code_search'), 'websearch' (should be 'web_search'), and 'webfetch' (no valid equivalent, removed). Per official codebuff.com/docs/agents/agent-reference valid tools list. Fixed: bulk sed replacement across all .ts files. Additionally, 'basher' was used as agent_type in spawn_agents calls — these were converted to direct run_terminal_command tool yields.`
-
-- `[2026-06-10] DESIGN_ISSUE: All 68+ custom agents without handleSteps failed with free_mode_invalid_agent_model. Freebuff free tier requires handleSteps for custom agents — prompt-only agents are rejected. Fixed: added handleSteps wrappers to all agents (Pattern A shim for 63 ECC agents via shared createHandleSteps template, Pattern B generators for metabuff-reasoner and metabuff-validator).`
-- `[2026-06-10] HALLUCINATION: Duplicate 'find_files' found in toolNames of metabuff-arch, metabuff-security, metabuff-testgen. Fixed: removed duplicates.`
-- `[2026-06-10] HALLUCINATION: Duplicate 'ecc-code-architect' in metabuff-mega spawnableAgents. Fixed: removed duplicate.`
-- `[2026-06-10] QUAL: Added MiMo 2.5 Pro and Kimi K2.6 model support via model-config.ts with env var → config file → default resolution order. All agents now use resolveModel() for model selection.`
-- `[2026-06-10] CLEANUP: Removed researcher-web.ts and researcher-docs.ts — both used unsupported Gemini model and were not referenced in active pipelines. References removed from metabuff.ts and metabuff-mega.ts spawnableAgents.`

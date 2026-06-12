@@ -8,7 +8,6 @@
  * This file documents the injection algorithm and provides standalone
  * utilities that can be used in non-handleSteps contexts.
  */
-/**
  * When MetaBuff spawns an agent, it uses getRelevantSkills() to find and
  * prepend matching skill knowledge from .agents/skills/ecc/.
  *

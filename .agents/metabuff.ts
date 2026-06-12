@@ -212,7 +212,6 @@
  */
 
 import { AgentDefinition } from './types/agent-definition'
-import { resolveModel } from './model-config'
 
 const definition: AgentDefinition = {
   id: 'metabuff',
@@ -225,7 +224,13 @@ const definition: AgentDefinition = {
     'including CoT enforcement, inter-session memory, continuous validation, ' +
     'regex safety checks, and anti-hallucination protocols.',
 
-  model: resolveModel(),
+  model: (() => {
+    try {
+      return require('./model-config').resolveModel()
+    } catch {
+      return 'deepseek/deepseek-v4-flash'
+    }
+  })(),  // v4-pro confirmed available in free tier; v4-flash was 403 in sub-agent spawns
 
   reasoningOptions: {
     enabled: true,
@@ -239,14 +244,18 @@ const definition: AgentDefinition = {
     'ecc-code-architect',        // general-purpose implementation (was codebuff/base)
     'codebuff/file-picker@0.0.1', // codebase mapping
     'thinker-with-files-gemini', // task decomposition / planning
-    'code-reviewer-deepseek',    // review / synthesis
+    'ecc-code-reviewer',          // review / synthesis (model-agnostic, avoids free-mode restrictions)
+    'researcher-web',            // documentation research
+    'researcher-docs',           // API docs research
     'metabuff-validator',
     'metabuff-reasoner',     // v1.4.0: algorithm/logic specialist
     'metabuff-regex-guard',  // v1.4.0: runtime regex safety
     'metabuff-mega',
+    'metabuff-autonomous',
     // ── ECC Agents (v1.7.0) — 63 full specialists ────────────────────
     'ecc-a11y-architect',
     'ecc-architect',
+    'metabuff-resume',
     'ecc-build-error-resolver',
     'ecc-chief-of-staff',
     'ecc-code-explorer',
@@ -276,6 +285,8 @@ const definition: AgentDefinition = {
     'ecc-harness-optimizer',
     'ecc-healthcare-reviewer',
     'ecc-homelab-architect',
+    'ecc-hypothesis-generator',
+    'ecc-vision-analyst',
     'ecc-java-build-resolver',
     'ecc-java-reviewer',
     'ecc-kotlin-build-resolver',
@@ -318,6 +329,35 @@ const definition: AgentDefinition = {
     'This is the Anthropic Skills "why over must" philosophy: understanding beats compliance.',
 
   handleSteps: function* ({ prompt }) {
+
+    // ─── SESSION F: RECOVERY CHECK ───────────────────────────────────────────
+    const { toolResult: recoveryCheck } = (yield {
+      toolName: 'run_terminal_command',
+      input: {
+        command: `if [ -f .agents/.recovery/latest.json ] && grep -q '"status": "in-progress"' .agents/.recovery/latest.json; then echo "RESUMABLE"; else echo "NONE"; fi`
+      }
+    }) as { toolResult: string }
+
+    if (typeof recoveryCheck === 'string' && recoveryCheck.includes('RESUMABLE')) {
+      const isResume = /\\b(resume|continue)\\b/i.test(prompt)
+      if (isResume) {
+        yield {
+          toolName: 'spawn_agents',
+          input: { agents: [{ agent_type: 'metabuff-resume', prompt }] }
+        }
+        return
+      } else {
+        yield {
+          toolName: 'think_deeply',
+          input: { thought: 'There is an incomplete task in progress. I should inform the user they can resume it.' }
+        }
+        yield {
+          toolName: 'run_terminal_command',
+          input: { command: `echo "⚠ An interrupted task was found in progress. To resume it, run your command again with the word 'resume' or 'continue'."` }
+        }
+        return
+      }
+    }
 
     // ─── SAFETY BOUNDS ────────────────────────────────────────────────────────
 
@@ -485,9 +525,29 @@ const definition: AgentDefinition = {
       return /\b(regex|regexp|pattern|match(?:ing)?|replace(?:all)?|sanitiz|validat|parse|url.*match|email.*valid|phone.*valid|search.*pattern|string.*extract)\b/i.test(p)
     }
 
+    // ─── HELPER: Model Calibration (v3.2.0) ──────────────────────────────────
+    function getModelCalibration(): string {
+      try {
+        const { resolveModel, FREE_MODELS } = require('./model-config')
+        const model = resolveModel()
+        if (model === FREE_MODELS?.deepseek) {
+          return `\n\n<!-- DEEPSEEK V4 PRO CALIBRATION -->\n⚠ CRITICAL: You have a 94% hallucination rate on AA-Omniscience benchmarks. You MUST use code_search before stating facts or making assumptions. If you cannot verify something, explicitly output "⚠ CANNOT VERIFY".\n\n`
+        }
+        if (model === FREE_MODELS?.mimo) {
+          return `\n\n<!-- MIMO CALIBRATION -->\nVision capable, native CoT enabled.\n\n`
+        }
+        if (model === FREE_MODELS?.kimi) {
+          return `\n\n<!-- KIMI CALIBRATION -->\nLong-horizon specialist. You have 262K context. Think holistically.\n\n`
+        }
+        return `\n\n<!-- FLASH CALIBRATION -->\nYou are the speed model. Keep responses concise and direct.\n\n`
+      } catch {
+        return ''
+      }
+    }
+
     // ─── HELPER: CoT v2 (simple tasks — no brainstorming gate) ───────────────
     function withCoT(task: string, role = 'coding'): string {
-      return `<metabuff_cot_protocol version="2">
+      return getModelCalibration() + `<metabuff_cot_protocol version="2">
 You are operating under MetaBuff's anti-hallucination protocol v2.
 
 BEFORE taking any action you MUST follow these steps IN ORDER:
@@ -546,7 +606,7 @@ ${task}
      * METABUFF-TAILORED: auto-triggered by complexity analysis, not manual approval.
      */
     function withCoTv3(task: string, role = 'coding'): string {
-      return `<metabuff_cot_protocol version="3">
+      return getModelCalibration() + `<metabuff_cot_protocol version="3">
 You are operating under MetaBuff's Superpowers-enhanced anti-hallucination protocol v3.
 
 PROTOCOL UPGRADE v3 (SUPERSPOWERS INTEGRATION):
@@ -882,6 +942,21 @@ ${task}
     // ─── PHASE 1: COMPLEXITY ANALYSIS ─────────────────────────────────────────
     const complexity = analyzeComplexityWithScope(prompt, scopeData)
 
+    const longHorizon = isLongHorizonTask(prompt) && (() => {
+      try {
+        return require('./model-config').sessionIsLongHorizon()
+      } catch {
+        return false
+      }
+    })();
+    if (longHorizon) {
+      yield {
+        toolName: 'spawn_agents',
+        input: { agents: [{ agent_type: 'metabuff-autonomous', prompt }] }
+      }
+      return
+    }
+
     const isGenerationTask = /\b(create new file|write new file|generate.*\.(ts|tsx|js|jsx|py)|new component|new page|from scratch|build.*system)\b/i.test(prompt)
     const algoTask = isAlgorithmTask(prompt)
     const regexTask = isRegexTask(prompt)
@@ -1043,6 +1118,43 @@ ${task}
     /** F# tasks */
     function isFSharpTask(p: string): boolean {
       return /\b(f#|fsharp|dotnet|functional)\b/i.test(p)
+    }
+    /** Vision tasks */
+    function isVisionTask(p: string): boolean {
+      return /\b(screenshot|image|diagram|png|jpg)\b/i.test(p)
+    }
+    /** Scientific tasks */
+    function isScientificTask(p: string): boolean {
+      return /\b(hypothesis|mechanism|phenomenon)\b/i.test(p)
+    }
+    /** Long-horizon tasks */
+    function isLongHorizonTask(p: string): boolean {
+      return /\b(overnight|full.?feature|from.?scratch)\b/i.test(p)
+    }
+
+    // --- Vision & Scientific Routing ---
+    const caps = (() => {
+      try {
+        return require('./model-config').resolveModelCaps()
+      } catch {
+        return { vision: false }
+      }
+    })();
+    
+    if (isVisionTask(prompt) && caps.vision) {
+      yield {
+        toolName: 'spawn_agents',
+        input: { agents: [{ agent_type: 'ecc-vision-analyst', prompt }] }
+      }
+      return
+    }
+
+    if (isScientificTask(prompt)) {
+      yield {
+        toolName: 'spawn_agents',
+        input: { agents: [{ agent_type: 'ecc-hypothesis-generator', prompt }] }
+      }
+      return
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -1220,6 +1332,7 @@ ${task}
       { domain: 'ml', primaryAgent: 'ecc-mle-reviewer', alternatives: [], priority: 75, requiresCoT: false, secondaryDomains: ['performance', 'build'] },
       { domain: 'network', primaryAgent: 'ecc-network-architect', alternatives: ['ecc-network-troubleshooter'], priority: 70, requiresCoT: false, secondaryDomains: ['security'] },
       { domain: 'autonomous', primaryAgent: 'ecc-loop-operator', alternatives: [], priority: 65, requiresCoT: false, secondaryDomains: [] },
+      { domain: 'scientific', primaryAgent: 'ecc-hypothesis-generator', alternatives: [], priority: 88, requiresCoT: false, secondaryDomains: [] },
       { domain: 'planning', primaryAgent: 'ecc-planner', alternatives: [], priority: 50, requiresCoT: true, secondaryDomains: [] },
     ]
 
@@ -1689,13 +1802,7 @@ ${task}
         },
       }
 
-      // v1.7.0: Record instinct for simple pipeline
-      recordInstinct(
-        'pipeline',
-        `Completed simple pipeline: ${prompt.slice(0, 100)}`,
-        'Simple pipeline executed with validation gates',
-        0.4
-      )
+
 
     // ── COMPLEX ───────────────────────────────────────────────────────────────
     } else if (complexity === 'complex') {
@@ -1809,13 +1916,7 @@ ${task}
         },
       }
 
-      // v1.7.0: Record instinct for complex pipeline
-      recordInstinct(
-        'pipeline',
-        `Completed complex pipeline: ${prompt.slice(0, 100)}`,
-        'Complex pipeline executed with ECC specialists and all validation gates',
-        0.5
-      )
+
 
     // ── MEGA ──────────────────────────────────────────────────────────────────
     } else {
@@ -1843,7 +1944,7 @@ ${task}
         toolName: 'spawn_agents',
         input: {
           agents: [{
-            agent_type: 'code-reviewer-deepseek',
+            agent_type: 'ecc-code-reviewer',
             prompt: withECCContext(withReview(
               `Post-mega conflict check for: ${prompt}\n\n` +
               `Multiple specialist agents ran in parallel. Check specifically for:\n` +
@@ -1856,14 +1957,7 @@ ${task}
         },
       }
 
-      // v1.7.0: Post-pipeline instinct recording
-      // Record learnings from this session for future cross-session memory
-      recordInstinct(
-        'pipeline',
-        `Completed mega pipeline for: ${prompt.slice(0, 120)}`,
-        'Pipeline executed with all validation gates passed',
-        0.5
-      )
+
     }
   },
 }

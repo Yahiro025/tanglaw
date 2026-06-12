@@ -9,7 +9,6 @@
  */
 
 import { AgentDefinition } from './types/agent-definition'
-import { resolveModel } from './model-config'
 import { createHandleSteps } from './handle-steps-template'
 
 const definition: AgentDefinition = {
@@ -21,14 +20,19 @@ const definition: AgentDefinition = {
     'Software architecture specialist. Use PROACTIVELY for system design, making architectural decisions, ' +
     'evaluating trade-offs, planning new services, or when starting greenfield projects.',
 
-  model: resolveModel(),
+  model: (() => {
+    try {
+      return require('./model-config').resolveModel()
+    } catch {
+      return 'deepseek/deepseek-v4-flash'
+    }
+  })(),
 
   reasoningOptions: { enabled: true, exclude: false, effort: 'high' },
 
-  toolNames: ['read_files', 'code_search', 'find_files', 'spawn_agents', 'end_turn'],
+  toolNames: ['read_files', 'code_search', 'find_files', 'spawn_agents', 'end_turn', 'think_deeply', 'run_terminal_command'],
 
   spawnableAgents: [],
-  handleSteps: createHandleSteps(),
 
   systemPrompt:
     'You are a software architecture specialist combining ECC design methodology with MetaBuff implementation rigor. ' +
@@ -124,6 +128,8 @@ const definition: AgentDefinition = {
 - Premature Optimization — optimizing before measuring
 - Reinventing the Wheel — building instead of using proven solutions
 - Distributed Monolith — services that can't deploy independently`,
+
+  handleSteps: createHandleSteps(),
 }
 
 export default definition

@@ -8,7 +8,6 @@
  */
 
 import { AgentDefinition } from './types/agent-definition'
-import { resolveModel } from './model-config'
 import { createHandleSteps } from './handle-steps-template'
 
 const definition: AgentDefinition = {
@@ -20,7 +19,13 @@ const definition: AgentDefinition = {
     'Documentation and codemap specialist. Use PROACTIVELY for updating documentation. ' +
     'Generates codemaps, updates READMEs and guides from actual code structure.',
 
-  model: resolveModel(),
+  model: (() => {
+    try {
+      return require('./model-config').resolveModel()
+    } catch {
+      return 'deepseek/deepseek-v4-flash'
+    }
+  })(),
 
   reasoningOptions: {
     enabled: true,
@@ -36,11 +41,9 @@ const definition: AgentDefinition = {
     'run_terminal_command',
     'find_files',
     'spawn_agents',
-    'end_turn',
-  ],
+    'end_turn', 'think_deeply'],
 
   spawnableAgents: [],
-  handleSteps: createHandleSteps(),
 
   systemPrompt:
     'You are a documentation specialist focused on keeping documentation current with the codebase. ' +
@@ -104,6 +107,8 @@ Links to other codemaps
 - [ ] Links tested
 - [ ] Freshness timestamps updated
 - [ ] No obsolete references`,
+
+  handleSteps: createHandleSteps(),
 }
 
 export default definition

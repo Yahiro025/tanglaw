@@ -36,10 +36,10 @@
  *     "NEVER return an error or 'VAGUE_PROMPT' — ALWAYS produce a valid JSON array."
  *
  * CHANGES FROM v1.2.0 → v1.3.0:
- *   • [QUAL] Cascade wave pattern: MAX_DECOMP_TASKS raised from 6 to 12.
- *     Subtasks are split into sequential waves of ≤ MAX_WAVE_SIZE (6).
- *     Closes scale gap vs Antigravity 2.0 — 12 effective specialist agents
- *     without exceeding the Freebuff 6-concurrent freeze limit.
+ *   • [QUAL] Cascade wave pattern: MAX_DECOMP_TASKS raised from 6 to 8.
+ *     Subtasks are split into sequential waves of ≤ MAX_WAVE_SIZE (4).
+ *     Closes scale gap vs Antigravity 2.0 — 8 effective specialist agents
+ *     without exceeding the Freebuff 4-concurrent freeze limit.
  *     Between waves, a lightweight integration review ensures wave 2 agents
  *     have accurate context from wave 1 changes.
  *   • [QUAL] Dynamic specialist type: thinker can now output specialist: 'custom'
@@ -58,7 +58,7 @@
  *   1. File-picker maps relevant codebase structure
  *   2. Thinker decomposes into 3–12 subtasks (JSON), including optional 'custom' types
  *   3. think_deeply extracts the JSON from thinker's response
- *   4. Subtasks split into waves of ≤ MAX_WAVE_SIZE (6) — Freebuff stability limit
+ *   4. Subtasks split into waves of ≤ MAX_WAVE_SIZE (4) — Freebuff stability limit
  *   5. Wave 1 runs in parallel; inter-wave review if Wave 2+ exists
  *   6. Wave 2+ runs in parallel (building on wave 1 context)
  *   7. Synthesis reviewer integrates all parallel outputs
@@ -67,9 +67,9 @@
  *  10. Validator does final anti-hallucination pass
  *
  * PERFORMANCE CONSTRAINTS (NEVER VIOLATE):
- *   • MAX_WAVE_SIZE = 6 — hard limit for Freebuff concurrent spawn stability.
- *     More than 6 simultaneous spawns cause Freebuff to freeze or crash.
- *   • MAX_DECOMP_TASKS = 12 — thinker soft limit (2 waves of 6 max).
+ *   • MAX_WAVE_SIZE = 4 — hard limit for Freebuff concurrent spawn stability.
+ *     More than 4 simultaneous spawns cause Freebuff to freeze or crash.
+ *   • MAX_DECOMP_TASKS = 8 — thinker soft limit (2 waves of 4 max).
  *     Increase only if cascade waves are proven stable in your environment.
  *
  * CRITICAL NOTE:
@@ -78,20 +78,25 @@
  */
 
 import { AgentDefinition } from './types/agent-definition'
-import { resolveModel } from './model-config'
 
 const definition: AgentDefinition = {
   id: 'metabuff-mega',
-  version: '1.3.1',
+  version: '2.0.0', // v2.0.0: MAX_WAVE_SIZE=4 (crash fix), native Gemini thinker, crash recovery
   displayName: 'MetaBuff Mega (SDD-Enhanced Cascade Spawner)',
 
   spawnerPrompt:
     'Spawn for large-scale tasks: full-system refactors, new features spanning many files, ' +
     'architectural changes, or anything requiring more than 5 files to change. ' +
-    'MetaBuff Mega decomposes the task into up to 12 subtasks and runs them in ' +
-    'cascade waves of ≤6 parallel agents (Antigravity 2.0 pattern, Freebuff-safe).',
+    'MetaBuff Mega decomposes the task into up to 8 subtasks and runs them in ' +
+    'cascade waves of ≤4 parallel agents (Antigravity 2.0 pattern, Freebuff-safe).',
 
-  model: resolveModel(),
+  model: (() => {
+    try {
+      return require('./model-config').resolveModel()
+    } catch {
+      return 'deepseek/deepseek-v4-flash'
+    }
+  })(),  // v4-pro confirmed available in free tier; v4-flash was 403 in sub-agent spawns
 
   reasoningOptions: {
     enabled: true,
@@ -102,9 +107,11 @@ const definition: AgentDefinition = {
   toolNames: ['spawn_agents', 'think_deeply', 'run_terminal_command', 'end_turn'],
 
   spawnableAgents: [
-    'ecc-code-architect',    // [FIX v1.3.1] resolveAgent() maps base/custom/fallback here — MUST be declared spawnable
+    'ecc-code-architect',    // general-purpose implementation (replaces 'metabuff' — avoids re-entrancy loop)
     'thinker-with-files-gemini',  // task decomposition
-    'code-reviewer-deepseek',    // review / synthesis
+    'ecc-code-reviewer',          // review / synthesis (model-agnostic, avoids free-mode restrictions)
+    'researcher-web',            // documentation research
+    'researcher-docs',           // API docs research
     'codebuff/file-picker@0.0.1', // codebase mapping
     'metabuff-arch',
     'metabuff-security',
@@ -112,31 +119,76 @@ const definition: AgentDefinition = {
     'metabuff-reasoner',     // v1.2.0: algorithm specialist
     'metabuff-regex-guard',  // v1.2.0: runtime regex safety
     'metabuff-validator',
+    'metabuff-resume',
+    'ecc-code-architect',    // [FIX v1.3.1] resolveAgent() maps base/custom/fallback here — MUST be declared spawnable
+    'ecc-vision-analyst',
   ],
 
   systemPrompt:
     'You are the MetaBuff Mega orchestrator. ' +
     'You never write code directly. ' +
     'Your job is to decompose large tasks into parallel subtasks and coordinate specialist agents ' +
-    'in cascade waves (never more than 6 concurrent spawns). ' +
+    'in cascade waves (never more than 4 concurrent spawns). ' +
     'Think of yourself as the Technical Director for a parallel coding team.',
 
   handleSteps: function* ({ prompt }) {
+
+    // ─── RECOVERY CONSTANTS & HELPER (Session F) ─────────────────────────────
+    const RECOVERY_DIR = '.agents/.recovery'
+    const pad = (n: number) => n.toString().padStart(2, '0')
+    const now = new Date()
+    const SESSION_ID = `session-${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
+
+    function buildCheckpointCmd(status: string, phase: string, contextObj: any = {}): string {
+      return [
+        `mkdir -p ${RECOVERY_DIR}`,
+        `python3 -c "`,
+        `import json, os, datetime`,
+        `path = '${RECOVERY_DIR}/${SESSION_ID}.json'`,
+        `d = {'id': '${SESSION_ID}', 'task': '''${prompt.replace(/'/g, "\\'")}''', 'pipeline': 'metabuff-mega', 'startTime': '${now.toISOString()}', 'phases': {}, 'context': {}, 'log': []}`,
+        `if os.path.exists(path): d = json.load(open(path))`,
+        `d['status'] = '${status}'`,
+        `d['lastCheckpoint'] = datetime.datetime.utcnow().isoformat() + 'Z'`,
+        `d['phases']['${phase}'] = 'done'`,
+        `ctx = ${JSON.stringify(contextObj).replace(/'/g, "\\'")}`,
+        `d['context'].update(ctx)`,
+        `d['log'].append('Completed phase: ${phase}')`,
+        `open(path, 'w').write(json.dumps(d, indent=2))`,
+        `"`,
+        `cp ${RECOVERY_DIR}/${SESSION_ID}.json ${RECOVERY_DIR}/latest.json`
+      ].join(' && ')
+    }
+
+    // ─── W0.4: Clean up stale scratchpad from previous mega run ──────────────
+    yield {
+      toolName: 'run_terminal_command',
+      input: {
+        command: 'rm -f .agents/.wave-scratchpad.json 2>/dev/null; echo "SCRATCHPAD_CLEANED"',
+      },
+    }
 
     /**
      * Hard limit: concurrent spawns that won't freeze Freebuff.
      * NEVER increase this without testing Freebuff stability.
      */
-    const MAX_WAVE_SIZE = 6
+    const MAX_WAVE_SIZE = 4
 
     /**
      * Soft limit: maximum subtasks the thinker can create.
-     * At 12 tasks and wave size 6 → 2 waves = 12 effective specialists total.
+     * At 8 tasks and wave size 4 → 2 waves = 8 effective specialists total.
      */
-    const MAX_DECOMP_TASKS = 12
+    const MAX_DECOMP_TASKS = 8
 
     /** Timeout for typecheck/test basher commands */
-    const BASHER_TIMEOUT = 120
+    const BASHER_TIMEOUT = (() => {
+      try {
+        const { resolveModel, FREE_MODELS } = require('./model-config')
+        const model = resolveModel()
+        // Default complexity for metabuff-mega is always mega
+        if (model === FREE_MODELS?.kimi) return 300
+      } catch {}
+      return 120
+    })()
 
     // ─── HELPER: Resolve specialist tag → agent type string ───────────────────
     function resolveAgent(specialist: string): string {
@@ -145,7 +197,8 @@ const definition: AgentDefinition = {
         security: 'metabuff-security',
         testgen:  'metabuff-testgen',
         base:     'ecc-code-architect',
-        review:   'code-reviewer-deepseek',
+        research: 'researcher-web',
+        review:   'ecc-code-reviewer',
         reason:   'metabuff-reasoner',     // v1.2.0
         custom:   'ecc-code-architect',    // v1.2.0: dynamic via custom prompt
       }
@@ -217,6 +270,30 @@ const definition: AgentDefinition = {
       return [{ subtask: fallbackPrompt, specialist: 'base', focus: 'full implementation' }]
     }
 
+    // ─── HELPER: Wave scratchpad for inter-wave coherence (W0.4) ──────────────
+    /**
+     * v2.0.0 W0.4: Reads .agents/.wave-scratchpad.json and returns a formatted
+     * context string for Wave 2+ agents so they know what previous waves changed.
+     * INLINED inside handleSteps — module-level code is not preserved at runtime.
+     */
+    function getScratchpadContext(): string {
+      try {
+        const fs = require('fs')
+        if (!fs.existsSync('.agents/.wave-scratchpad.json')) return ''
+        const s = JSON.parse(fs.readFileSync('.agents/.wave-scratchpad.json', 'utf-8'))
+        const waves = Object.entries(s)
+        if (waves.length === 0) return ''
+        return (
+          `\n\n<!-- WAVE SCRATCHPAD: What previous waves changed -->\n` +
+          waves.map(([w, d]: [string, any]) =>
+            `${w}: changed ${(d.changed_files ?? []).join(', ') || 'unknown files'} — ${d.summary || ''}`
+          ).join('\n') +
+          `\nIMPORTANT: Read these changed files FIRST before implementing. ` +
+          `Do not assume original interfaces — they may have changed in prior waves.\n`
+        )
+      } catch { return '' }
+    }
+
     // ─── SDD PROTOCOL prefix for all specialist agents ────────────────────────
     /**
      * v1.3.0: Subagent-Driven Development (SDD) protocol.
@@ -283,6 +360,12 @@ ANTI-HALLUCINATION (non-negotiable):
           .filter(l => /^[\w./\-].*\.(ts|tsx|js|jsx|py|go|rs|java|kt|swift|cs|cpp|dart|rb|php)$/.test(l))
           .slice(0, 40)  // cap to avoid overloading thinker context
       : []
+
+    // 1. Recovery Checkpoint
+    yield {
+      toolName: 'run_terminal_command',
+      input: { command: buildCheckpointCmd('in-progress', 'file-picker', { discoveredPaths }) },
+    }
 
     // ── Phase 1: Task decomposition ───────────────────────────────────────────
     yield {
@@ -354,7 +437,14 @@ ANTI-HALLUCINATION (non-negotiable):
       prompt,
     )
 
+    // 2. Recovery Checkpoint
+    yield {
+      toolName: 'run_terminal_command',
+      input: { command: buildCheckpointCmd('in-progress', 'decomposition', { subtasks, totalWaves: Math.ceil(subtasks.length / MAX_WAVE_SIZE) }) },
+    }
+
     // ── Phase 2: Cascade wave execution ───────────────────────────────────────
+    // Build base agent configs without scratchpad — scratchpad is injected at spawn-time
     const agentConfigs = subtasks.map(st => {
       let customPrefix = ''
       if (st.specialist === 'custom') {
@@ -382,7 +472,13 @@ ANTI-HALLUCINATION (non-negotiable):
     const waves = splitIntoWaves(agentConfigs, MAX_WAVE_SIZE)
 
     for (let waveIdx = 0; waveIdx < waves.length; waveIdx++) {
-      const wave = waves[waveIdx]
+      // W0.4: For Wave 2+, inject scratchpad context so agents know what previous waves changed
+      const wave = waveIdx > 0
+        ? waves[waveIdx].map(cfg => ({
+            ...cfg,
+            prompt: cfg.prompt + getScratchpadContext(),
+          }))
+        : waves[waveIdx]
 
       yield {
         toolName: 'spawn_agents',
@@ -403,7 +499,7 @@ ANTI-HALLUCINATION (non-negotiable):
         toolName: 'spawn_agents',
         input: {
           agents: [{
-            agent_type: 'code-reviewer-deepseek',
+            agent_type: 'ecc-code-reviewer',
             prompt:
               `SDD STAGE 1 — SPEC COMPLIANCE REVIEW (Wave ${waveIdx + 1} of ${waves.length})\n\n` +
               `${wave.length} subagents completed work on: ${prompt}\n\n` +
@@ -428,7 +524,7 @@ ANTI-HALLUCINATION (non-negotiable):
         toolName: 'spawn_agents',
         input: {
           agents: [{
-            agent_type: 'code-reviewer-deepseek',
+            agent_type: 'ecc-code-reviewer',
             prompt:
               `SDD STAGE 2 — CODE QUALITY REVIEW (Wave ${waveIdx + 1} of ${waves.length})\n\n` +
               `Stage 1 spec compliance has completed. Now check code quality:\n\n` +
@@ -454,6 +550,36 @@ ANTI-HALLUCINATION (non-negotiable):
           }],
         },
       }
+
+      // ─── W0.4: Write wave scratchpad after each wave's review ──────────────
+      yield {
+        toolName: 'run_terminal_command',
+        input: {
+          command: [
+            `mkdir -p .agents`,
+            `python3 -c "`,
+            `import json,os`,
+            `existing = {}`,
+            `if os.path.exists('.agents/.wave-scratchpad.json'):`,
+            `  existing = json.load(open('.agents/.wave-scratchpad.json'))`,
+            `existing['wave_${waveIdx + 1}'] = {`,
+            `  'changed_files': os.popen('git diff --name-only HEAD 2>/dev/null').read().strip().split('\\n')[:20],`,
+            `  'summary': os.popen('git diff --stat HEAD 2>/dev/null | tail -3').read().strip(),`,
+            `  'task_count': ${wave.length},`,
+            `  'subtasks': ${JSON.stringify(wave.map(a => a.prompt.slice(0, 80))).replace(/'/g, "\\'")}`,
+            `}`,
+            `open('.agents/.wave-scratchpad.json','w').write(json.dumps(existing,indent=2))`,
+            `print('SCRATCHPAD updated: wave ${waveIdx + 1}')`,
+            `" 2>/dev/null || echo "SCRATCHPAD_WRITE_FAILED (non-fatal)"`,
+          ].join(' && '),
+        },
+      }
+
+      // 3. Recovery Checkpoint
+      yield {
+        toolName: 'run_terminal_command',
+        input: { command: buildCheckpointCmd('in-progress', `wave-${waveIdx + 1}`, { waveIdx: waveIdx + 1 }) },
+      }
     }
 
     // ── Phase 3: Final synthesis review ───────────────────────────────────────
@@ -461,7 +587,7 @@ ANTI-HALLUCINATION (non-negotiable):
       toolName: 'spawn_agents',
       input: {
         agents: [{
-          agent_type: 'code-reviewer-deepseek',
+          agent_type: 'ecc-code-reviewer',
           prompt:
             `Final synthesis review for a ${waves.length}-wave parallel cascade session.\n\n` +
             `${subtasks.length} specialist agents completed work on:\n${prompt}\n\n` +
@@ -472,6 +598,36 @@ ANTI-HALLUCINATION (non-negotiable):
             `  4. Any subtask that appears incomplete\n` +
             `  5. TODOs or placeholder comments left by any agent\n` +
             `Fix all issues found — do not just report them.`,
+        }],
+      },
+    }
+
+    // ── Phase 3b: Adversarial critic (W0.5) ──────────────────────────────────
+    // v2.0.0 W0.5: Dedicated adversarial agent explicitly tries to BREAK the
+    // implementation before the validator runs. Catches interface mismatches,
+    // edge cases, and regressions that friendly synthesis reviews miss.
+    yield {
+      toolName: 'spawn_agents',
+      input: {
+        agents: [{
+          agent_type: 'metabuff-arch',
+          prompt:
+            `ADVERSARIAL CRITIC MODE — Your job is to try to BREAK the implementation.\n\n` +
+            `Original task: ${prompt}\n\n` +
+            `What was just implemented (wave scratchpad):\n` + getScratchpadContext() + `\n\n` +
+            `ADVERSARIAL CHECKLIST — check each item and report PASS/FAIL:\n` +
+            `  1. INTERFACE CONTRACTS: Do all callers of changed functions pass the right arguments?\n` +
+            `     → code_search for every import of changed symbols\n` +
+            `  2. EDGE CASES: What inputs would cause the new code to throw or return wrong results?\n` +
+            `     → Think: null, empty string, max value, circular reference, concurrent calls\n` +
+            `  3. REGRESSION RISK: Did any change break something that was working before?\n` +
+            `     → run_terminal_command: git diff HEAD --name-only, then read each changed file\n` +
+            `  4. ASSUMPTION VIOLATIONS: Does the implementation assume something about the codebase\n` +
+            `     that may not be true? (e.g., hardcoded paths, assumed file existence, env vars)\n` +
+            `  5. TYPE SAFETY: Run npx tsc --noEmit and report any new errors\n\n` +
+            `For each FAIL: either fix it directly (str_replace) or spawn ecc-code-architect.\n` +
+            `For each PASS: briefly state why.\n` +
+            `Finish by writing a one-line verdict: ADVERSARIAL: CLEAR / ADVERSARIAL: N ISSUES FIXED.`,
         }],
       },
     }
@@ -510,6 +666,12 @@ ANTI-HALLUCINATION (non-negotiable):
             `${subtasks.length} specialists): ${prompt}`,
         }],
       },
+    }
+
+    // 4. Recovery Checkpoint (Complete)
+    yield {
+      toolName: 'run_terminal_command',
+      input: { command: buildCheckpointCmd('completed', 'validation') },
     }
   },
 }

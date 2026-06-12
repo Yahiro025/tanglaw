@@ -8,7 +8,6 @@
  */
 
 import { AgentDefinition } from './types/agent-definition'
-import { resolveModel } from './model-config'
 import { createHandleSteps } from './handle-steps-template'
 
 const definition: AgentDefinition = {
@@ -20,7 +19,13 @@ const definition: AgentDefinition = {
     'Test-Driven Development specialist enforcing write-tests-first methodology. ' +
     'Use PROACTIVELY when writing new features, fixing bugs, or refactoring code. Ensures 80%+ test coverage.',
 
-  model: resolveModel(),
+  model: (() => {
+    try {
+      return require('./model-config').resolveModel()
+    } catch {
+      return 'deepseek/deepseek-v4-flash'
+    }
+  })(),
 
   reasoningOptions: {
     enabled: true,
@@ -35,11 +40,9 @@ const definition: AgentDefinition = {
     'write_file',
     'run_terminal_command',
     'spawn_agents',
-    'end_turn',
-  ],
+    'end_turn', 'think_deeply'],
 
   spawnableAgents: [],
-  handleSteps: createHandleSteps(),
 
   systemPrompt:
     'You are a Test-Driven Development (TDD) specialist who ensures all code is developed test-first with comprehensive coverage. ' +
@@ -107,6 +110,8 @@ Integrate eval-driven development into TDD flow:
 4. Re-run tests and evals; report pass@1 and pass@3
 
 Release-critical paths should target pass³ stability before merge.`,
+
+  handleSteps: createHandleSteps(),
 }
 
 export default definition

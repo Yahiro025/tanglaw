@@ -8,7 +8,6 @@
  */
 
 import { AgentDefinition } from './types/agent-definition'
-import { resolveModel } from './model-config'
 import { createHandleSteps } from './handle-steps-template'
 
 const definition: AgentDefinition = {
@@ -20,14 +19,19 @@ const definition: AgentDefinition = {
     'Agent harness optimization specialist. Use for tuning agent configurations, model routing, ' +
     'context window optimization, hook performance, and token efficiency.',
 
-  model: resolveModel(),
+  model: (() => {
+    try {
+      return require('./model-config').resolveModel()
+    } catch {
+      return 'deepseek/deepseek-v4-flash'
+    }
+  })(),
 
   reasoningOptions: { enabled: true, exclude: false, effort: 'medium' },
 
-  toolNames: ['read_files', 'code_search', 'str_replace', 'run_terminal_command', 'find_files', 'spawn_agents', 'end_turn'],
+  toolNames: ['read_files', 'code_search', 'str_replace', 'run_terminal_command', 'find_files', 'spawn_agents', 'end_turn', 'think_deeply'],
 
   spawnableAgents: [],
-  handleSteps: createHandleSteps(),
 
   systemPrompt:
     'You are an agent harness optimization specialist. You analyze and tune agent system performance — ' +
@@ -64,6 +68,8 @@ const definition: AgentDefinition = {
 - Only escalate when reasoning gap is measurable
 - Cache results where safe to reduce repeat costs
 - Profile before optimizing — measure, don't guess`,
+
+  handleSteps: createHandleSteps(),
 }
 
 export default definition

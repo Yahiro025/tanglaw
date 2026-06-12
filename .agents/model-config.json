@@ -1,4 +1,4 @@
 {
-  "model": "deepseek/deepseek-v4-pro",
-  "_comment": "Set to 'moonshot/mimo-2.5-pro' or 'moonshot/kimi-k2.6' when using those models in Freebuff"
+  "model": "deepseek/deepseek-v4-flash",
+  "thinkerModel": "google/gemini-3.1-flash-lite:free"
 }
