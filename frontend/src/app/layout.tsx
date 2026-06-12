@@ -2,6 +2,7 @@
  * Root layout for the Next.js application.
  * Configures fonts, metadata, global styles, and shared page chrome.
  */
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
@@ -46,8 +47,10 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${outfit.variable} h-full antialiased`}>
       <body className="relative min-h-full flex flex-col bg-base-light text-text-primary">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
-        <DynamicParticlesBackground />
-        <DynamicNatureCanvas />
+        <Suspense fallback={null}>
+          <DynamicParticlesBackground />
+          <DynamicNatureCanvas />
+        </Suspense>
 
         <NextAuthProvider>
           <SiteHeader />

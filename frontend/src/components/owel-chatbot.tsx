@@ -97,15 +97,17 @@ export default function OwelChatbot({ variant = "floating" }: { variant?: "float
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Defer chat history loading until the panel is actually opened (not on mount)
+  const hasLoadedHistory = useRef(false);
   useEffect(() => {
-    let active = true;
+    if (!isOpen || hasLoadedHistory.current) return;
+    hasLoadedHistory.current = true;
 
+    let active = true;
     async function loadChatHistory() {
       try {
         const storedMessages = await getChatMessages();
-
         if (!active) return;
-
         if (storedMessages.length > 0) {
           setMessages(
             storedMessages.map((msg: BackendMessage) => ({
@@ -120,12 +122,9 @@ export default function OwelChatbot({ variant = "floating" }: { variant?: "float
         console.error("Failed to load chat history from backend:", error);
       }
     }
-
     loadChatHistory();
-    return () => {
-      active = false;
-    };
-  }, []);
+    return () => { active = false; };
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -133,10 +132,13 @@ export default function OwelChatbot({ variant = "floating" }: { variant?: "float
     }
   }, [messages, isOpen, isTyping]);
 
-  // Track mobile / desktop changes
+  // Combined resize listener: track mobile/desktop AND clamp panel height
   useEffect(() => {
-    const handleResize = () => setIsMobile(getIsMobile());
-    window.addEventListener("resize", handleResize);
+    const handleResize = () => {
+      setIsMobile(getIsMobile());
+      setPanelHeight((prev) => Math.min(prev, getMaxHeight()));
+    };
+    window.addEventListener("resize", handleResize, { passive: true });
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
@@ -149,15 +151,6 @@ export default function OwelChatbot({ variant = "floating" }: { variant?: "float
       setSheetVisible(false);
     }
   }, [isOpen, isMobile]);
-
-  // Update max height when window resizes
-  useEffect(() => {
-    const handleWindowResize = () => {
-      setPanelHeight((prev) => Math.min(prev, getMaxHeight()));
-    };
-    window.addEventListener("resize", handleWindowResize);
-    return () => window.removeEventListener("resize", handleWindowResize);
-  }, []);
 
   // ── Resize handlers (desktop only) ──────────────────────────────────────
 
@@ -262,7 +255,7 @@ export default function OwelChatbot({ variant = "floating" }: { variant?: "float
 
   // ── Message handling ───────────────────────────────────────────────────
 
-  const handleSendMessage = async (textToSend: string) => {
+  const handleSendMessage = useCallback(async (textToSend: string) => {
     if (!textToSend.trim()) return;
 
     const userMsg: Message = {
@@ -285,49 +278,48 @@ export default function OwelChatbot({ variant = "floating" }: { variant?: "float
       console.error("Failed to save user message:", error);
     }
 
-    setTimeout(async () => {
-      const matchingPrompt = PRELOADED_PROMPTS.find(
-        (p) => p.query.toLowerCase() === textToSend.toLowerCase() || p.label.toLowerCase() === textToSend.toLowerCase()
-      );
+    // Process reply immediately — no artificial delay
+    const matchingPrompt = PRELOADED_PROMPTS.find(
+      (p) => p.query.toLowerCase() === textToSend.toLowerCase() || p.label.toLowerCase() === textToSend.toLowerCase()
+    );
 
-      let replyText: string;
-      let aiGenerated = false;
+    let replyText: string;
+    let aiGenerated = false;
 
-      if (matchingPrompt) {
-        replyText = matchingPrompt.reply;
-      } else {
-        try {
-          const { answer } = await sendChatMessage(textToSend);
-          replyText = answer;
-          aiGenerated = true;
-        } catch (error) {
-          console.error("AI chat failed, using generic fallback:", error);
-          replyText = `Hoot! I've noted your question: "${textToSend}". As your AI assistant, I recommend browsing the Scholarships page or using the review engine for deeper guidance.`;
-        }
-      }
-
-      const owelMsg: Message = {
-        id: `owel-${Date.now()}`,
-        sender: "owel",
-        text: replyText,
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, owelMsg]);
-
+    if (matchingPrompt) {
+      replyText = matchingPrompt.reply;
+    } else {
       try {
-        await createChatMessage({
-          role: "assistant",
-          content: replyText,
-          metadata: { source: aiGenerated ? "ai-rag" : "preloaded", aiFallback: !matchingPrompt && !aiGenerated },
-        });
+        const { answer } = await sendChatMessage(textToSend);
+        replyText = answer;
+        aiGenerated = true;
       } catch (error) {
-        console.error("Failed to save assistant message:", error);
+        console.error("AI chat failed, using generic fallback:", error);
+        replyText = `Hoot! I've noted your question: "${textToSend}". As your AI assistant, I recommend browsing the Scholarships page or using the review engine for deeper guidance.`;
       }
+    }
 
-      setIsTyping(false);
-    }, 900);
-  };
+    const owelMsg: Message = {
+      id: `owel-${Date.now()}`,
+      sender: "owel",
+      text: replyText,
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, owelMsg]);
+
+    try {
+      await createChatMessage({
+        role: "assistant",
+        content: replyText,
+        metadata: { source: aiGenerated ? "ai-rag" : "preloaded", aiFallback: !matchingPrompt && !aiGenerated },
+      });
+    } catch (error) {
+      console.error("Failed to save assistant message:", error);
+    }
+
+    setIsTyping(false);
+  }, [input]);
 
   // ── Shared panel body (used by both desktop & mobile) ──────────────────
 

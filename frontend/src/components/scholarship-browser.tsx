@@ -4,7 +4,7 @@
  * Scholarship discovery component used in the authenticated dashboard.
  * Supports keyword search, program filtering, income constraints, and scholarship listings.
  */
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { Filter, ArrowUp } from "lucide-react";
 import ScholarshipFilterPanel from "./scholarship-filter-panel";
 import ScholarshipCard from "./scholarship-card";
@@ -186,12 +186,12 @@ export default function ScholarshipBrowser() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const toggleCard = (name: string) => {
+  const toggleCard = useCallback((name: string) => {
     setExpandedCards(prev => ({
       ...prev,
       [name]: !prev[name]
     }));
-  };
+  }, []);
 
   return (
     <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 lg:py-8 animate-fade-in font-sans overflow-x-hidden">

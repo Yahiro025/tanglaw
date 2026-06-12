@@ -88,17 +88,17 @@ export function EtheralShadow({
                     <svg style={{ position: "absolute", width: 0, height: 0, animationPlayState }}>
                         <defs>
                             <filter id={id}>
-                                <feTurbulence result="undulation" numOctaves="2" baseFrequency={`${mapRange(animation.scale, 0, 100, 0.001, 0.0005)},${mapRange(animation.scale, 0, 100, 0.004, 0.002)}`} seed="0" type="turbulence" />
+                                <feTurbulence result="undulation" numOctaves="1" baseFrequency={`${mapRange(animation.scale, 0, 100, 0.001, 0.0005)},${mapRange(animation.scale, 0, 100, 0.004, 0.002)}`} seed="0" type="turbulence" />
                                 <feColorMatrix in="undulation" type="hueRotate" values="180">
                                     <animate 
                                         attributeName="values" 
                                         from="0" 
                                         to="360" 
-                                        dur={`${animationDuration / 25}s`} 
+                                        dur={`${animationDuration / 10}s`} 
                                         repeatCount="indefinite" 
                                     />
                                 </feColorMatrix>
-                                <feColorMatrix in="dist" result="circulation" type="matrix" values="4 0 0 0 1  4 0 0 0 1  4 0 0 0 1  1 0 0 0 0" />
+                                <feColorMatrix in="undulation" result="circulation" type="matrix" values="4 0 0 0 1  4 0 0 0 1  4 0 0 0 1  1 0 0 0 0" />
                                 <feDisplacementMap in="SourceGraphic" in2="circulation" scale={displacementScale} result="dist" />
                                 <feDisplacementMap in="dist" in2="undulation" scale={displacementScale} result="output" />
                             </filter>

@@ -11,7 +11,7 @@ interface ScholarshipCardProps {
   onToggle: (name: string) => void;
 }
 
-export default function ScholarshipCard({
+const ScholarshipCard = React.memo(function ScholarshipCard({
   scholarship,
   isExpanded,
   onToggle,
@@ -175,4 +175,6 @@ export default function ScholarshipCard({
       </AnimatePresence>
     </article>
   );
-}
+});
+
+export default ScholarshipCard;

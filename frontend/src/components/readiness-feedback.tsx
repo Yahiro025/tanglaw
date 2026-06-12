@@ -24,7 +24,7 @@ interface ReadinessFeedbackProps {
   onRestart: () => void;
 }
 
-export default function ReadinessFeedback({
+const ReadinessFeedback = React.memo(function ReadinessFeedback({
   score,
   total,
   scorePercentage,
@@ -128,4 +128,6 @@ export default function ReadinessFeedback({
       </div>
     </motion.div>
   );
-}
+});
+
+export default ReadinessFeedback;

@@ -133,11 +133,11 @@ const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
       detectsOn: 'window',
       events: {
         onHover: {
-          enable: true,
+          enable: false,
           mode: 'repulse',
         },
         onClick: {
-          enable: true,
+          enable: false,
           mode: 'push',
         },
         resize: true,

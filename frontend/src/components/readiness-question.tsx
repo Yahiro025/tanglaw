@@ -25,7 +25,7 @@ interface ReadinessQuestionProps {
   canGoPrev: boolean;
 }
 
-export default function ReadinessQuestion({
+const ReadinessQuestion = React.memo(function ReadinessQuestion({
   question,
   questionIndex,
   totalQuestions,
@@ -116,4 +116,6 @@ export default function ReadinessQuestion({
       </div>
     </div>
   );
-}
+});
+
+export default ReadinessQuestion;

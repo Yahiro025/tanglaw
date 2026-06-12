@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 
 interface Particle {
@@ -26,13 +26,13 @@ interface Particle {
 export default function NatureCanvas() {
   const pathname = usePathname();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const themeRef = useRef<"light" | "dark">("light");
 
-  // Determine current theme
+  // Determine current theme — writes to ref only (animation loop reads from ref)
   const checkTheme = () => {
     if (typeof window === "undefined") return;
     const stored = window.localStorage.getItem("tanglaw-theme") || "light";
-    setTheme(stored === "dark" ? "dark" : "light");
+    themeRef.current = stored === "dark" ? "dark" : "light";
   };
 
   useEffect(() => {
@@ -54,7 +54,7 @@ export default function NatureCanvas() {
     };
   }, []);
 
-  // Canvas particle logic
+  // Canvas particle logic — depends only on pathname (not theme) to avoid full recreation on theme change
   useEffect(() => {
     if (pathname?.startsWith("/dashboard")) {
       return;
@@ -69,8 +69,11 @@ export default function NatureCanvas() {
     let animationFrameId: number;
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
+    // Frame rate cap: target ~30fps to halve GPU load
+    const FRAME_INTERVAL = 1000 / 30;
+    let lastFrameTime = 0;
 
-    // Particle colors depending on theme
+    // Particle colors depending on theme — reads from ref to avoid stale closures
     const getColors = (currentTheme: "light" | "dark") => {
       if (currentTheme === "light") {
         return [
@@ -95,7 +98,7 @@ export default function NatureCanvas() {
 
     // Initialize particles
     for (let i = 0; i < count; i++) {
-      const palette = getColors(theme);
+      const palette = getColors(themeRef.current);
       const color = palette[Math.floor(Math.random() * palette.length)];
       const size = 18 + Math.random() * 34; // glowing orbs — larger for more presence
       const baseAlpha = 0.18 + Math.random() * 0.22;
@@ -120,10 +123,16 @@ export default function NatureCanvas() {
       });
     }
 
+    // Throttled resize handler (max once per 200ms)
+    let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
     const handleResize = () => {
-      if (!canvas) return;
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
+      if (resizeTimeout) return;
+      resizeTimeout = setTimeout(() => {
+        resizeTimeout = null;
+        if (!canvas) return;
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      }, 200);
     };
 
     window.addEventListener("resize", handleResize);
@@ -139,7 +148,7 @@ export default function NatureCanvas() {
       bgCache.width = width;
       bgCache.height = height;
       const grad = bgCacheCtx.createRadialGradient(width / 2, height / 2, 10, width / 2, height / 2, Math.max(width, height));
-      if (theme === "light") {
+      if (themeRef.current === "light") {
         grad.addColorStop(0, "rgba(247, 249, 239, 0.95)");
         grad.addColorStop(1, "rgba(203, 223, 144, 0.9)");
       } else {
@@ -176,24 +185,32 @@ export default function NatureCanvas() {
       return off;
     };
 
-    // Animation Loop
+    // Animation Loop — capped at ~30fps, reads theme from ref
     let isRunning = true;
-    let lastBgColor = theme;
+    let lastBgColor = themeRef.current;
 
-    const draw = () => {
+    const draw = (timestamp: number) => {
       if (!isRunning) return;
+
+      // Frame rate cap: skip frame if not enough time has elapsed
+      if (timestamp - lastFrameTime < FRAME_INTERVAL) {
+        animationFrameId = requestAnimationFrame(draw);
+        return;
+      }
+      lastFrameTime = timestamp;
 
       ctx.clearRect(0, 0, width, height);
 
-      // Re-render background cache on theme change or resize
-      if (lastBgColor !== theme || bgCache.width !== width || bgCache.height !== height) {
-        lastBgColor = theme;
+      // Re-render background cache on theme change or resize — reads from ref
+      const currentTheme = themeRef.current;
+      if (lastBgColor !== currentTheme || bgCache.width !== width || bgCache.height !== height) {
+        lastBgColor = currentTheme;
         renderBgCache();
       }
-      // Use cached background via drawImage — avoids createRadialGradient in 60FPS loop
+      // Use cached background via drawImage — avoids createRadialGradient in animation loop
       ctx.drawImage(bgCache, 0, 0);
 
-      const palette = getColors(theme);
+      const palette = getColors(currentTheme);
 
       // Render & Update particles
       particles.forEach((p) => {
@@ -268,25 +285,35 @@ export default function NatureCanvas() {
     );
     intersectionObserver.observe(canvas);
 
-    draw();
+    animationFrameId = requestAnimationFrame(draw);
 
-    // Trigger color update whenever theme state changes
-    particles.forEach((p) => {
-      const palette = getColors(theme);
-      const color = palette[Math.floor(Math.random() * palette.length)];
-      p.targetR = color.r;
-      p.targetG = color.g;
-      p.targetB = color.b;
-    });
+    // Update particle target colors when theme changes (via MutationObserver + event listeners above)
+    const updateTargetColors = () => {
+      const palette = getColors(themeRef.current);
+      particles.forEach((p) => {
+        const color = palette[Math.floor(Math.random() * palette.length)];
+        p.targetR = color.r;
+        p.targetG = color.g;
+        p.targetB = color.b;
+      });
+      // Also re-render the background cache for the new theme
+      lastBgColor = themeRef.current;
+      renderBgCache();
+    };
+    window.addEventListener("tanglaw-theme-change", updateTargetColors);
+    window.addEventListener("storage", updateTargetColors);
 
     return () => {
       window.removeEventListener("resize", handleResize);
       document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("tanglaw-theme-change", updateTargetColors);
+      window.removeEventListener("storage", updateTargetColors);
+      if (resizeTimeout) clearTimeout(resizeTimeout);
       intersectionObserver.disconnect();
       isRunning = false;
       cancelAnimationFrame(animationFrameId);
     };
-  }, [theme, pathname]);
+  }, [pathname]);
 
   if (pathname?.startsWith("/dashboard")) {
     return null;

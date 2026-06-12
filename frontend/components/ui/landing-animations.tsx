@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { motion } from "framer-motion";
 import ScrollReveal from "@/components/scroll-reveal";
 import { EtheralShadow } from "./etheral-shadow";
@@ -76,7 +77,7 @@ export function MascotWithGlow() {
   );
 }
 
-export function FeatureCard({
+export const FeatureCard = React.memo(function FeatureCard({
   title,
   description,
   delay,
@@ -97,4 +98,4 @@ export function FeatureCard({
       </article>
     </ScrollReveal>
   );
-}
+});

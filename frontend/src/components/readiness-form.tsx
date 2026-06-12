@@ -4,7 +4,7 @@
  * Interactive Readiness Check and Consolidated Mock Exam component.
  * Thin orchestrator — child components are code-split via next/dynamic.
  */
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { Clock, Flag } from "lucide-react";
@@ -198,6 +198,34 @@ export default function ReadinessForm() {
   const [timeLeft, setTimeLeft] = useState<number>(45);
   const [activeSubject, setActiveSubject] = useState<SubjectType>("Mathematics");
 
+  // Stable callbacks (declared before timer effect to avoid used-before-declaration)
+  const handleSelectOption = useCallback((optionIndex: number) => {
+    setSelectedAnswers((prev) => ({
+      ...prev,
+      [activeIndex]: optionIndex,
+    }));
+  }, [activeIndex]);
+
+  const handleNextQuestion = useCallback(() => {
+    if (activeIndex < activeQuestions.length - 1) {
+      setActiveIndex((prev) => prev + 1);
+      if (selectedType === "diagnostics") {
+        setTimeLeft(45);
+      }
+    } else {
+      setView("feedback");
+    }
+  }, [activeIndex, activeQuestions.length, selectedType]);
+
+  const handlePrevQuestion = useCallback(() => {
+    if (activeIndex > 0) {
+      setActiveIndex((prev) => prev - 1);
+      if (selectedType === "diagnostics") {
+        setTimeLeft(45);
+      }
+    }
+  }, [activeIndex, selectedType]);
+
   // Timer Effect
   useEffect(() => {
     if (view !== "active") return;
@@ -216,8 +244,7 @@ export default function ReadinessForm() {
     }, 1000);
 
     return () => clearInterval(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeLeft, view, selectedType]);
+  }, [timeLeft, view, selectedType, handleNextQuestion]);
 
   // Sync active subject in mock exam when active question changes
   useEffect(() => {
@@ -278,33 +305,6 @@ export default function ReadinessForm() {
       setTimeLeft(180 * 60);
       setActiveSubject("Mathematics");
       setView("active");
-    }
-  };
-
-  const handleSelectOption = (optionIndex: number) => {
-    setSelectedAnswers((prev) => ({
-      ...prev,
-      [activeIndex]: optionIndex,
-    }));
-  };
-
-  const handleNextQuestion = () => {
-    if (activeIndex < activeQuestions.length - 1) {
-      setActiveIndex((prev) => prev + 1);
-      if (selectedType === "diagnostics") {
-        setTimeLeft(45);
-      }
-    } else {
-      setView("feedback");
-    }
-  };
-
-  const handlePrevQuestion = () => {
-    if (activeIndex > 0) {
-      setActiveIndex((prev) => prev - 1);
-      if (selectedType === "diagnostics") {
-        setTimeLeft(45);
-      }
     }
   };
 
