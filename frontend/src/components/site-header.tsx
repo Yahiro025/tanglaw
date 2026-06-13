@@ -18,11 +18,31 @@ export default function SiteHeader() {
   const isDashboard = pathname?.startsWith("/dashboard");
   const isAuthenticated = status === "authenticated";
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolledAway, setScrolledAway] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const lastScrollY = useRef(0);
 
-  // Close mobile menu on route change
+  // Auto-hide header on scroll down, show on scroll up
   useEffect(() => {
+    if (isDashboard) return;
+    const handleScroll = () => {
+      const currentY = window.scrollY;
+      if (currentY > 60 && currentY > lastScrollY.current) {
+        setScrolledAway(true);
+      } else if (currentY < lastScrollY.current) {
+        if (currentY < 30) setScrolledAway(false);
+      }
+      lastScrollY.current = currentY;
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [isDashboard]);
+
+  // Reset scroll state on route change
+  useEffect(() => {
+    setScrolledAway(false);
     setMenuOpen(false);
+    lastScrollY.current = 0;
   }, [pathname]);
 
   // Close mobile menu on click outside
@@ -42,7 +62,7 @@ export default function SiteHeader() {
   }
 
   return (
-    <header className="relative z-50 w-full border-b border-white/10 bg-[color:var(--theme-component-backdrop)]">
+    <header className={`relative z-50 w-full border-b border-white/10 bg-[color:var(--theme-component-backdrop)] transition-all duration-500 ease-out ${scrolledAway ? "opacity-0 -translate-y-full pointer-events-none" : "opacity-100 translate-y-0"}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-24 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-3">
           <div className="h-12 w-12 rounded-full border border-white/10 bg-[color:var(--theme-surface)] shadow-lg shadow-black/20 flex items-center justify-center">
@@ -67,7 +87,7 @@ export default function SiteHeader() {
         <nav className="hidden md:flex items-center gap-2 text-[11px] uppercase tracking-[0.34em] text-[color:var(--theme-typography-secondary)] font-black">
           <Link
             href="/"
-            className={`transition px-3 py-2 rounded-full ${
+            className={`transition duration-500 px-3 py-2 rounded-full ${
               pathname === "/"
                 ? "border border-primary/20 bg-primary/75 text-white"
                 : "hover:text-[color:var(--theme-typography-main)]"
@@ -77,7 +97,7 @@ export default function SiteHeader() {
           </Link>
           <Link
             href="/about"
-            className={`transition px-3 py-2 rounded-full ${
+            className={`transition duration-500 px-3 py-2 rounded-full ${
               pathname === "/about"
                 ? "border border-primary/20 bg-primary/75 text-white"
                 : "hover:text-[color:var(--theme-typography-main)]"
@@ -87,7 +107,7 @@ export default function SiteHeader() {
           </Link>
           <Link
             href="/contact"
-            className={`transition px-3 py-2 rounded-full ${
+            className={`transition duration-500 px-3 py-2 rounded-full ${
               pathname === "/contact"
                 ? "border border-primary/20 bg-primary/75 text-white"
                 : "hover:text-[color:var(--theme-typography-main)]"

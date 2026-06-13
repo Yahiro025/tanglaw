@@ -6,7 +6,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
-import { DynamicNatureCanvas, DynamicParticlesBackground } from "@/components/dynamic-backgrounds";
+import { DynamicNatureCanvas } from "@/components/dynamic-backgrounds";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
 import NextAuthProvider from "@/components/NextAuthProvider";
@@ -48,7 +48,6 @@ export default function RootLayout({
       <body className="relative min-h-full flex flex-col bg-base-light text-text-primary">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
         <Suspense fallback={null}>
-          <DynamicParticlesBackground />
           <DynamicNatureCanvas />
         </Suspense>
 

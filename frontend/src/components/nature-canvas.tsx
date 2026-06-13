@@ -74,11 +74,26 @@ class LRUCache<K, V> {
   }
 }
 
-export default function NatureCanvas() {
+interface NatureCanvasProps {
+  countDesktop?: number;
+  countTablet?: number;
+  countMobile?: number;
+  className?: string;
+}
+
+export default function NatureCanvas({
+  countDesktop = 75,
+  countTablet = 55,
+  countMobile = 35,
+  className,
+}: NatureCanvasProps) {
   const pathname = usePathname();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const themeRef = useRef<"light" | "dark">("light");
   const reducedMotionRef = useRef(false);
+  const isVisibleRef = useRef(true);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Determine current theme — writes to ref only (animation loop reads from ref)
   const checkTheme = () => {
@@ -93,9 +108,35 @@ export default function NatureCanvas() {
     reducedMotionRef.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   };
 
+  // Idle timer: hide particles after 5s of no activity
+  const GLOW_CSS_VAR = "--particles-glow-filter";
+
+  const resetIdleTimer = () => {
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    idleTimerRef.current = setTimeout(() => {
+      isVisibleRef.current = false;
+      if (containerRef.current) containerRef.current.style.opacity = "0";
+    }, 5000);
+  };
+
+  const handleActivity = () => {
+    isVisibleRef.current = true;
+    if (containerRef.current) containerRef.current.style.opacity = "1";
+    resetIdleTimer();
+  };
+
   useEffect(() => {
     checkTheme();
     checkReducedMotion();
+
+    // Apply CSS glow variable
+    const isDark = themeRef.current === "dark";
+    document.documentElement.style.setProperty(
+      GLOW_CSS_VAR,
+      isDark
+        ? "drop-shadow(0 0 12px rgba(255,235,200,0.80)) drop-shadow(0 0 40px rgba(255,235,200,0.45)) drop-shadow(0 0 80px rgba(255,215,0,0.20))"
+        : "drop-shadow(0 0 14px rgba(29,78,216,0.75)) drop-shadow(0 0 40px rgba(124,58,237,0.35)) drop-shadow(0 0 80px rgba(29,78,216,0.15))"
+    );
 
     // Listen to storage event (works across tabs)
     window.addEventListener("storage", checkTheme);
@@ -110,11 +151,21 @@ export default function NatureCanvas() {
     const motionObserver = window.matchMedia("(prefers-reduced-motion: reduce)");
     motionObserver.addEventListener("change", checkReducedMotion);
 
+    // Idle timer: track user activity to pause particles when idle
+    window.addEventListener("mousemove", handleActivity, { passive: true });
+    window.addEventListener("scroll", handleActivity, { passive: true });
+    window.addEventListener("touchstart", handleActivity, { passive: true });
+    resetIdleTimer();
+
     return () => {
       window.removeEventListener("storage", checkTheme);
       window.removeEventListener("tanglaw-theme-change", checkTheme);
       observer.disconnect();
       motionObserver.removeEventListener("change", checkReducedMotion);
+      window.removeEventListener("mousemove", handleActivity);
+      window.removeEventListener("scroll", handleActivity);
+      window.removeEventListener("touchstart", handleActivity);
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     };
   }, []);
 
@@ -137,11 +188,11 @@ export default function NatureCanvas() {
     const FRAME_INTERVAL = 1000 / 30;
     let lastFrameTime = 0;
 
-    // Responsive particle count based on viewport width
+    // Responsive particle count based on viewport width (configurable via props)
     const getParticleCount = () => {
-      if (width >= 1024) return 75;
-      if (width >= 768) return 55;
-      return 35;
+      if (width >= 1024) return countDesktop;
+      if (width >= 768) return countTablet;
+      return countMobile;
     };
 
     // Particle colors depending on theme — reads from ref to avoid stale closures
@@ -325,6 +376,36 @@ export default function NatureCanvas() {
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
     window.addEventListener("mouseleave", handleMouseLeave);
     window.addEventListener("click", handleClick);
+
+    // Touch events for mobile particle interaction
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 0) return;
+      const touch = e.touches[0];
+      const dx = touch.clientX - mouse.x;
+      const dy = touch.clientY - mouse.y;
+      if (mouse.x !== -1000) {
+        mouse.windX = mouse.windX * 0.6 + dx * 0.4;
+        mouse.windY = mouse.windY * 0.6 + dy * 0.4;
+      }
+      mouse.x = touch.clientX;
+      mouse.y = touch.clientY;
+      mouse.active = true;
+    };
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 0) return;
+      const touch = e.touches[0];
+      mouse.x = touch.clientX;
+      mouse.y = touch.clientY;
+      mouse.active = true;
+    };
+    const handleTouchEnd = () => {
+      mouse.active = false;
+      mouse.x = -1000;
+      mouse.y = -1000;
+    };
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd);
 
     const draw = (timestamp: number) => {
       if (!isRunning) return;
@@ -666,6 +747,9 @@ export default function NatureCanvas() {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseleave", handleMouseLeave);
       window.removeEventListener("click", handleClick);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchend", handleTouchEnd);
       if (resizeTimeout) clearTimeout(resizeTimeout);
       intersectionObserver.disconnect();
       isRunning = false;
@@ -678,9 +762,15 @@ export default function NatureCanvas() {
   }
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="pointer-events-none fixed inset-0 -z-20 w-full h-full block"
-    />
+    <div
+      ref={containerRef}
+      className={`pointer-events-none fixed inset-0 z-[1] transition-opacity duration-700 ${className ?? ""}`}
+      style={{ filter: `var(${GLOW_CSS_VAR})` }}
+    >
+      <canvas
+        ref={canvasRef}
+        className="w-full h-full block"
+      />
+    </div>
   );
 }

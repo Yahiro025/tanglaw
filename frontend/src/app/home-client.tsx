@@ -30,22 +30,22 @@ export default function HomeClient() {
     <main className="relative z-10">
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         <div className="grid gap-12 lg:grid-cols-[0.95fr_0.85fr] items-center">
-          <ScrollReveal direction="left" className="space-y-8">
-            <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] uppercase tracking-[0.32em] text-[color:var(--theme-typography-secondary)] font-black shadow-lg shadow-black/20">
+          <div className="space-y-8">
+            <div className="animate-stagger-1 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] uppercase tracking-[0.32em] text-[color:var(--theme-typography-secondary)] font-black shadow-lg shadow-black/20">
               TANGLAW · SCHOLARSHIP COMPASS
             </div>
             <div className="max-w-3xl space-y-6">
-              <h1 className="font-display text-6xl font-black tracking-tight text-[color:var(--theme-typography-main)] bg-clip-text bg-gradient-to-r from-primary via-[color:var(--theme-accent-periwinkle)] to-[color:var(--theme-typography-main)] md:text-8xl select-none">
+              <h1 className="animate-stagger-2 font-display text-6xl font-black tracking-tight text-[color:var(--theme-typography-main)] bg-clip-text bg-gradient-to-r from-primary via-[color:var(--theme-accent-periwinkle)] to-[color:var(--theme-typography-main)] md:text-8xl select-none">
                 <GlowingText glowType="primary">TANGLAW</GlowingText>
               </h1>
-              <p className="text-lg font-medium leading-8 text-[color:var(--theme-typography-secondary)] md:text-xl">
+              <p className="animate-stagger-3 text-lg font-medium leading-8 text-[color:var(--theme-typography-secondary)] md:text-xl">
                 Scholarship access with the clarity of a{" "}
                 <GlowingText glowType="secondary" className="font-semibold text-[color:var(--theme-typography-main)]">
                   guiding light
                 </GlowingText>
                 .
               </p>
-              <div className="text-sm max-w-xl text-balance mt-4 opacity-80 leading-7 text-[color:var(--theme-text-body)]">
+              <div className="animate-stagger-4 text-sm max-w-xl text-balance mt-4 opacity-80 leading-7 text-[color:var(--theme-text-body)]">
                 <GlowingText glowType="primary">
                   Built specifically for tertiary students, TANGLAW unifies granular scholarship directories, natural
                   language verification, and mock screening tools into a unified portal—streamlining localized financial
@@ -54,7 +54,7 @@ export default function HomeClient() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="animate-stagger-4 flex flex-col gap-4 sm:flex-row sm:items-center">
               <HeroButton onClick={() => router.push("/signup")} variant="primary">
                 Begin your journey
               </HeroButton>
@@ -63,7 +63,7 @@ export default function HomeClient() {
               </HeroButton>
             </div>
 
-            <div className="flex flex-wrap gap-3 text-[11px] uppercase tracking-[0.28em] text-[color:var(--theme-typography-secondary)]">
+            <div className="animate-stagger-5 flex flex-wrap gap-3 text-[11px] uppercase tracking-[0.28em] text-[color:var(--theme-typography-secondary)]">
               <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2">
                 Scholarship Finder
               </span>
@@ -74,7 +74,7 @@ export default function HomeClient() {
                 Readiness Check
               </span>
             </div>
-          </ScrollReveal>
+          </div>
 
           <ScrollReveal direction="right" className="flex justify-center">
             <MascotWithGlow />

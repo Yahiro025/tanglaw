@@ -4,7 +4,7 @@
  * About page describing the project goals and team members.
  */
 import Image from "next/image";
-import { Users, BookOpen, Linkedin, ChevronLeft, ChevronRight } from "lucide-react";
+import { Users, BookOpen, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
@@ -495,7 +495,7 @@ export default function AboutPage() {
                   <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                     {DOCUMENTATION_TEAM.map((member, idx) => (
                       <ScrollReveal key={member.username} delay={0.05 * idx} direction="up">
-                        <div className="group flex flex-col items-center text-center h-full rounded-3xl border border-white/10 bg-[color:var(--theme-canvas)]/80 p-5                transition-all duration-200 hover:-translate-y-1 hover:bg-[color:var(--theme-canvas)]/95 shadow-md">
+                        <div className="group flex flex-col items-center text-center h-full rounded-3xl border border-white/10 bg-[color:var(--theme-canvas)]/80 p-5                transition-all duration-500 hover:-translate-y-1 hover:bg-[color:var(--theme-canvas)]/95 shadow-md">
                           <div className="relative h-24 w-24 mb-4 rounded-full overflow-hidden border-2 border-primary/40 bg-[color:var(--theme-surface)] shadow-inner">
                             <Image
                               src={`/team/${PHOTO_2_0[member.username] ?? `${member.username}.jpg`}`}
@@ -523,7 +523,7 @@ export default function AboutPage() {
                                 aria-label={`${member.name} on LinkedIn`}
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                <Linkedin className="h-5 w-5 text-white" />
+                                <ExternalLink className="h-5 w-5 text-white" />
                               </a>
                             </div>
                           </div>
@@ -541,7 +541,7 @@ export default function AboutPage() {
                   <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     {DEVELOPMENT_TEAM.map((member, idx) => (
                       <ScrollReveal key={member.username} delay={0.05 * idx} direction="up">
-                        <div className="group flex flex-col items-center text-center h-full rounded-3xl border border-white/10 bg-[color:var(--theme-canvas)]/80 p-5                transition-all duration-200 hover:-translate-y-1 hover:bg-[color:var(--theme-canvas)]/95 shadow-md">
+                        <div className="group flex flex-col items-center text-center h-full rounded-3xl border border-white/10 bg-[color:var(--theme-canvas)]/80 p-5                transition-all duration-500 hover:-translate-y-1 hover:bg-[color:var(--theme-canvas)]/95 shadow-md">
                           <div className="relative h-24 w-24 mb-4 rounded-full overflow-hidden border-2 border-primary/40 bg-[color:var(--theme-surface)] shadow-inner">
                             <Image
                               src={`/team/${PHOTO_2_0[member.username] ?? `${member.username}.jpg`}`}
@@ -569,7 +569,7 @@ export default function AboutPage() {
                                 aria-label={`${member.name} on LinkedIn`}
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                <Linkedin className="h-5 w-5 text-white" />
+                                <ExternalLink className="h-5 w-5 text-white" />
                               </a>
                             </div>
                           </div>

@@ -33,8 +33,8 @@ export function HeroButton({
 }) {
   const baseClass =
     variant === "primary"
-      ?      "inline-flex items-center justify-center rounded-full bg-primary px-8 py-3 text-sm font-bold uppercase tracking-[0.24em] text-white shadow-2xl shadow-black/20 transition-all duration-200 hover:bg-primary-hover cursor-pointer shadow-[var(--theme-glow-primary)]"
-      : "inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-8 py-3 text-sm font-bold uppercase tracking-[0.24em] text-[color:var(--theme-typography-main)] shadow-2xl shadow-black/15 transition duration-200 hover:bg-white/10 cursor-pointer";
+      ?      "inline-flex items-center justify-center rounded-full bg-primary px-8 py-3 text-sm font-bold uppercase tracking-[0.24em] text-white shadow-2xl shadow-black/20 transition-all duration-300 hover:bg-primary-hover cursor-pointer shadow-[var(--theme-glow-primary)]"
+      : "inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-8 py-3 text-sm font-bold uppercase tracking-[0.24em] text-[color:var(--theme-typography-main)] shadow-2xl shadow-black/15 transition duration-300 hover:bg-white/10 cursor-pointer";
 
   return (
     <motion.button whileHover={{ scale: 1.03 }} onClick={onClick} className={baseClass}>
@@ -95,11 +95,15 @@ export const FeatureCard = React.memo(function FeatureCard({
 }) {
   return (
     <ScrollReveal delay={delay} direction={direction}>
-      <article className="rounded-[2rem] border border-white/10 bg-[color:var(--theme-surface)] p-6 shadow-xl shadow-black/20 backdrop-blur-sm h-full hover:border-white/20 transition-all duration-300">
-        <p className="text-xs uppercase tracking-[0.34em] text-[color:var(--theme-typography-secondary)] font-bold">
-          {title}
-        </p>
-        <p className="mt-4 text-sm leading-7 text-[color:var(--theme-text-body)]">{description}</p>
+      <article className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[color:var(--theme-surface)] p-6 shadow-xl shadow-black/20 backdrop-blur-sm h-full hover:border-white/20 transition-all duration-500">
+        <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute -left-8 -bottom-8 h-20 w-20 rounded-full bg-[color:var(--theme-accent-periwinkle)]/5 blur-2xl" />
+        <div className="relative z-10">
+          <p className="text-xs uppercase tracking-[0.34em] text-[color:var(--theme-typography-secondary)] font-bold">
+            {title}
+          </p>
+          <p className="mt-4 text-sm leading-7 text-[color:var(--theme-text-body)]">{description}</p>
+        </div>
       </article>
     </ScrollReveal>
   );

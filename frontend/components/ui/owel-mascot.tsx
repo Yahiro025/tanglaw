@@ -42,10 +42,11 @@ export function OwelMascot({ className }: OwelMascotProps) {
     >
       {/* Single theme image — loads only the active theme's mascot */}
       <Image
-        src={isDark ? "/assets/owel-full-body.png" : "/assets/owel-full-body2.0.png"}
+        src={isDark ? "/assets/owel-full-body.webp" : "/assets/owel-full-body2.0.webp"}
         alt="Owel Mascot"
         width={MASCOT_SIZE}
         height={MASCOT_SIZE}
+        sizes="(max-width: 640px) 256px, (max-width: 1024px) 400px, 520px"
         className="absolute inset-0 object-contain select-none pointer-events-none transition-opacity duration-700 ease-in-out"
         priority
       />
