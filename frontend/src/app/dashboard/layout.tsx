@@ -121,8 +121,8 @@ export default function DashboardLayout({
               </Link>
             </div>
 
-            {/* Pill Nav — glassmorphism */}
-            <nav className="mx-auto flex items-center gap-1 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/60 px-3 py-2.5 shadow-[0_4px_30px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl sm:gap-2 sm:px-5 translate-x-4 sm:translate-x-8">
+            {/* Pill Nav — glassmorphism, hidden on mobile */}
+            <nav className="mx-auto hidden md:flex items-center gap-1 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/60 px-3 py-2.5 shadow-[0_4px_30px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl sm:gap-2 sm:px-5 translate-x-4 sm:translate-x-8">
               {[
                 { href: "/dashboard", label: "Overview" },
                 { href: "/dashboard/scholarships", label: "Scholarships" },
@@ -160,7 +160,7 @@ export default function DashboardLayout({
           </div>
 
           {/* Mobile hamburger */}
-          <div className="absolute right-4 top-4 sm:right-6 sm:top-5 sm:hidden" ref={menuRef}>
+          <div className="absolute right-3 top-3 sm:right-5 sm:top-4 sm:hidden" ref={menuRef}>
             <button
               onClick={() => setMenuOpen(!menuOpen)}
               className="flex items-center justify-center h-10 w-10 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/60 backdrop-blur-xl shadow-lg transition-all duration-500 hover:bg-[color:var(--theme-surface)]/80"
@@ -182,7 +182,7 @@ export default function DashboardLayout({
                   onClick={() => setMenuOpen(false)}
                   aria-hidden="true"
                 />
-                <div className="absolute top-14 right-0 z-50 w-56 overflow-hidden rounded-2xl border border-white/10 bg-[color:var(--theme-surface)]/80 backdrop-blur-xl shadow-2xl shadow-black/30 origin-top transition-all duration-150">
+                <div className="absolute top-12 right-0 z-50 w-52 overflow-hidden rounded-2xl border border-white/10 bg-[color:var(--theme-surface)]/80 backdrop-blur-xl shadow-2xl shadow-black/30 origin-top transition-all duration-150">
                   <nav className="flex flex-col gap-1 p-3 text-[11px] uppercase tracking-[0.18em] font-semibold">
                     {[
                       { href: "/dashboard", label: "Overview" },
