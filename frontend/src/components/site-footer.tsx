@@ -17,7 +17,7 @@ export default function SiteFooter() {
   }
 
   return (
-    <footer className="bg-[color:var(--theme-component-backdrop)] border-t border-white/5 py-8 px-4 mt-auto">
+    <footer className="relative z-10 bg-[color:var(--theme-component-backdrop)] border-t border-white/5 py-8 px-4 mt-auto">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
         <div className="text-center md:text-left">
           <p className="text-[11px] uppercase tracking-[0.3em] text-[color:var(--theme-typography-secondary)] font-black">
