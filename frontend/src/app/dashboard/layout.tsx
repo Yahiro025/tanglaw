@@ -109,11 +109,15 @@ export default function DashboardLayout({
           onMouseLeave={() => setHovered(false)}
         >
           <div className="relative flex w-full max-w-4xl items-center">
-            {/* DASHBOARD wordmark */}
+            {/* DASHBOARD logo + wordmark */}
             <div className="absolute -left-2 top-1/2 -translate-y-1/2 sm:-left-4">
-              <Link href="/dashboard" className="inline-flex items-center gap-2 font-display text-lg font-black uppercase tracking-[0.18em] sm:text-xl bg-gradient-to-r from-primary via-[color:var(--theme-accent-periwinkle)] to-primary bg-clip-text text-transparent">
-                <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                Dashboard
+              <Link href="/dashboard" className="flex items-center gap-2" aria-label="Go to dashboard">
+                <div className="h-8 w-8 shrink-0 rounded-full border border-white/10 bg-[color:var(--theme-surface)] shadow-lg shadow-black/20 flex items-center justify-center">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                </div>
+                <span className="font-display text-lg font-black uppercase tracking-[0.12em] text-[color:var(--theme-typography-main)] sm:text-xl whitespace-nowrap">
+                  Dashboard
+                </span>
               </Link>
             </div>
 
