@@ -17,6 +17,15 @@
  */
 
 import { AgentDefinition } from './types/agent-definition'
+import { createHandleSteps } from './handle-steps-template'
+
+const FREE_MODEL = (() => {
+  try {
+    return require('./model-config').resolveModel()
+  } catch {
+    return 'deepseek/deepseek-v4-flash'
+  }
+})()
 
 const definition: AgentDefinition = {
   id: 'thinker-with-files-gemini',
@@ -27,7 +36,7 @@ const definition: AgentDefinition = {
     'Task decomposition specialist. Use to break a large coding task into parallel subtasks ' +
     'for cascade execution. Pass filePaths param with relevant file list. Always returns a JSON array.',
 
-  model: 'google/gemini-3.1-flash-lite:free',
+  model: FREE_MODEL,
 
   reasoningOptions: {
     enabled: true,
@@ -85,6 +94,8 @@ You receive a task description and optionally a list of relevant file paths.
   {"subtask": "Implement the business logic and API routes", "specialist": "base", "focus": "Core implementation"},
   {"subtask": "Write unit and integration tests", "specialist": "testgen", "focus": "Test coverage"}
 ]`,
+
+  handleSteps: createHandleSteps(),
 }
 
 export default definition

@@ -45,8 +45,9 @@ const definition: AgentDefinition = {
     'write_file',
     'str_replace',
     'run_terminal_command',
-    'find_files',
-    'end_turn', 'think_deeply'],
+    'end_turn',
+    'think_deeply',
+  ],
 
   spawnableAgents: [],
 

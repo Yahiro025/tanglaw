@@ -43,7 +43,6 @@ const definition: AgentDefinition = {
     'run_terminal_command',
     'spawn_agents',
     'think_deeply',
-    'find_files',
     'end_turn',
   ],
 

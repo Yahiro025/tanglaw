@@ -33,6 +33,7 @@
  */
 
 import { AgentDefinition } from './types/agent-definition'
+import { createHandleSteps } from './handle-steps-template'
 
 const FREE_MODEL = require('./model-config').resolveModel()
 
@@ -224,6 +225,8 @@ const definition: AgentDefinition = {
     'Continue the regex audit. Fix all ❌ errors and ⚠️ ReDoS warnings. ' +
     'Call end_turn only when the basher scan reports REGEX GUARD PASSED ' +
     'with 0 errors remaining.',
+
+  handleSteps: createHandleSteps(),
 }
 
 export default definition

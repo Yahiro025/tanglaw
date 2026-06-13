@@ -33,6 +33,7 @@
  */
 
 import { AgentDefinition } from './types/agent-definition'
+import { createHandleSteps } from './handle-steps-template'
 
 const FREE_MODEL = require('./model-config').resolveModel()
 
@@ -166,6 +167,8 @@ const definition: AgentDefinition = {
     'Continue reasoning through the Socratic protocol. ' +
     'If you are on STEP 5 or 6, run your tests before calling end_turn. ' +
     'Do not call end_turn while any ⚠ UNCERTAIN items are unresolved or any tests are failing.',
+
+  handleSteps: createHandleSteps(),
 }
 
 export default definition
