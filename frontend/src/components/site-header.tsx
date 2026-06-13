@@ -40,8 +40,12 @@ export default function SiteHeader() {
   const isAuthenticated = status === "authenticated";
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolledAway, setScrolledAway] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
+
+  // Visibility: home page = only on hover; other pages = visible unless scrolled away, hover overrides
+  const isVisible = hovered || (!isHome && !scrolledAway);
 
   useEffect(() => {
     if (isDashboard) return;
@@ -80,11 +84,23 @@ export default function SiteHeader() {
   }
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-center px-4 pt-4 sm:px-6 sm:pt-5 transition-all duration-700 ease-out ${
-        scrolledAway ? "opacity-0 -translate-y-4 pointer-events-none" : "opacity-100 translate-y-0"
-      }`}
-    >
+    <>
+      {/* Invisible trigger zone at top — reveals navbar on hover when hidden */}
+      {!isVisible && (
+        <div
+          className="fixed top-0 left-0 right-0 z-[60] h-20"
+          onMouseEnter={() => setHovered(true)}
+          aria-hidden="true"
+        />
+      )}
+
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-center px-4 pt-4 sm:px-6 sm:pt-5 transition-all duration-700 ease-out ${
+          isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none"
+        }`}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
       <div className="relative flex w-full max-w-4xl items-center">
         {/* TANGLAW wordmark — visible on non-home pages */}
         <div
@@ -234,5 +250,6 @@ export default function SiteHeader() {
         )}
       </div>
     </header>
+    </>
   );
 }
