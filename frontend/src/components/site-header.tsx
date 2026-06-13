@@ -108,7 +108,7 @@ export default function SiteHeader() {
       <div className="relative flex w-full max-w-4xl items-center">
         {/* TANGLAW logo + wordmark — visible on non-home pages */}
         <div
-          className={`absolute -left-2 top-1/2 translate-y-[calc(-50%+4px)] sm:translate-y-[-50%] transition-all duration-700 sm:-left-4 ${
+          className={`absolute -left-2 top-1/2 translate-y-[calc(-50%+10px)] sm:translate-y-[-50%] transition-all duration-700 sm:-left-4 ${
             !isHome
               ? "pointer-events-auto translate-x-0 opacity-100"
               : "pointer-events-none -translate-x-6 opacity-0"
