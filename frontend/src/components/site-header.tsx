@@ -2,27 +2,47 @@
 
 /**
  * Global site header shown on public pages.
+ * Pill-shaped glassmorphism navbar inspired by Landas.
  * Hides itself when the user is inside dashboard routes.
  */
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Menu, X } from "lucide-react";
 import ThemeChanger from "@/components/theme-changer";
 
+function NavLink({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className={`group relative rounded-full px-3.5 py-1.5 text-[10px] font-semibold tracking-[0.18em] uppercase transition-all duration-500 sm:px-4 ${
+        active
+          ? "bg-primary/15 text-primary"
+          : "text-[color:var(--theme-typography-secondary)] hover:bg-white/5 hover:text-[color:var(--theme-typography-main)]"
+      }`}
+    >
+      {children}
+      <span
+        className={`absolute -bottom-0.5 left-1/2 h-px -translate-x-1/2 rounded-full bg-primary/40 transition-all duration-500 ${
+          active ? "w-3/5 opacity-100" : "w-0 opacity-0 group-hover:w-2/5 group-hover:opacity-60"
+        }`}
+      />
+    </Link>
+  );
+}
+
 export default function SiteHeader() {
   const pathname = usePathname();
   const { status } = useSession();
   const isDashboard = pathname?.startsWith("/dashboard");
+  const isHome = pathname === "/";
   const isAuthenticated = status === "authenticated";
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolledAway, setScrolledAway] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
 
-  // Auto-hide header on scroll down, show on scroll up
   useEffect(() => {
     if (isDashboard) return;
     const handleScroll = () => {
@@ -38,14 +58,12 @@ export default function SiteHeader() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isDashboard]);
 
-  // Reset scroll state on route change
   useEffect(() => {
     setScrolledAway(false);
     setMenuOpen(false);
     lastScrollY.current = 0;
   }, [pathname]);
 
-  // Close mobile menu on click outside
   useEffect(() => {
     if (!menuOpen) return;
     function handleClick(e: MouseEvent) {
@@ -62,179 +80,158 @@ export default function SiteHeader() {
   }
 
   return (
-    <header className={`relative z-50 w-full border-b border-white/10 bg-[color:var(--theme-component-backdrop)] transition-all duration-500 ease-out ${scrolledAway ? "opacity-0 -translate-y-full pointer-events-none" : "opacity-100 translate-y-0"}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-24 flex items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-full border border-white/10 bg-[color:var(--theme-surface)] shadow-lg shadow-black/20 flex items-center justify-center">
-            <Image
-              src="/assets/owel-head.png"
-              alt="Owel Logo Avatar"
-              width={38}
-              height={38}
-              className="object-cover"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="font-display text-xl font-black tracking-[0.12em] text-[color:var(--theme-typography-main)]">
-              TANGLAW
-            </span>
-            <span className="rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-primary shadow-sm">
-              Beta
-            </span>
-          </div>
-        </Link>
-
-        <nav className="hidden md:flex items-center gap-2 text-[11px] uppercase tracking-[0.34em] text-[color:var(--theme-typography-secondary)] font-black">
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-center px-4 pt-4 sm:px-6 sm:pt-5 transition-all duration-700 ease-out ${
+        scrolledAway ? "opacity-0 -translate-y-4 pointer-events-none" : "opacity-100 translate-y-0"
+      }`}
+    >
+      <div className="relative flex w-full max-w-4xl items-center">
+        {/* TANGLAW wordmark — visible on non-home pages */}
+        <div
+          className={`absolute -left-2 top-1/2 -translate-y-1/2 transition-all duration-700 sm:-left-4 ${
+            !isHome
+              ? "pointer-events-auto translate-x-0 opacity-100"
+              : "pointer-events-none -translate-x-6 opacity-0"
+          }`}
+        >
           <Link
             href="/"
-            className={`transition duration-500 px-3 py-2 rounded-full ${
-              pathname === "/"
-                ? "border border-primary/20 bg-primary/75 text-white"
-                : "hover:text-[color:var(--theme-typography-main)]"
-            }`}
+            className="font-display text-2xl font-black tracking-widest sm:text-3xl bg-gradient-to-r from-primary via-[color:var(--theme-accent-periwinkle)] to-primary bg-clip-text text-transparent"
+            aria-label="Go to home"
           >
+            TANGLAW
+          </Link>
+        </div>
+
+        {/* Pill Nav — glassmorphism */}
+        <nav
+          className={`mx-auto flex items-center gap-1 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/60 px-3 py-2.5 shadow-[0_4px_30px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl transition-all duration-700 sm:gap-2 sm:px-5 ${
+            !isHome ? "translate-x-4 sm:translate-x-8" : ""
+          }`}
+        >
+          <NavLink href="/" active={pathname === "/"}>
             Home
-          </Link>
-          <Link
-            href="/about"
-            className={`transition duration-500 px-3 py-2 rounded-full ${
-              pathname === "/about"
-                ? "border border-primary/20 bg-primary/75 text-white"
-                : "hover:text-[color:var(--theme-typography-main)]"
-            }`}
-          >
+          </NavLink>
+          <NavLink href="/about" active={pathname === "/about"}>
             About
-          </Link>
-          <Link
-            href="/contact"
-            className={`transition duration-500 px-3 py-2 rounded-full ${
-              pathname === "/contact"
-                ? "border border-primary/20 bg-primary/75 text-white"
-                : "hover:text-[color:var(--theme-typography-main)]"
-            }`}
-          >
+          </NavLink>
+          <NavLink href="/contact" active={pathname === "/contact"}>
             Contact
-          </Link>
+          </NavLink>
+
+          <div className="mx-1 h-4 w-px bg-white/10 sm:mx-2" />
+
           {isAuthenticated ? (
-            <Link
-              href="/dashboard"
-              className={`transition px-4 py-2 rounded-full ${
-                pathname?.startsWith("/dashboard")
-                  ? "border border-primary/20 bg-primary/75 text-white hover:bg-primary-hover"
-                  : "hover:text-[color:var(--theme-typography-main)]"
-              }`}
-            >
+            <NavLink href="/dashboard" active={pathname?.startsWith("/dashboard") ?? false}>
               Dashboard
-            </Link>
+            </NavLink>
           ) : (
             <>
-              <Link
-                href="/login"
-                className="rounded-full border border-white/10 bg-[color:var(--theme-surface)]/70 px-4 py-2 transition hover:bg-[color:var(--theme-surface)]"
-              >
+              <NavLink href="/login" active={pathname === "/login"}>
                 Log In
-              </Link>
+              </NavLink>
               <Link
                 href="/signup"
-                className="rounded-full border border-primary/20 bg-primary/75 px-4 py-2 text-white transition hover:bg-primary-hover"
+                className="rounded-full bg-primary/90 px-4 py-1.5 text-[10px] font-semibold tracking-[0.18em] uppercase text-white shadow-[0_0_16px_rgba(27,64,121,0.2)] transition-all duration-500 hover:bg-primary hover:shadow-[0_0_20px_rgba(27,64,121,0.3)]"
               >
                 Sign Up
               </Link>
             </>
           )}
-        </nav>
 
-        <div className="flex items-center gap-3" ref={menuRef}>
-          {/* Mobile hamburger */}
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="md:hidden flex items-center justify-center h-10 w-10 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/80 hover:bg-[color:var(--theme-surface)] transition"
-            aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
-            aria-expanded={menuOpen}
-          >
-            {menuOpen ? (
-              <X className="h-5 w-5 text-[color:var(--theme-typography-main)]" />
-            ) : (
-              <Menu className="h-5 w-5 text-[color:var(--theme-typography-main)]" />
-            )}
-          </button>
-
-          {/* Mobile backdrop + dropdown panel */}
-          {menuOpen && (
-            <>
-              <div
-                className="fixed inset-0 z-40 md:hidden bg-black/35 transition-opacity duration-150"
-                onClick={() => setMenuOpen(false)}
-                aria-hidden="true"
-              />
-              <div
-                className="absolute top-24 left-0 right-0 z-50 md:hidden border-b border-white/10 bg-[color:var(--theme-component-backdrop)] shadow-2xl shadow-black/30 origin-top transition-all duration-150 opacity-100 translate-y-0"
-              >
-                <nav className="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex flex-col gap-3 text-[11px] uppercase tracking-[0.34em] text-[color:var(--theme-typography-secondary)] font-black">
-                  <Link
-                    href="/"
-                    className={`transition px-4 py-3 rounded-full ${
-                      pathname === "/"
-                        ? "border border-primary/20 bg-primary/75 text-white"
-                        : "hover:text-[color:var(--theme-typography-main)] hover:bg-white/5"
-                    }`}
-                  >
-                    Home
-                  </Link>
-                  <Link
-                    href="/about"
-                    className={`transition px-4 py-3 rounded-full ${
-                      pathname === "/about"
-                        ? "border border-primary/20 bg-primary/75 text-white"
-                        : "hover:text-[color:var(--theme-typography-main)] hover:bg-white/5"
-                    }`}
-                  >
-                    About
-                  </Link>
-                  <Link
-                    href="/contact"
-                    className={`transition px-4 py-3 rounded-full ${
-                      pathname === "/contact"
-                        ? "border border-primary/20 bg-primary/75 text-white"
-                        : "hover:text-[color:var(--theme-typography-main)] hover:bg-white/5"
-                    }`}
-                  >
-                    Contact
-                  </Link>
-                  {isAuthenticated ? (
-                    <Link
-                      href="/dashboard"
-                      className={`transition px-4 py-3 rounded-full ${
-                        pathname?.startsWith("/dashboard")
-                          ? "border border-primary/20 bg-primary/75 text-white"
-                          : "hover:text-[color:var(--theme-typography-main)] hover:bg-white/5"
-                      }`}
-                    >
-                      Dashboard
-                    </Link>
-                  ) : (
-                    <>
-                      <Link
-                        href="/login"
-                        className="rounded-full border border-white/10 bg-[color:var(--theme-surface)]/70 px-4 py-3 transition hover:bg-[color:var(--theme-surface)]"
-                      >
-                        Log In
-                      </Link>
-                      <Link
-                        href="/signup"
-                        className="rounded-full border border-primary/20 bg-primary/75 px-4 py-3 text-white transition hover:bg-primary-hover"
-                      >
-                        Sign Up
-                      </Link>
-                    </>
-                  )}
-                </nav>
-              </div>
-            </>
-          )}
+          <div className="mx-1 h-4 w-px bg-white/10 sm:mx-2" />
 
           <ThemeChanger />
-        </div>
+        </nav>
+      </div>
+
+      {/* Mobile hamburger — positioned absolutely */}
+      <div className="absolute right-4 top-4 sm:right-6 sm:top-5 md:hidden" ref={menuRef}>
+        <button
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="flex items-center justify-center h-10 w-10 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/60 backdrop-blur-xl shadow-lg transition-all duration-500 hover:bg-[color:var(--theme-surface)]/80"
+          aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+          aria-expanded={menuOpen}
+        >
+          {menuOpen ? (
+            <X className="h-5 w-5 text-[color:var(--theme-typography-main)]" />
+          ) : (
+            <Menu className="h-5 w-5 text-[color:var(--theme-typography-main)]" />
+          )}
+        </button>
+
+        {menuOpen && (
+          <>
+            <div
+              className="fixed inset-0 z-40 bg-black/35 transition-opacity duration-150"
+              style={{ top: "100%" }}
+              onClick={() => setMenuOpen(false)}
+              aria-hidden="true"
+            />
+            <div className="absolute top-14 right-0 z-50 w-56 overflow-hidden rounded-2xl border border-white/10 bg-[color:var(--theme-surface)]/80 backdrop-blur-xl shadow-2xl shadow-black/30 origin-top transition-all duration-150">
+              <nav className="flex flex-col gap-1 p-3 text-[11px] uppercase tracking-[0.18em] font-semibold">
+                <Link
+                  href="/"
+                  className={`rounded-full px-4 py-2.5 transition-all duration-300 ${
+                    pathname === "/"
+                      ? "bg-primary/15 text-primary"
+                      : "text-[color:var(--theme-typography-secondary)] hover:bg-white/5 hover:text-[color:var(--theme-typography-main)]"
+                  }`}
+                >
+                  Home
+                </Link>
+                <Link
+                  href="/about"
+                  className={`rounded-full px-4 py-2.5 transition-all duration-300 ${
+                    pathname === "/about"
+                      ? "bg-primary/15 text-primary"
+                      : "text-[color:var(--theme-typography-secondary)] hover:bg-white/5 hover:text-[color:var(--theme-typography-main)]"
+                  }`}
+                >
+                  About
+                </Link>
+                <Link
+                  href="/contact"
+                  className={`rounded-full px-4 py-2.5 transition-all duration-300 ${
+                    pathname === "/contact"
+                      ? "bg-primary/15 text-primary"
+                      : "text-[color:var(--theme-typography-secondary)] hover:bg-white/5 hover:text-[color:var(--theme-typography-main)]"
+                  }`}
+                >
+                  Contact
+                </Link>
+                {isAuthenticated ? (
+                  <Link
+                    href="/dashboard"
+                    className={`rounded-full px-4 py-2.5 transition-all duration-300 ${
+                      pathname?.startsWith("/dashboard")
+                        ? "bg-primary/15 text-primary"
+                        : "text-[color:var(--theme-typography-secondary)] hover:bg-white/5 hover:text-[color:var(--theme-typography-main)]"
+                    }`}
+                  >
+                    Dashboard
+                  </Link>
+                ) : (
+                  <>
+                    <div className="my-1 h-px bg-white/10" />
+                    <Link
+                      href="/login"
+                      className="rounded-full px-4 py-2.5 text-[color:var(--theme-typography-secondary)] hover:bg-white/5 hover:text-[color:var(--theme-typography-main)] transition-all duration-300"
+                    >
+                      Log In
+                    </Link>
+                    <Link
+                      href="/signup"
+                      className="rounded-full bg-primary/90 px-4 py-2.5 text-center text-white transition-all duration-300 hover:bg-primary"
+                    >
+                      Sign Up
+                    </Link>
+                  </>
+                )}
+              </nav>
+            </div>
+          </>
+        )}
       </div>
     </header>
   );
