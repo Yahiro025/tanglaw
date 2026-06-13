@@ -7,6 +7,7 @@
  */
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Menu, X } from "lucide-react";
@@ -105,7 +106,7 @@ export default function SiteHeader() {
         onMouseLeave={() => setHovered(false)}
       >
       <div className="relative flex w-full max-w-4xl items-center">
-        {/* TANGLAW wordmark — visible on non-home pages */}
+        {/* TANGLAW logo + wordmark — visible on non-home pages */}
         <div
           className={`absolute -left-2 top-1/2 -translate-y-1/2 transition-all duration-700 sm:-left-4 ${
             !isHome
@@ -113,12 +114,22 @@ export default function SiteHeader() {
               : "pointer-events-none -translate-x-6 opacity-0"
           }`}
         >
-          <Link
-            href="/"
-            className="font-display text-2xl font-black tracking-widest sm:text-3xl bg-gradient-to-r from-primary via-[color:var(--theme-accent-periwinkle)] to-primary bg-clip-text text-transparent"
-            aria-label="Go to home"
-          >
-            TANGLAW
+          <Link href="/" className="flex items-center gap-2" aria-label="Go to home">
+            <div className="h-9 w-9 rounded-full border border-white/10 bg-[color:var(--theme-surface)] shadow-lg shadow-black/20 flex items-center justify-center">
+              <Image
+                src="/assets/owel-head.png"
+                alt="Owel Logo"
+                width={30}
+                height={30}
+                className="object-cover"
+              />
+            </div>
+            <span className="font-display text-xl font-black tracking-[0.12em] text-[color:var(--theme-typography-main)]">
+              TANGLAW
+            </span>
+            <span className="rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-primary shadow-sm">
+              Beta
+            </span>
           </Link>
         </div>
 
