@@ -4,7 +4,7 @@
  * About page describing the project goals and team members.
  */
 import Image from "next/image";
-import { Users, BookOpen, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
+import { Users, BookOpen, Linkedin, ChevronLeft, ChevronRight } from "lucide-react";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
@@ -523,7 +523,7 @@ export default function AboutPage() {
                                 aria-label={`${member.name} on LinkedIn`}
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                <ExternalLink className="h-5 w-5 text-white" />
+                                <Linkedin className="h-5 w-5 text-white" />
                               </a>
                             </div>
                           </div>
@@ -569,7 +569,7 @@ export default function AboutPage() {
                                 aria-label={`${member.name} on LinkedIn`}
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                <ExternalLink className="h-5 w-5 text-white" />
+                                <Linkedin className="h-5 w-5 text-white" />
                               </a>
                             </div>
                           </div>
