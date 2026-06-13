@@ -1,25 +1,33 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { Search, Bot, BookOpen } from "lucide-react";
 import ScrollReveal from "@/components/scroll-reveal";
 import { GlowingText } from "../../components/ui/glowing-text";
 import { HeroButton, MascotWithGlow, FeatureCard } from "../../components/ui/landing-animations";
+import { SectionDivider } from "@/components/ui/section-divider";
 
 const FEATURES = [
   {
     title: "Scholarship Discovery",
     description:
       "Browse grant opportunities, filter by academic standing, location, and program requirements.",
+    icon: Search,
+    accent: "periwinkle" as const,
   },
   {
     title: "AI Guidance",
     description:
       "Get contextual answers from Owel, the intelligent companion built to simplify requirements and eligibility.",
+    icon: Bot,
+    accent: "rose" as const,
   },
   {
     title: "Exam Readiness",
     description:
       "Track your preparation with interactive mock drills and analytics designed for scholarship performance.",
+    icon: BookOpen,
+    accent: "muted" as const,
   },
 ];
 
@@ -34,18 +42,18 @@ export default function HomeClient() {
             <div className="animate-stagger-1 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] uppercase tracking-[0.32em] text-[color:var(--theme-typography-secondary)] font-black shadow-lg shadow-black/20">
               TANGLAW · SCHOLARSHIP COMPASS
             </div>
-            <div className="max-w-3xl space-y-6">
-              <h1 className="animate-stagger-2 font-display text-6xl font-black tracking-tight text-[color:var(--theme-typography-main)] bg-clip-text bg-gradient-to-r from-primary via-[color:var(--theme-accent-periwinkle)] to-[color:var(--theme-typography-main)] md:text-8xl select-none">
+            <div className="max-w-3xl space-y-3">
+              <h1 className="animate-stagger-2 font-display text-[length:var(--text-display)] font-black tracking-tight text-[color:var(--theme-typography-main)] bg-clip-text bg-gradient-to-r from-primary via-[color:var(--theme-accent-periwinkle)] to-[color:var(--theme-typography-main)] md:text-[length:var(--text-display)] select-none">
                 <GlowingText glowType="primary">TANGLAW</GlowingText>
               </h1>
-              <p className="animate-stagger-3 text-lg font-medium leading-8 text-[color:var(--theme-typography-secondary)] md:text-xl">
+              <p className="animate-stagger-3 text-lg font-medium leading-relaxed text-[color:var(--theme-typography-secondary)] md:text-xl">
                 Scholarship access with the clarity of a{" "}
                 <GlowingText glowType="secondary" className="font-semibold text-[color:var(--theme-typography-main)]">
                   guiding light
                 </GlowingText>
                 .
               </p>
-              <div className="animate-stagger-4 text-sm max-w-xl text-balance mt-4 opacity-80 leading-7 text-[color:var(--theme-text-body)]">
+              <div className="animate-stagger-4 text-sm max-w-xl text-balance mt-4 opacity-80 leading-relaxed text-[color:var(--theme-text-body)]">
                 <GlowingText glowType="primary">
                   Built specifically for tertiary students, TANGLAW unifies granular scholarship directories, natural
                   language verification, and mock screening tools into a unified portal—streamlining localized financial
@@ -82,7 +90,9 @@ export default function HomeClient() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 pb-24 sm:px-6 lg:px-8">
+      <SectionDivider variant="wave" />
+
+      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         <div className="grid gap-6 md:grid-cols-3">
           {FEATURES.map((item, idx) => (
             <FeatureCard key={item.title} delay={0.08 * idx} direction="up" {...item} />

@@ -33,9 +33,7 @@
  */
 
 import { AgentDefinition } from './types/agent-definition'
-import { createHandleSteps } from './handle-steps-template'
-
-const FREE_MODEL = require('./model-config').resolveModel()
+import { resolveModel } from './model-config'
 
 const REASONER_SYSTEM = `You are MetaBuff's deep reasoning specialist.
 You are invoked for tasks that require genuine algorithmic thinking — not code lookup or boilerplate.
@@ -133,7 +131,7 @@ const definition: AgentDefinition = {
     'solution is known to be wrong. Uses maximum reasoning effort and a 6-step ' +
     'Socratic protocol (understand → challenge → explore → select → implement → prove).',
 
-  model: FREE_MODEL,
+  model: resolveModel(),
 
   reasoningOptions: {
     enabled: true,
@@ -163,12 +161,127 @@ const definition: AgentDefinition = {
   systemPrompt: REASONER_SYSTEM,
   instructionsPrompt: REASONER_INSTRUCTIONS,
 
-  stepPrompt:
-    'Continue reasoning through the Socratic protocol. ' +
-    'If you are on STEP 5 or 6, run your tests before calling end_turn. ' +
-    'Do not call end_turn while any ⚠ UNCERTAIN items are unresolved or any tests are failing.',
+  handleSteps: function* ({ prompt }) {
+    // Phase 0: ORIENT
+    yield {
+      toolName: 'think_deeply',
+      input: {
+        thought: [
+          '=== PHASE 0: ORIENT ===',
+          '',
+          `TASK: ${prompt}`,
+          '',
+          'You are the MetaBuff Deep Reasoner. Follow the 6-step Socratic protocol in your systemPrompt.',
+          'Read your instructionsPrompt to understand the methodology.',
+          '',
+          '1. CLASSIFY the task domain.',
+          '2. MAP to your Socratic methodology (UNDERSTAND → CHALLENGE → EXPLORE → SELECT → IMPLEMENT → PROVE).',
+          '3. IDENTIFY likely files based on the task description.',
+          '',
+          'Proceed to Phase 1 (DISCOVER).',
+        ].join('\n'),
+      },
+    }
 
-  handleSteps: createHandleSteps(),
+    // Phase 1: DISCOVER
+    const promptKeywords = prompt
+      .toLowerCase()
+      .match(/[a-z]{4,}/g)
+      ?.filter(w =>
+        !['this','that','with','from','have','will','your','into','when',
+          'them','they','what','file','code','make','want','need','just',
+          'like','some','more','then','also','than','even','only','over',
+          'back','here','there','their','been','were','does','dont','should',
+          'would','could','change','update','every','other','same','such',
+          'very','much','many','well','still','down','first','last','next',
+        ].includes(w)
+      )
+      ?.slice(0, 6) ?? ['typescript', 'algorithm', 'function', 'export']
+
+    const componentNames = prompt.match(/\b[A-Z][a-z]+(?:[A-Z][a-z]+)+\b/g) ?? []
+    const searchTargets = [...promptKeywords, ...componentNames.slice(0, 4)]
+
+    yield {
+      toolName: 'code_search',
+      input: {
+        searchQueries: [{
+          pattern: searchTargets.join('|'),
+          flags: '-g *.ts -g *.tsx -g *.js -g *.jsx',
+          maxResults: 15,
+        }],
+      },
+    }
+
+    // Phase 2: READ
+    const filePatterns = prompt.match(/[\w.\/-]+\.(ts|tsx|js|jsx|json)/g) ?? []
+    const kebabComponents = componentNames
+      .map(c => c.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase())
+      .slice(0, 3)
+    const configPaths = ['package.json', 'tsconfig.json']
+    const allPathsToRead = [...new Set([...filePatterns, ...kebabComponents, ...configPaths])]
+      .filter(p => !p.startsWith('node_modules') && !p.startsWith('.git'))
+      .slice(0, 8)
+
+    yield {
+      toolName: 'read_files',
+      input: { paths: allPathsToRead.length > 0 ? allPathsToRead : ['package.json'] },
+    }
+
+    // Phase 3: PLAN
+    yield {
+      toolName: 'think_deeply',
+      input: {
+        thought: [
+          '=== PHASE 3: PLAN ===',
+          '',
+          'You have searched the codebase and read relevant files.',
+          'Based on your Socratic protocol (UNDERSTAND → CHALLENGE → EXPLORE → SELECT):',
+          '',
+          'Create an ACTION PLAN with:',
+          '  FILE: <path>',
+          '  ACTION: <str_replace | write_file | no_change>',
+          '  WHAT: <specific description>',
+          '  WHY: <reason>',
+          '',
+          'Proceed to Phase 4 (IMPLEMENT).',
+        ].join('\n'),
+      },
+    }
+
+    // Phase 4: IMPLEMENT
+    yield {
+      toolName: 'think_deeply',
+      input: {
+        thought: [
+          '=== PHASE 4: IMPLEMENT ===',
+          '',
+          'Execute your plan from Phase 3.',
+          'Use str_replace for targeted edits. Use write_file only for new files.',
+          'Add inline complexity annotations (e.g. // O(n) — linear scan).',
+          'Write the TEST CASE before the implementation.',
+          '',
+          'After completing your work, proceed to Phase 5 (PROVE).',
+        ].join('\n'),
+      },
+    }
+
+    // Phase 5: PROVE — run tests + typecheck
+    yield {
+      toolName: 'run_terminal_command',
+      input: {
+        command: 'echo "=== TESTS ===" && (bun test 2>&1 || npx vitest run 2>&1 || npx jest 2>&1) | tail -20',
+      },
+    }
+
+    yield {
+      toolName: 'run_terminal_command',
+      input: {
+        command: 'echo "=== TYPE CHECK ===" && (bun run typecheck 2>/dev/null || npx tsc --noEmit 2>&1) | head -30',
+      },
+    }
+
+    // Generator returns → Freebuff calls end_turn automatically.
+  },
 }
 
 export default definition

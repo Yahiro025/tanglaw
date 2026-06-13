@@ -4,15 +4,17 @@
  * Layout wrapper for dashboard pages.
  * Applies secure guard, header navigation, and embedded chatbot UI.
  */
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { LogOut, Sparkles, Menu, X } from "lucide-react";
+import { LogOut, Sparkles } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import dynamic from "next/dynamic";
 import AuthGuard from "@/components/AuthGuard";
 import NextAuthProvider from "@/components/NextAuthProvider";
 import ThemeChanger from "@/components/theme-changer";
+import PillNav from "@/components/pill-nav";
+import { useScrollHide } from "@/hooks/use-scroll-hide";
 
 const EtheralShadow = dynamic(
   () => import("../../../components/ui/etheral-shadow").then((mod) => mod.EtheralShadow),
@@ -32,47 +34,7 @@ export default function DashboardLayout({
 }>) {
   const router = useRouter();
   const pathname = usePathname();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [scrolledAway, setScrolledAway] = useState(false);
-  const [hovered, setHovered] = useState(false);
-  const [atTop, setAtTop] = useState(true);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const lastScrollY = useRef(0);
-
-  const isVisible = hovered || atTop || !scrolledAway;
-
-  // Auto-hide on scroll down, show on scroll up
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentY = window.scrollY;
-      setAtTop(currentY < 30);
-      if (currentY > 60 && currentY > lastScrollY.current) {
-        setScrolledAway(true);
-      } else if (currentY < lastScrollY.current) {
-        if (currentY < 30) setScrolledAway(false);
-      }
-      lastScrollY.current = currentY;
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  // Close mobile menu on route change
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [pathname]);
-
-  // Close mobile menu on click outside
-  useEffect(() => {
-    if (!menuOpen) return;
-    function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [menuOpen]);
+  const { isVisible, setHovered } = useScrollHide();
 
   const handleSignOut = async () => {
     try {
@@ -82,6 +44,49 @@ export default function DashboardLayout({
     }
     router.push("/login");
   };
+
+  const navItems = [
+    { href: "/dashboard", label: "Overview" },
+    { href: "/dashboard/scholarships", label: "Scholarships" },
+    { href: "/dashboard/readiness", label: "Readiness" },
+  ];
+
+  const actionsSlot = (
+    <>
+      <ThemeChanger />
+      <button
+        onClick={handleSignOut}
+        className="rounded-full px-3 py-1.5 text-[10px] font-semibold tracking-[0.18em] uppercase text-[color:var(--theme-typography-secondary)] transition-all duration-500 hover:bg-white/5 hover:text-[color:var(--theme-typography-main)] sm:px-4"
+      >
+        Logout
+      </button>
+    </>
+  );
+
+  const mobileExtra = (
+    <>
+      <button
+        onClick={handleSignOut}
+        className="flex items-center justify-center gap-2 rounded-full bg-primary/90 px-4 py-2.5 text-white transition-all duration-300 hover:bg-primary"
+      >
+        <LogOut className="h-4 w-4" />
+        Sign Out
+      </button>
+    </>
+  );
+
+  const logoSlot = (
+    <div className="hidden sm:block">
+      <Link href="/dashboard" className="flex items-center gap-2" aria-label="Go to dashboard">
+        <div className="h-8 w-8 shrink-0 rounded-full border border-white/10 bg-[color:var(--theme-surface)] shadow-lg shadow-black/20 flex items-center justify-center">
+          <Sparkles className="h-4 w-4 text-primary" />
+        </div>
+        <span className="font-display text-lg font-black uppercase tracking-[0.12em] text-[color:var(--theme-typography-main)] sm:text-xl whitespace-nowrap">
+          Dashboard
+        </span>
+      </Link>
+    </div>
+  );
 
   return (
     <NextAuthProvider>
@@ -111,110 +116,12 @@ export default function DashboardLayout({
           onMouseLeave={() => setHovered(false)}
         >
           <div className="relative flex w-full max-w-4xl items-center">
-            {/* DASHBOARD logo + wordmark — hidden on small screens to prevent overflow */}
-            <div className="absolute -left-2 top-3 sm:top-1/2 sm:translate-y-[calc(-50%+6px)] sm:-left-4 hidden sm:block">
-              <Link href="/dashboard" className="flex items-center gap-2" aria-label="Go to dashboard">
-                <div className="h-8 w-8 shrink-0 rounded-full border border-white/10 bg-[color:var(--theme-surface)] shadow-lg shadow-black/20 flex items-center justify-center">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                </div>
-                <span className="font-display text-lg font-black uppercase tracking-[0.12em] text-[color:var(--theme-typography-main)] sm:text-xl whitespace-nowrap">
-                  Dashboard
-                </span>
-              </Link>
-            </div>
-
-            {/* Pill Nav — glassmorphism, hidden on mobile */}
-            <nav className="mx-auto hidden md:flex items-center gap-1 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/60 px-3 py-2.5 shadow-[0_4px_30px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl sm:gap-2 sm:px-5 translate-x-4 sm:translate-x-8">
-              {[
-                { href: "/dashboard", label: "Overview" },
-                { href: "/dashboard/scholarships", label: "Scholarships" },
-                { href: "/dashboard/readiness", label: "Readiness" },
-              ].map(({ href, label }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`group relative rounded-full px-3.5 py-1.5 text-[10px] font-semibold tracking-[0.18em] uppercase transition-all duration-500 sm:px-4 ${
-                    pathname === href
-                      ? "bg-primary/15 text-primary"
-                      : "text-[color:var(--theme-typography-secondary)] hover:bg-white/5 hover:text-[color:var(--theme-typography-main)]"
-                  }`}
-                >
-                  {label}
-                  <span
-                    className={`absolute -bottom-0.5 left-1/2 h-px -translate-x-1/2 rounded-full bg-primary/40 transition-all duration-500 ${
-                      pathname === href ? "w-3/5 opacity-100" : "w-0 opacity-0 group-hover:w-2/5 group-hover:opacity-60"
-                    }`}
-                  />
-                </Link>
-              ))}
-
-              <div className="mx-1 h-4 w-px bg-white/10 sm:mx-2" />
-
-              <ThemeChanger />
-
-              <button
-                onClick={handleSignOut}
-                className="rounded-full px-3 py-1.5 text-[10px] font-semibold tracking-[0.18em] uppercase text-[color:var(--theme-typography-secondary)] transition-all duration-500 hover:bg-white/5 hover:text-[color:var(--theme-typography-main)] sm:px-4"
-              >
-                Logout
-              </button>
-            </nav>
-          </div>
-
-          {/* Mobile hamburger */}
-          <div className="absolute right-3 top-3 sm:right-5 sm:top-4 sm:hidden" ref={menuRef}>
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="flex items-center justify-center h-10 w-10 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/60 backdrop-blur-xl shadow-lg transition-all duration-500 hover:bg-[color:var(--theme-surface)]/80"
-              aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
-              aria-expanded={menuOpen}
-            >
-              {menuOpen ? (
-                <X className="h-5 w-5 text-[color:var(--theme-typography-main)]" />
-              ) : (
-                <Menu className="h-5 w-5 text-[color:var(--theme-typography-main)]" />
-              )}
-            </button>
-
-            {menuOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-40 bg-black/35 transition-opacity duration-150"
-                  style={{ top: "100%" }}
-                  onClick={() => setMenuOpen(false)}
-                  aria-hidden="true"
-                />
-                <div className="absolute top-12 right-0 z-50 w-52 overflow-hidden rounded-2xl border border-white/10 bg-[color:var(--theme-surface)]/80 backdrop-blur-xl shadow-2xl shadow-black/30 origin-top transition-all duration-150">
-                  <nav className="flex flex-col gap-1 p-3 text-[11px] uppercase tracking-[0.18em] font-semibold">
-                    {[
-                      { href: "/dashboard", label: "Overview" },
-                      { href: "/dashboard/scholarships", label: "Scholarships" },
-                      { href: "/dashboard/readiness", label: "Readiness" },
-                    ].map(({ href, label }) => (
-                      <Link
-                        key={href}
-                        href={href}
-                        className={`rounded-full px-4 py-2.5 transition-all duration-300 ${
-                          pathname === href
-                            ? "bg-primary/15 text-primary"
-                            : "text-[color:var(--theme-typography-secondary)] hover:bg-white/5 hover:text-[color:var(--theme-typography-main)]"
-                        }`}
-                      >
-                        {label}
-                      </Link>
-                    ))}
-                    <div className="my-1 h-px bg-white/10" />
-                    <button
-                      onClick={handleSignOut}
-                      className="flex items-center justify-center gap-2 rounded-full bg-primary/90 px-4 py-2.5 text-white transition-all duration-300 hover:bg-primary"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      Sign Out
-                    </button>
-                  </nav>
-                </div>
-              </>
-            )}
+            <PillNav
+              items={navItems}
+              logoSlot={logoSlot}
+              actionsSlot={actionsSlot}
+              mobileExtra={mobileExtra}
+            />
           </div>
         </header>
 

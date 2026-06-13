@@ -13,9 +13,7 @@
  */
 
 import { AgentDefinition } from './types/agent-definition'
-import { createHandleSteps } from './handle-steps-template'
-
-const FREE_MODEL = require('./model-config').resolveModel()
+import { resolveModel } from './model-config'
 
 const definition: AgentDefinition = {
   id: 'metabuff-arch',
@@ -26,7 +24,7 @@ const definition: AgentDefinition = {
     'Spawn for architecture concerns: data model design, API contract definition, ' +
     'component structure, dependency analysis, or system-level design decisions.',
 
-  model: FREE_MODEL,
+  model: resolveModel(),
 
   reasoningOptions: {
     enabled: true,
@@ -96,11 +94,34 @@ For your assigned architectural subtask:
    - code_searcher for every new type you defined to make sure it's used correctly
    - Make sure no circular imports were introduced (check imports in changed files)`,
 
-  stepPrompt:
-    'Continue the architectural work. ' +
-    'If you have completed the design and implementation, verify consistency and call end_turn.',
-
-  handleSteps: createHandleSteps(),
+  handleSteps: function* ({ prompt }) {
+    const promptKeywords = prompt.toLowerCase().match(/[a-z]{4,}/g)
+      ?.filter(w => !['this','that','with','from','have','will','your','into','when','them','they','what','file','code','make','want','need','just','like','some','more','then','also','than','even','only','over','back','here','there','their','been','were','does','dont','should','would','could','change','update','every','other','same','such','very','much','many','well','still','down','first','last','next'].includes(w))
+      ?.slice(0, 6) ?? ['schema', 'interface', 'type', 'component']
+    const componentNames = prompt.match(/\b[A-Z][a-z]+(?:[A-Z][a-z]+)+\b/g) ?? []
+    const searchTargets = [...promptKeywords, ...componentNames.slice(0, 4)]
+    yield {
+      toolName: 'code_search',
+      input: { searchQueries: [{ pattern: searchTargets.join('|'), flags: '-g *.ts -g *.tsx', maxResults: 15 }] },
+    }
+    const filePatterns = prompt.match(/[\w.\/-]+\.(ts|tsx|js|jsx|json)/g) ?? []
+    const configPaths = ['package.json', 'tsconfig.json']
+    const paths = [...new Set([...filePatterns, ...configPaths])].filter(p => !p.startsWith('node_modules')).slice(0, 8)
+    yield {
+      toolName: 'read_files',
+      input: { paths: paths.length > 0 ? paths : ['package.json'] },
+    }
+    yield {
+      toolName: 'think_deeply',
+      input: {
+        thought: `Architecture task: ${prompt}. You have discovered the codebase. Design changes — define types first, then interfaces, then implementations. Verify no circular imports. Use str_replace for targeted edits, write_file for new files.`,
+      },
+    }
+    yield {
+      toolName: 'run_terminal_command',
+      input: { command: 'echo "=== TYPE CHECK ===" && (bun run typecheck 2>/dev/null || npx tsc --noEmit 2>&1) | head -30' },
+    }
+  },
 }
 
 export default definition

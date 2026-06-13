@@ -9,6 +9,7 @@ import { Mail, MapPin, Building2, Send, CheckCircle2 } from "lucide-react";
 import dynamic from "next/dynamic";
 import ScrollReveal from "@/components/scroll-reveal";
 import { GlowingText } from "../../../components/ui/glowing-text";
+import { SectionDivider } from "@/components/ui/section-divider";
 
 const EtheralShadow = dynamic(
   () => import("../../../components/ui/etheral-shadow").then((mod) => mod.EtheralShadow),
@@ -62,6 +63,8 @@ export default function ContactPage() {
             </p>
           </header>
         </ScrollReveal>
+
+        <SectionDivider variant="gradient" colorFrom="var(--theme-canvas)" colorTo="var(--theme-surface)" />
 
         <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
           <ScrollReveal direction="left" className="h-full">

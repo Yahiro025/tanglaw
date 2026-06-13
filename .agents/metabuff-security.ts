@@ -14,9 +14,7 @@
  */
 
 import { AgentDefinition } from './types/agent-definition'
-import { createHandleSteps } from './handle-steps-template'
-
-const FREE_MODEL = require('./model-config').resolveModel()
+import { resolveModel } from './model-config'
 
 /** Common insecure patterns to search for and eliminate */
 const SECURITY_RED_FLAGS = [
@@ -49,7 +47,7 @@ const definition: AgentDefinition = {
     'Spawn for security-critical work: authentication, authorization, input validation, ' +
     'secrets management, SQL injection prevention, or any feature touching user data.',
 
-  model: FREE_MODEL,
+  model: resolveModel(),
 
   reasoningOptions: {
     enabled: true,
@@ -128,12 +126,24 @@ ${SECURITY_RED_FLAGS.map((_, i) => `   code_searcher searchQueries: [{ pattern: 
    - Run the test suite after your changes
    - Specifically run any auth-related tests`,
 
-  stepPrompt:
-    'Continue the security work. ' +
-    'Fix all vulnerabilities you have identified. ' +
-    'Call end_turn only when all red flags are resolved and tests pass.',
-
-  handleSteps: createHandleSteps(),
+  handleSteps: function* ({ prompt }) {
+    yield {
+      toolName: 'think_deeply',
+      input: {
+        thought: `Security audit task: ${prompt}. Search for vulnerability patterns: hardcoded secrets, eval(), innerHTML, SQL injection. Read all auth-related files. Plan your fixes.`,
+      },
+    }
+    yield {
+      toolName: 'think_deeply',
+      input: {
+        thought: `Implement security fixes for: ${prompt}. Add input validation, authorization checks, parameterized queries. Use str_replace for surgical edits. Add // SECURITY: comments.`,
+      },
+    }
+    yield {
+      toolName: 'run_terminal_command',
+      input: { command: 'echo "=== TYPE CHECK ===" && (bun run typecheck 2>/dev/null || npx tsc --noEmit 2>&1) | head -30' },
+    }
+  },
 }
 
 export default definition

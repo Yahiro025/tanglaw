@@ -8,16 +8,17 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { Clock, Flag } from "lucide-react";
+import { ReadinessSetupSkeleton, ReadinessQuestionSkeleton, ReadinessFeedbackSkeleton } from "@/components/ui/skeleton";
 
 // ─── Code-split child components ──────────────────────────────────────────
 const ReadinessSetup = dynamic(() => import("./readiness-setup"), {
-  loading: () => <div className="h-[600px] animate-pulse rounded-[2rem] bg-[color:var(--theme-surface)]" />,
+  loading: () => <ReadinessSetupSkeleton />,
 });
 const ReadinessQuestion = dynamic(() => import("./readiness-question"), {
-  loading: () => <div className="h-[400px] animate-pulse rounded-[2rem] bg-[color:var(--theme-surface)]" />,
+  loading: () => <ReadinessQuestionSkeleton />,
 });
 const ReadinessFeedback = dynamic(() => import("./readiness-feedback"), {
-  loading: () => <div className="h-[500px] animate-pulse rounded-[2rem] bg-[color:var(--theme-surface)]" />,
+  loading: () => <ReadinessFeedbackSkeleton />,
 });
 
 // ─── Types ─────────────────────────────────────────────────────────────────

@@ -1,16 +1,11 @@
 import { AgentDefinition } from './types/agent-definition'
+import { resolveModel } from './model-config'
 
 const definition: AgentDefinition = {
   id: 'metabuff-autonomous',
   version: '1.0.1',
   displayName: 'MetaBuff Autonomous (Long-Horizon Loop)',
-  model: (() => {
-    try {
-      return require('./model-config').resolveModel()
-    } catch {
-      return 'deepseek/deepseek-v4-flash'
-    }
-  })(),
+  model: resolveModel(),
   spawnerPrompt:
     'Spawn MetaBuff Autonomous for long-horizon, overnight, or from-scratch tasks. ' +
     'It decomposes work into phases, executes them sequentially with checkpoint recovery, ' +

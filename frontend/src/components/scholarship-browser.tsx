@@ -6,6 +6,7 @@
  */
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { Filter, ArrowUp } from "lucide-react";
+import { ScholarshipCardSkeleton } from "@/components/ui/skeleton";
 import ScholarshipFilterPanel from "./scholarship-filter-panel";
 import ScholarshipCard from "./scholarship-card";
 import ScholarshipPagination from "./scholarship-pagination";
@@ -227,7 +228,7 @@ export default function ScholarshipBrowser() {
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {[1, 2, 3, 4].map(i => (
-              <div key={i} className="bg-[color:var(--theme-surface)]/80 border-2 border-accent-muted/40 rounded-[2rem] p-6 h-64 animate-pulse" />
+              <ScholarshipCardSkeleton key={i} />
             ))}
           </div>
         ) : filteredScholarships.length > 0 ? (

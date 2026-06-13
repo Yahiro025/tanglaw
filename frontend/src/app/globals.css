@@ -151,6 +151,30 @@ body {
   background: var(--theme-borders-system, #7F9C96);
 }
 
+/* ── Typography Rhythm Scale ── */
+@theme {
+  /* Section spacing */
+  --space-section-gap: 5rem;
+  --space-section-padding-y: 5rem;
+
+  /* Component spacing */
+  --space-component-gap: 1.5rem;
+  --space-element-gap: 1rem;
+
+  /* Text spacing */
+  --space-heading-to-body: 0.75rem;
+  --space-paragraph: 1rem;
+
+  /* Typography sizes (enforced scale) */
+  --text-display: 4rem;
+  --text-h1: 2.5rem;
+  --text-h2: 2rem;
+  --text-h3: 1.5rem;
+  --text-body: 1rem;
+  --text-caption: 0.875rem;
+  --text-xs: 0.75rem;
+}
+
 /* Custom Range Slider Thumb */
 input[type="range"].readiness-slider::-webkit-slider-thumb {
   -webkit-appearance: none;

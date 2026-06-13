@@ -78,6 +78,7 @@
  */
 
 import { AgentDefinition } from './types/agent-definition'
+import { resolveModel } from './model-config'
 
 const definition: AgentDefinition = {
   id: 'metabuff-mega',
@@ -90,13 +91,7 @@ const definition: AgentDefinition = {
     'MetaBuff Mega decomposes the task into up to 8 subtasks and runs them in ' +
     'cascade waves of ≤4 parallel agents (Antigravity 2.0 pattern, Freebuff-safe).',
 
-  model: (() => {
-    try {
-      return require('./model-config').resolveModel()
-    } catch {
-      return 'deepseek/deepseek-v4-flash'
-    }
-  })(),  // v4-pro confirmed available in free tier; v4-flash was 403 in sub-agent spawns
+  model: resolveModel(),
 
   reasoningOptions: {
     enabled: true,

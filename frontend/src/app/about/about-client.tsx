@@ -10,6 +10,7 @@ import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import ScrollReveal from "@/components/scroll-reveal";
 import { GlowingText } from "../../../components/ui/glowing-text";
+import { SectionDivider } from "@/components/ui/section-divider";
 
 const EtheralShadow = dynamic(
   () => import("../../../components/ui/etheral-shadow").then((mod) => mod.EtheralShadow),
@@ -274,7 +275,7 @@ function CarouselSection() {
   }, [handleScroll, pauseAutoPlay]);
 
   return (
-    <section className="mb-24 relative">
+    <section className="relative py-20">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -403,8 +404,10 @@ export default function AboutClient() {
           </header>
         </ScrollReveal>
 
+        <SectionDivider variant="gradient" colorFrom="var(--theme-canvas)" colorTo="var(--theme-surface)" />
+
         <ScrollReveal direction="up">
-          <section className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] items-start mb-20">
+          <section className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] items-start py-20">
             <div className="rounded-[2rem] border border-white/10 bg-[color:var(--theme-surface)]/90 p-8 shadow-2xl shadow-black/25 backdrop-blur-sm">
               <div className="mb-6 flex items-center gap-3 rounded-full bg-white/5 px-4 py-2 text-[10px] uppercase tracking-[0.28em] text-[color:var(--theme-typography-secondary)] font-black">
                 <BookOpen className="h-4 w-4" /> Our mission
@@ -431,7 +434,7 @@ export default function AboutClient() {
         </ScrollReveal>
 
         <ScrollReveal direction="up">
-          <section className="mb-20">
+          <section className="py-20">
             <div className="text-center mb-10">
               <p className="text-[10px] uppercase tracking-[0.34em] text-[color:var(--theme-typography-secondary)] font-black">The Barriers to Brilliance</p>
               <h2 className="mt-4 text-3xl font-black text-[color:var(--theme-typography-main)]">What students face today</h2>
@@ -448,6 +451,8 @@ export default function AboutClient() {
             </div>
           </section>
         </ScrollReveal>
+
+        <SectionDivider variant="wave" flip />
 
         <CarouselSection />
 

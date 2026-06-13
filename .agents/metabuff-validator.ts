@@ -34,9 +34,7 @@
  */
 
 import { AgentDefinition } from './types/agent-definition'
-import { createHandleSteps } from './handle-steps-template'
-
-const FREE_MODEL = require('./model-config').resolveModel()
+import { resolveModel } from './model-config'
 
 const VALIDATOR_SYSTEM_PROMPT = `You are MetaBuff's Superpowers-enhanced anti-hallucination validator.
 Your ONLY job is to audit changes made by other agents and fix any problems.
@@ -170,7 +168,7 @@ const definition: AgentDefinition = {
     'Catches ghost imports, phantom edits, broken tests, incomplete TODOs, ' +
     'runtime-invalid regex patterns, and function signature mismatches.',
 
-  model: FREE_MODEL,
+  model: resolveModel(),
 
   reasoningOptions: {
     enabled: true,
@@ -202,12 +200,26 @@ const definition: AgentDefinition = {
   systemPrompt: VALIDATOR_SYSTEM_PROMPT,
   instructionsPrompt: VALIDATOR_INSTRUCTIONS,
 
-  stepPrompt:
-    'Continue auditing. ' +
-    'If you have found and fixed all issues, output your final VALIDATION PASSED/FAILED summary and call end_turn. ' +
-    'Do not call end_turn while there are unresolved issues or while a regex scan is pending.',
-
-  handleSteps: createHandleSteps(),
+  handleSteps: function* ({ prompt }) {
+    yield {
+      toolName: 'run_terminal_command',
+      input: { command: 'git diff HEAD --name-only' },
+    }
+    yield {
+      toolName: 'think_deeply',
+      input: {
+        thought: `Validate changes for: ${prompt}. Read every changed file. Check: ghost imports, phantom edits, TODOs, broken tests, type consistency. Fix issues with str_replace.`,
+      },
+    }
+    yield {
+      toolName: 'run_terminal_command',
+      input: { command: 'echo "=== TESTS ===" && (bun test 2>&1 || npx vitest run 2>&1 || npx jest 2>&1) | tail -30' },
+    }
+    yield {
+      toolName: 'run_terminal_command',
+      input: { command: 'echo "=== TYPE CHECK ===" && (bun run typecheck 2>/dev/null || npx tsc --noEmit 2>&1) | head -30' },
+    }
+  },
 }
 
 export default definition

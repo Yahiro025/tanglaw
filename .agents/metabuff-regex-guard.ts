@@ -33,9 +33,7 @@
  */
 
 import { AgentDefinition } from './types/agent-definition'
-import { createHandleSteps } from './handle-steps-template'
-
-const FREE_MODEL = require('./model-config').resolveModel()
+import { resolveModel } from './model-config'
 
 /**
  * Shell script that validates regex patterns in all changed .ts/.tsx/.js files.
@@ -197,7 +195,7 @@ const definition: AgentDefinition = {
     'ALSO spawn proactively on ALL AI-generated code — LLMs frequently produce ' +
     'runtime-invalid regex that TypeScript\'s type checker silently accepts.',
 
-  model: FREE_MODEL,
+  model: resolveModel(),
 
   reasoningOptions: {
     enabled: true,
@@ -221,12 +219,18 @@ const definition: AgentDefinition = {
   systemPrompt: REGEX_GUARD_SYSTEM,
   instructionsPrompt: REGEX_GUARD_INSTRUCTIONS,
 
-  stepPrompt:
-    'Continue the regex audit. Fix all ❌ errors and ⚠️ ReDoS warnings. ' +
-    'Call end_turn only when the basher scan reports REGEX GUARD PASSED ' +
-    'with 0 errors remaining.',
-
-  handleSteps: createHandleSteps(),
+  handleSteps: function* ({ prompt }) {
+    yield {
+      toolName: 'think_deeply',
+      input: {
+        thought: `Regex guard for: ${prompt}. Run the REGEX_SCAN_COMMAND from your instructionsPrompt via run_terminal_command. Triage findings: fix INVALID patterns, document ReDoS warnings, verify escapes.`,
+      },
+    }
+    yield {
+      toolName: 'run_terminal_command',
+      input: { command: 'echo "=== REGEX GUARD ===" && git diff HEAD --name-only 2>/dev/null | grep -E "\\.(ts|tsx|js|jsx)$" | head -20' },
+    }
+  },
 }
 
 export default definition

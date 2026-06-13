@@ -16,9 +16,7 @@
  */
 
 import { AgentDefinition } from './types/agent-definition'
-import { createHandleSteps } from './handle-steps-template'
-
-const FREE_MODEL = require('./model-config').resolveModel()
+import { resolveModel } from './model-config'
 
 const definition: AgentDefinition = {
   id: 'metabuff-testgen',
@@ -30,7 +28,7 @@ const definition: AgentDefinition = {
     'Writes unit tests, integration tests, and edge-case coverage ' +
     'matching the project\'s existing test style.',
 
-  model: FREE_MODEL,
+  model: resolveModel(),
 
   reasoningOptions: {
     enabled: true,
@@ -113,12 +111,31 @@ For your test generation subtask:
    - If the SOURCE CODE is wrong, fix the source code and report it
    - All tests must pass before you finish`,
 
-  stepPrompt:
-    'Continue generating tests. ' +
-    'Run each test file as you write it. ' +
-    'Call end_turn only when all tests are written and passing.',
-
-  handleSteps: createHandleSteps(),
+  handleSteps: function* ({ prompt }) {
+    const promptKeywords = prompt.toLowerCase().match(/[a-z]{4,}/g)
+      ?.filter(w => !['this','that','with','from','have','will','your','into','when','them','they','what','file','code','make','want','need','just','like','some','more','then','also','than','even','only','over'].includes(w))
+      ?.slice(0, 6) ?? ['test', 'spec', 'function', 'export']
+    yield {
+      toolName: 'code_search',
+      input: { searchQueries: [{ pattern: promptKeywords.join('|'), flags: '-g *.test.ts -g *.spec.ts -g *.test.tsx', maxResults: 10 }] },
+    }
+    yield {
+      toolName: 'think_deeply',
+      input: {
+        thought: `Test generation task: ${prompt}. Read 2-3 existing test files to match project style. Plan your test files covering happy path, error paths, edge cases.`,
+      },
+    }
+    yield {
+      toolName: 'think_deeply',
+      input: {
+        thought: `Write tests for: ${prompt}. Use write_file for new test files, str_replace to add to existing ones. Run each test as you write it.`,
+      },
+    }
+    yield {
+      toolName: 'run_terminal_command',
+      input: { command: 'echo "=== RUN TESTS ===" && (bun test 2>&1 || npx vitest run 2>&1 || npx jest 2>&1) | tail -30' },
+    }
+  },
 }
 
 export default definition
