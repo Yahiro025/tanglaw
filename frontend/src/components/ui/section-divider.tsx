@@ -42,7 +42,7 @@ function SectionDivider({
   if (variant === "gradient") {
     return (
       <div
-        className="w-full h-20 sm:h-24 md:h-32"
+        className="w-full h-12 sm:h-16 md:h-20"
         style={{
           background: `linear-gradient(to bottom, ${colorFrom}, ${colorTo})`,
         }}

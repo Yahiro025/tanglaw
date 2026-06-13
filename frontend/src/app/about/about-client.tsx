@@ -452,7 +452,7 @@ export default function AboutClient() {
           </section>
         </ScrollReveal>
 
-        <SectionDivider variant="wave" flip />
+        <SectionDivider variant="gradient" colorFrom="var(--theme-surface)" colorTo="var(--theme-canvas)" />
 
         <CarouselSection />
 

@@ -65,6 +65,9 @@ export default function DashboardLayout({
 
   const mobileExtra = (
     <>
+      <div className="flex justify-center">
+        <ThemeChanger />
+      </div>
       <button
         onClick={handleSignOut}
         className="flex items-center justify-center gap-2 rounded-full bg-primary/90 px-4 py-2.5 text-white transition-all duration-300 hover:bg-primary"

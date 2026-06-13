@@ -117,18 +117,26 @@ export default function SiteHeader() {
   );
 
   const mobileExtra = isAuthenticated ? (
-    <Link
-      href="/dashboard"
-      className={`rounded-full px-4 py-2.5 transition-all duration-300 ${
-        pathname?.startsWith("/dashboard")
-          ? "bg-primary/15 text-primary"
-          : "text-[color:var(--theme-typography-secondary)] hover:bg-white/5 hover:text-[color:var(--theme-typography-main)]"
-      }`}
-    >
-      Dashboard
-    </Link>
+    <>
+      <div className="flex justify-center">
+        <ThemeChanger />
+      </div>
+      <Link
+        href="/dashboard"
+        className={`rounded-full px-4 py-2.5 transition-all duration-300 ${
+          pathname?.startsWith("/dashboard")
+            ? "bg-primary/15 text-primary"
+            : "text-[color:var(--theme-typography-secondary)] hover:bg-white/5 hover:text-[color:var(--theme-typography-main)]"
+        }`}
+      >
+        Dashboard
+      </Link>
+    </>
   ) : (
     <>
+      <div className="flex justify-center">
+        <ThemeChanger />
+      </div>
       <Link
         href="/login"
         className="rounded-full px-4 py-2.5 text-[color:var(--theme-typography-secondary)] hover:bg-white/5 hover:text-[color:var(--theme-typography-main)] transition-all duration-300"
@@ -169,6 +177,9 @@ export default function SiteHeader() {
             actionsSlot={actionsSlot}
             mobileExtra={mobileExtra}
           />
+          <div className="absolute right-0 top-0 hidden md:flex items-center gap-2 md:right-2 md:top-1/2 md:-translate-y-1/2">
+            <ThemeChanger />
+          </div>
         </div>
       </header>
     </>

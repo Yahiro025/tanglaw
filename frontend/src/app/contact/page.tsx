@@ -67,8 +67,8 @@ export default function ContactPage() {
         <SectionDivider variant="gradient" colorFrom="var(--theme-canvas)" colorTo="var(--theme-surface)" />
 
         <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
-          <ScrollReveal direction="left" className="h-full">
-            <section className="rounded-[2rem] border border-white/10 bg-[color:var(--theme-surface)]/90 p-8 shadow-2xl shadow-black/20 backdrop-blur-sm h-full flex flex-col justify-center">
+          <ScrollReveal direction="left">
+            <section className="rounded-[2rem] border border-white/10 bg-[color:var(--theme-surface)]/90 p-8 shadow-2xl shadow-black/20 backdrop-blur-sm">
               <div className="space-y-6">
                 <div className="inline-flex items-center gap-3 rounded-full bg-white/5 px-4 py-2 text-[10px] uppercase tracking-[0.32em] text-[color:var(--theme-typography-secondary)] font-black">
                   Support Node
