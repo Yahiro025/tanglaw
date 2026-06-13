@@ -110,7 +110,7 @@ export default function DashboardLayout({
         >
           <div className="relative flex w-full max-w-4xl items-center">
             {/* DASHBOARD logo + wordmark — hidden on small screens to prevent overflow */}
-            <div className="absolute -left-2 top-1/2 -translate-y-1/2 sm:-left-4 hidden sm:block">
+            <div className="absolute -left-2 top-1/2 translate-y-[calc(-50%+6px)] sm:-left-4 hidden sm:block">
               <Link href="/dashboard" className="flex items-center gap-2" aria-label="Go to dashboard">
                 <div className="h-8 w-8 shrink-0 rounded-full border border-white/10 bg-[color:var(--theme-surface)] shadow-lg shadow-black/20 flex items-center justify-center">
                   <Sparkles className="h-4 w-4 text-primary" />
