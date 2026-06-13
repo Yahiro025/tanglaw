@@ -6,7 +6,7 @@
 import Image from "next/image";
 import { Users, BookOpen, Linkedin, ChevronLeft, ChevronRight } from "lucide-react";
 import { useRef, useState, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 import ScrollReveal from "@/components/scroll-reveal";
 import { GlowingText } from "../../../components/ui/glowing-text";
@@ -190,59 +190,28 @@ const PILLARS = [
 ];
 
 function CarouselSection() {
-  const carouselRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const activeIndexRef = useRef(0);
   const autoPlayRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pauseUntilRef = useRef(0);
-  const isProgrammaticScroll = useRef(false);
 
-  const getCardWidth = useCallback(() => {
-    if (!carouselRef.current?.children[0]) return 364;
-    return (carouselRef.current.children[0] as HTMLElement).offsetWidth + 24;
-  }, []);
-
-  const scrollTo = useCallback((index: number) => {
-    if (!carouselRef.current) return;
-    isProgrammaticScroll.current = true;
-    const cardWidth = getCardWidth();
-    carouselRef.current.scrollTo({
-      left: index * cardWidth,
-      behavior: "smooth",
-    });
+  const goTo = useCallback((index: number) => {
     activeIndexRef.current = index;
     setActiveIndex(index);
-  }, [getCardWidth]);
+  }, []);
 
   const nextSlide = useCallback(() => {
-    const next = (activeIndexRef.current + 1) % PILLARS.length;
-    scrollTo(next);
-  }, [scrollTo]);
+    goTo((activeIndexRef.current + 1) % PILLARS.length);
+  }, [goTo]);
 
   const prevSlide = useCallback(() => {
-    const prev = (activeIndexRef.current - 1 + PILLARS.length) % PILLARS.length;
-    scrollTo(prev);
-  }, [scrollTo]);
+    goTo((activeIndexRef.current - 1 + PILLARS.length) % PILLARS.length);
+  }, [goTo]);
 
-  // Sync activeIndex on manual scroll
-  const handleScroll = useCallback(() => {
-    if (!carouselRef.current) return;
-    const { scrollLeft } = carouselRef.current;
-    const cardWidth = getCardWidth();
-    if (cardWidth <= 0) return;
-    const idx = Math.round(scrollLeft / cardWidth);
-    if (idx !== activeIndexRef.current && idx >= 0 && idx < PILLARS.length) {
-      activeIndexRef.current = idx;
-      setActiveIndex(idx);
-    }
-  }, [getCardWidth]);
-
-  // Pause auto-play briefly on any user interaction
   const pauseAutoPlay = useCallback(() => {
     pauseUntilRef.current = Date.now() + 8000;
   }, []);
 
-  // Auto-play interval: advances every 4s unless paused
   useEffect(() => {
     autoPlayRef.current = setInterval(() => {
       if (Date.now() >= pauseUntilRef.current) {
@@ -254,22 +223,7 @@ function CarouselSection() {
     };
   }, [nextSlide]);
 
-  // Scroll listener for dot syncing and pausing auto-play
-  useEffect(() => {
-    const el = carouselRef.current;
-    if (!el) return;
-    const onScroll = () => {
-      handleScroll();
-      // Only pause auto-play for user-initiated scrolls (drag/wheel/touch),
-      // not for programmatic scrolls from auto-play itself.
-      if (!isProgrammaticScroll.current) {
-        pauseAutoPlay();
-      }
-      isProgrammaticScroll.current = false;
-    };
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
-  }, [handleScroll, pauseAutoPlay]);
+  const pillar = PILLARS[activeIndex];
 
   return (
     <section className="mb-24 relative">
@@ -284,68 +238,45 @@ function CarouselSection() {
         <h2 className="mt-4 text-3xl font-black text-[color:var(--theme-typography-main)]"><GlowingText glowType="primary">The five pillars of TANGLAW</GlowingText></h2>
       </motion.div>
 
-      <div className="relative">
-        {/* Slider Track */}
-        <div
-          ref={carouselRef}
-          role="list"
-          aria-label="The five pillars of TANGLAW"
-          className="hide-scrollbar flex gap-6 overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth py-4"
-          style={{ overscrollBehaviorX: "contain" }}
-        >
-          {PILLARS.map((pillar, index) => (
-            <motion.article
-              key={pillar.number}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { pauseAutoPlay(); scrollTo(index); }}}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-80px" }}
-              transition={{
-                type: "spring",
-                stiffness: 200,
-                damping: 25,
-                delay: 0.05 * index,
-              }}
-              className="
-                snap-start shrink-0 grow-0 basis-[340px]
-                min-h-[470px]
-                rounded-[1.5rem]
-                border border-white/10
-                bg-[color:var(--theme-surface)]/90
-                px-8 py-10
-                shadow-2xl shadow-black/20
-                transition-all                        duration-200
-                cursor-pointer
-                flex flex-col
-                hover:-translate-y-1 hover:border-white/20
-              "
-              onClick={() => { pauseAutoPlay(); scrollTo(index); }}
-            >
-              {/* Large numeric indicator */}
-              <span className="font-display text-5xl sm:text-6xl font-black text-[color:var(--theme-accent-periwinkle)] leading-none tracking-tight">
-                {pillar.number}
-              </span>
-
-              {/* Divider spacer */}
-              <div className="mt-6 w-10 h-[2px] rounded-full bg-[color:var(--theme-borders-system)]/40" />
-
-              {/* Title */}
-              <h3 className="mt-6 text-2xl font-black text-[color:var(--theme-typography-main)] leading-snug">
-                {pillar.title}
-              </h3>
-
-              {/* Body text */}
-              <p className="mt-4 text-base leading-relaxed text-[color:var(--theme-text-body)] flex-1">
-                {pillar.description}
-              </p>
-            </motion.article>
-          ))}
-        </div>
+      <div className="relative w-full max-w-2xl mx-auto px-4">
+        <AnimatePresence mode="wait">
+          <motion.article
+            key={pillar.number}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { pauseAutoPlay(); goTo(activeIndexRef.current); }}}
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -40 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="
+              w-full min-h-[470px]
+              rounded-[1.5rem]
+              border border-white/10
+              bg-[color:var(--theme-surface)]/90
+              px-8 py-10
+              shadow-2xl shadow-black/20
+              cursor-pointer
+              flex flex-col
+              hover:-translate-y-1 hover:border-white/20
+              transition-all duration-200
+            "
+          >
+            <span className="font-display text-5xl sm:text-6xl font-black text-[color:var(--theme-accent-periwinkle)] leading-none tracking-tight">
+              {pillar.number}
+            </span>
+            <div className="mt-6 w-10 h-[2px] rounded-full bg-[color:var(--theme-borders-system)]/40" />
+            <h3 className="mt-6 text-2xl font-black text-[color:var(--theme-typography-main)] leading-snug">
+              {pillar.title}
+            </h3>
+            <p className="mt-4 text-base leading-relaxed text-[color:var(--theme-text-body)] flex-1">
+              {pillar.description}
+            </p>
+          </motion.article>
+        </AnimatePresence>
       </div>
 
-      {/* Bottom Controls — centered arrow buttons */}
+      {/* Bottom Controls */}
       <div className="flex items-center justify-center gap-4 mt-10">
         <button
           onClick={() => { pauseAutoPlay(); prevSlide(); }}
@@ -364,13 +295,12 @@ function CarouselSection() {
           <ChevronLeft className="h-5 w-5 text-[color:var(--theme-typography-main)]" />
         </button>
 
-        {/* Pill indicator dots */}
         <div className="flex items-center gap-2 px-4">
-          {PILLARS.map((pillar, index) => (
+          {PILLARS.map((p, index) => (
             <button
-              key={pillar.number}
-              onClick={() => { pauseAutoPlay(); scrollTo(index); }}
-              aria-label={`Go to pillar ${pillar.number}`}
+              key={p.number}
+              onClick={() => { pauseAutoPlay(); goTo(index); }}
+              aria-label={`Go to pillar ${p.number}`}
               aria-current={index === activeIndex ? "true" : undefined}
               className={`
                 h-2 rounded-full transition-all duration-300
