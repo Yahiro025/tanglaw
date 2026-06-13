@@ -38,7 +38,7 @@ export default function OwelBriefing({ step, report }: OwelBriefingProps) {
         >
           <div className="absolute -top-1 -left-1 h-2 w-2 border-t border-l border-primary opacity-50 rounded-tl-sm" />
           <Image
-            src="/assets/owel-head.png"
+            src="/assets/owel-head.webp"
             alt="Owel Alpha Unit"
             width={48}
             height={48}

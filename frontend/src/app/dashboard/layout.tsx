@@ -11,6 +11,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import dynamic from "next/dynamic";
 import AuthGuard from "@/components/AuthGuard";
+import NextAuthProvider from "@/components/NextAuthProvider";
 import ThemeChanger from "@/components/theme-changer";
 
 const EtheralShadow = dynamic(
@@ -83,6 +84,7 @@ export default function DashboardLayout({
   };
 
   return (
+    <NextAuthProvider>
     <AuthGuard>
       <div className="h-screen overflow-y-auto hide-scrollbar bg-base-light text-text-primary flex flex-col">
           <EtheralShadow
@@ -243,5 +245,6 @@ export default function DashboardLayout({
         </footer>
       </div>
     </AuthGuard>
+    </NextAuthProvider>
   );
 }

@@ -9,7 +9,6 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { Menu, X } from "lucide-react";
 import ThemeChanger from "@/components/theme-changer";
 
@@ -35,10 +34,20 @@ function NavLink({ href, active, children }: { href: string; active: boolean; ch
 
 export default function SiteHeader() {
   const pathname = usePathname();
-  const { status } = useSession();
   const isDashboard = pathname?.startsWith("/dashboard");
   const isHome = pathname === "/";
-  const isAuthenticated = status === "authenticated";
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    setIsAuthenticated(!!localStorage.getItem("tanglaw-token"));
+    const handler = () => setIsAuthenticated(!!localStorage.getItem("tanglaw-token"));
+    window.addEventListener("storage", handler);
+    window.addEventListener("tanglaw-auth-change", handler);
+    return () => {
+      window.removeEventListener("storage", handler);
+      window.removeEventListener("tanglaw-auth-change", handler);
+    };
+  }, []);
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolledAway, setScrolledAway] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -117,7 +126,7 @@ export default function SiteHeader() {
           <Link href="/" className="flex items-center gap-2" aria-label="Go to home">
             <div className="h-9 w-9 rounded-full border border-white/10 bg-[color:var(--theme-surface)] shadow-lg shadow-black/20 flex items-center justify-center">
               <Image
-                src="/assets/owel-head.png"
+                src="/assets/owel-head.webp"
                 alt="Owel Logo"
                 width={30}
                 height={30}

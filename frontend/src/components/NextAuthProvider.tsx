@@ -19,6 +19,7 @@ function SessionSync({ children }: { children: React.ReactNode }) {
     } else {
       window.localStorage.removeItem("tanglaw-token");
     }
+    window.dispatchEvent(new Event("tanglaw-auth-change"));
   }, [session, status]);
 
   return <>{children}</>;

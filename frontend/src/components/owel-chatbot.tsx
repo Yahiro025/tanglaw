@@ -330,7 +330,7 @@ export default function OwelChatbot({ variant = "floating" }: { variant?: "float
         <div className="flex items-center gap-3">
           <div className="h-12 w-12 overflow-hidden rounded-full bg-[color:var(--theme-surface)] flex items-center justify-center shadow-lg">
             <Image
-              src="/assets/owel-head.png"
+              src="/assets/owel-head.webp"
               alt="Owel Mascot"
               width={40}
               height={40}
@@ -459,7 +459,7 @@ export default function OwelChatbot({ variant = "floating" }: { variant?: "float
             aria-label="Open Owel chat"
           >
             <Image
-              src="/assets/owel-head.png"
+              src="/assets/owel-head.webp"
               alt="Owel Mascot"
               width={44}
               height={44}

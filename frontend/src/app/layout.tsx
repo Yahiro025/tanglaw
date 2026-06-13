@@ -9,14 +9,13 @@ import "./globals.css";
 import { DynamicNatureCanvas } from "@/components/dynamic-backgrounds";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
-import NextAuthProvider from "@/components/NextAuthProvider";
 import { ThemeProvider } from "next-themes";
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
   display: "swap",
-  weight: ["400", "500", "600", "700", "900"],
+  weight: ["400", "600", "700"],
   preload: true,
 });
 
@@ -24,7 +23,7 @@ const outfit = Outfit({
   subsets: ["latin"],
   variable: "--font-display",
   display: "swap",
-  weight: ["700", "900"],
+  weight: ["700"],
   preload: true,
 });
 
@@ -33,8 +32,8 @@ export const metadata: Metadata = {
   description:
     "TANGLAW is an AI-first scholarship navigator for Filipino learners, combining readiness checks, grant discovery, and guidance into a single academic dashboard.",
   icons: {
-    icon: [{ url: "/assets/owel-head.png", type: "image/png" }],
-    shortcut: "/assets/owel-head.png",
+    icon: [{ url: "/assets/owel-head.webp", type: "image/webp" }],
+    shortcut: "/assets/owel-head.webp",
   },
 };
 
@@ -51,11 +50,9 @@ export default function RootLayout({
           <DynamicNatureCanvas />
         </Suspense>
 
-        <NextAuthProvider>
-          <SiteHeader />
-          <main className="flex-grow flex flex-col">{children}</main>
-          <SiteFooter />
-        </NextAuthProvider>
+        <SiteHeader />
+        <main className="flex-grow flex flex-col">{children}</main>
+        <SiteFooter />
         </ThemeProvider>
       </body>
     </html>

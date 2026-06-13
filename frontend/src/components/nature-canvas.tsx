@@ -223,6 +223,8 @@ export default function NatureCanvas({
     const burstParticles: BurstParticle[] = [];
     const count = getParticleCount();
 
+    // Defer heavy initialization to avoid long main-thread task
+    const startParticles = () => {
     // Initialize particles
     for (let i = 0; i < count; i++) {
       const palette = getColors(themeRef.current);
@@ -256,6 +258,12 @@ export default function NatureCanvas({
         originalY: y,
       });
     }
+    }; // end startParticles
+
+    // Defer heavy particle initialization to avoid long main-thread task
+    const idleId = typeof requestIdleCallback !== "undefined"
+      ? requestIdleCallback(startParticles, { timeout: 2000 })
+      : setTimeout(startParticles, 0) as unknown as number;
 
     // Throttled resize handler (max once per 200ms)
     let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -740,6 +748,8 @@ export default function NatureCanvas({
     window.addEventListener("storage", updateTargetColors);
 
     return () => {
+      if (typeof cancelIdleCallback !== "undefined") cancelIdleCallback(idleId);
+      else clearTimeout(idleId);
       window.removeEventListener("resize", handleResize);
       document.removeEventListener("visibilitychange", handleVisibility);
       window.removeEventListener("tanglaw-theme-change", updateTargetColors);
