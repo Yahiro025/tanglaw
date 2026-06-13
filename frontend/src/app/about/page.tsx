@@ -4,9 +4,9 @@
  * About page describing the project goals and team members.
  */
 import Image from "next/image";
-import { Users, BookOpen, Linkedin, ChevronLeft, ChevronRight } from "lucide-react";
+import { Users, BookOpen, Linkedin, ChevronLeft, ChevronRight, Target, ClipboardCheck, Bot, LayoutGrid, BarChart3 } from "lucide-react";
 import { useRef, useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import ScrollReveal from "@/components/scroll-reveal";
 import { GlowingText } from "../../../components/ui/glowing-text";
@@ -166,47 +166,83 @@ const PILLARS = [
     number: "01",
     title: "Guided Scholarship Matching",
     description: "TANGLAW turns raw grant criteria into student-friendly matches and decision prompts.",
+    Icon: Target,
   },
   {
     number: "02",
     title: "Adaptive Readiness Check",
     description: "Interactive drills help students identify strengths, gaps, and high-impact review areas.",
+    Icon: ClipboardCheck,
   },
   {
     number: "03",
     title: "AI Navigation Companion",
     description: "Owel answers eligibility questions, simplifies terms, and recommends next steps.",
+    Icon: Bot,
   },
   {
     number: "04",
     title: "Smart Scholarship Directory",
     description: "Filter grants by institution, funder type, and requirement intensity in one interface.",
+    Icon: LayoutGrid,
   },
   {
     number: "05",
     title: "Review Engine & Analytics",
     description: "Practice modules and completion metrics keep learners motivated and accountable.",
+    Icon: BarChart3,
   },
 ];
 
+const PILLAR_NUM_GRADIENTS = [
+  "from-[color:var(--theme-accent-periwinkle)] via-[color:var(--theme-typography-main)] to-[color:var(--theme-accent-periwinkle)]",
+  "from-[color:var(--theme-typography-main)] via-[color:var(--theme-accent-periwinkle)] to-[color:var(--theme-typography-main)]",
+  "from-[color:var(--theme-accent-periwinkle)] via-[color:var(--theme-typography-main)] to-[color:var(--theme-accent-periwinkle)]",
+  "from-[color:var(--theme-typography-main)] via-[color:var(--theme-accent-periwinkle)] to-[color:var(--theme-typography-main)]",
+  "from-[color:var(--theme-accent-periwinkle)] via-[color:var(--theme-typography-main)] to-[color:var(--theme-accent-periwinkle)]",
+];
+
 function CarouselSection() {
+  const carouselRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const activeIndexRef = useRef(0);
   const autoPlayRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pauseUntilRef = useRef(0);
+  const isProgrammaticScroll = useRef(false);
 
-  const goTo = useCallback((index: number) => {
+  const CARD_W = 576;
+  const GAP = 24;
+
+  const scrollTo = useCallback((index: number) => {
+    if (!carouselRef.current) return;
+    isProgrammaticScroll.current = true;
+    carouselRef.current.scrollTo({
+      left: index * (CARD_W + GAP),
+      behavior: "smooth",
+    });
     activeIndexRef.current = index;
     setActiveIndex(index);
   }, []);
 
   const nextSlide = useCallback(() => {
-    goTo((activeIndexRef.current + 1) % PILLARS.length);
-  }, [goTo]);
+    const next = (activeIndexRef.current + 1) % PILLARS.length;
+    scrollTo(next);
+  }, [scrollTo]);
 
   const prevSlide = useCallback(() => {
-    goTo((activeIndexRef.current - 1 + PILLARS.length) % PILLARS.length);
-  }, [goTo]);
+    const prev = (activeIndexRef.current - 1 + PILLARS.length) % PILLARS.length;
+    scrollTo(prev);
+  }, [scrollTo]);
+
+  const handleScroll = useCallback(() => {
+    if (!carouselRef.current) return;
+    const { scrollLeft } = carouselRef.current;
+    const idx = Math.round(scrollLeft / (CARD_W + GAP));
+    if (idx !== activeIndexRef.current && idx >= 0 && idx < PILLARS.length) {
+      activeIndexRef.current = idx;
+      setActiveIndex(idx);
+    }
+  }, []);
 
   const pauseAutoPlay = useCallback(() => {
     pauseUntilRef.current = Date.now() + 8000;
@@ -223,7 +259,19 @@ function CarouselSection() {
     };
   }, [nextSlide]);
 
-  const pillar = PILLARS[activeIndex];
+  useEffect(() => {
+    const el = carouselRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      handleScroll();
+      if (!isProgrammaticScroll.current) {
+        pauseAutoPlay();
+      }
+      isProgrammaticScroll.current = false;
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [handleScroll, pauseAutoPlay]);
 
   return (
     <section className="mb-24 relative">
@@ -238,96 +286,91 @@ function CarouselSection() {
         <h2 className="mt-4 text-3xl font-black text-[color:var(--theme-typography-main)]"><GlowingText glowType="primary">The five pillars of TANGLAW</GlowingText></h2>
       </motion.div>
 
-      <div className="relative w-full max-w-2xl mx-auto px-4">
-        <AnimatePresence mode="wait">
-          <motion.article
-            key={pillar.number}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { pauseAutoPlay(); goTo(activeIndexRef.current); }}}
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -40 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="
-              w-full min-h-[470px]
-              rounded-[1.5rem]
-              border border-white/10
-              bg-[color:var(--theme-surface)]/90
-              px-8 py-10
-              shadow-2xl shadow-black/20
-              cursor-pointer
-              flex flex-col
-              hover:-translate-y-1 hover:border-white/20
-              transition-all duration-200
-            "
-          >
-            <span className="font-display text-5xl sm:text-6xl font-black text-[color:var(--theme-accent-periwinkle)] leading-none tracking-tight">
-              {pillar.number}
-            </span>
-            <div className="mt-6 w-10 h-[2px] rounded-full bg-[color:var(--theme-borders-system)]/40" />
-            <h3 className="mt-6 text-2xl font-black text-[color:var(--theme-typography-main)] leading-snug">
-              {pillar.title}
-            </h3>
-            <p className="mt-4 text-base leading-relaxed text-[color:var(--theme-text-body)] flex-1">
-              {pillar.description}
-            </p>
-          </motion.article>
-        </AnimatePresence>
-      </div>
-
-      {/* Bottom Controls */}
-      <div className="flex items-center justify-center gap-4 mt-10">
-        <button
-          onClick={() => { pauseAutoPlay(); prevSlide(); }}
-          className="
-            h-12 w-12 rounded-full
-            border border-white/15
-            bg-[color:var(--theme-surface)]/80 backdrop-blur-md
-            flex items-center justify-center
-            hover:bg-[color:var(--theme-surface)]
-            active:scale-95
-            transition-all duration-150
-            shadow-xl shadow-black/30
-          "
-          aria-label="Previous pillar"
+      <div className="relative">
+        <div
+          ref={carouselRef}
+          role="list"
+          aria-label="The five pillars of TANGLAW"
+          className="hide-scrollbar flex gap-6 overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth pb-4"
+          style={{ overscrollBehaviorX: "contain", paddingLeft: "calc(50% - 18rem)", paddingRight: "calc(50% - 18rem)" }}
         >
-          <ChevronLeft className="h-5 w-5 text-[color:var(--theme-typography-main)]" />
-        </button>
-
-        <div className="flex items-center gap-2 px-4">
-          {PILLARS.map((p, index) => (
-            <button
-              key={p.number}
-              onClick={() => { pauseAutoPlay(); goTo(index); }}
-              aria-label={`Go to pillar ${p.number}`}
-              aria-current={index === activeIndex ? "true" : undefined}
+          {PILLARS.map((pillar, index) => (
+            <div
+              key={pillar.number}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { pauseAutoPlay(); scrollTo(index); }}}
+              onClick={() => { pauseAutoPlay(); scrollTo(index); }}
               className={`
-                h-2 rounded-full transition-all duration-300
+                relative flex-shrink-0 w-[36rem] snap-center overflow-hidden
+                rounded-3xl border p-8 sm:p-10
+                shadow-2xl backdrop-blur-sm
+                transition-all duration-500 cursor-pointer
                 ${index === activeIndex
-                  ? "w-8 bg-[color:var(--theme-typography-main)]"
-                  : "w-2 bg-[color:var(--theme-borders-system)]/40 hover:bg-[color:var(--theme-borders-system)]/60"
+                  ? "border-[color:var(--theme-borders-system)]/20 scale-100 opacity-100 bg-[color:var(--theme-surface)]/90"
+                  : "border-[color:var(--theme-borders-system)]/5 scale-[0.95] opacity-50 bg-[color:var(--theme-surface)]/60"
                 }
               `}
+            >
+              <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-[color:var(--theme-accent-periwinkle)]/5 blur-3xl" />
+              <div className="absolute -bottom-8 -left-8 h-24 w-24 rounded-full bg-[color:var(--theme-accent-periwinkle)]/10 blur-2xl" />
+
+              <div className="relative z-10">
+                <div className="mb-6 flex items-center gap-5">
+                  <span
+                    className={`font-display text-6xl sm:text-7xl font-black italic bg-gradient-to-br ${PILLAR_NUM_GRADIENTS[index]} bg-clip-text text-transparent`}
+                    style={{ WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+                  >
+                    {pillar.number}
+                  </span>
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[color:var(--theme-borders-system)]/10 bg-[color:var(--theme-accent-periwinkle)]/8 text-[color:var(--theme-accent-periwinkle)]/70">
+                    <pillar.Icon className="h-7 w-7" />
+                  </div>
+                </div>
+
+                <h3 className="text-2xl sm:text-3xl font-black text-[color:var(--theme-typography-main)] leading-snug">
+                  {pillar.title}
+                </h3>
+
+                <p className="mt-4 text-base sm:text-lg leading-relaxed text-[color:var(--theme-text-body)]" style={{ textAlign: "justify" }}>
+                  {pillar.description}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-6 flex items-center justify-center gap-6">
+        <button
+          onClick={() => { pauseAutoPlay(); prevSlide(); }}
+          className="group flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--theme-borders-system)]/10 bg-[color:var(--theme-surface)]/60 text-[color:var(--theme-typography-main)]/40 shadow-lg backdrop-blur-sm transition-all duration-500 hover:border-[color:var(--theme-borders-system)]/25 hover:bg-[color:var(--theme-surface)]/80 hover:text-[color:var(--theme-typography-main)]/80"
+          aria-label="Previous pillar"
+        >
+          <ChevronLeft className="h-4 w-4 transition-transform duration-500 group-hover:-translate-x-0.5" />
+        </button>
+
+        <div className="flex items-center gap-2">
+          {PILLARS.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => { pauseAutoPlay(); scrollTo(index); }}
+              className={`rounded-full transition-all duration-500 ${
+                index === activeIndex
+                  ? "h-2.5 w-8 bg-[color:var(--theme-typography-main)]/60"
+                  : "h-2 w-2 bg-[color:var(--theme-borders-system)]/15 hover:bg-[color:var(--theme-borders-system)]/30"
+              }`}
+              aria-label={`Go to pillar ${index + 1}`}
             />
           ))}
         </div>
 
         <button
           onClick={() => { pauseAutoPlay(); nextSlide(); }}
-          className="
-            h-12 w-12 rounded-full
-            border border-white/15
-            bg-[color:var(--theme-surface)]/80 backdrop-blur-md
-            flex items-center justify-center
-            hover:bg-[color:var(--theme-surface)]
-            active:scale-95
-            transition-all duration-150
-            shadow-xl shadow-black/30
-          "
+          className="group flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--theme-borders-system)]/10 bg-[color:var(--theme-surface)]/60 text-[color:var(--theme-typography-main)]/40 shadow-lg backdrop-blur-sm transition-all duration-500 hover:border-[color:var(--theme-borders-system)]/25 hover:bg-[color:var(--theme-surface)]/80 hover:text-[color:var(--theme-typography-main)]/80"
           aria-label="Next pillar"
         >
-          <ChevronRight className="h-5 w-5 text-[color:var(--theme-typography-main)]" />
+          <ChevronRight className="h-4 w-4 transition-transform duration-500 group-hover:translate-x-0.5" />
         </button>
       </div>
     </section>
