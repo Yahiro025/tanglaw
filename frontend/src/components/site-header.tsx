@@ -41,16 +41,18 @@ export default function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolledAway, setScrolledAway] = useState(false);
   const [hovered, setHovered] = useState(false);
+  const [atTop, setAtTop] = useState(true);
   const menuRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
 
-  // Visibility: home page = only on hover; other pages = visible unless scrolled away, hover overrides
-  const isVisible = hovered || (!isHome && !scrolledAway);
+  // Visibility: show at top or on hover; other pages also visible unless scrolled away
+  const isVisible = hovered || atTop || (!isHome && !scrolledAway);
 
   useEffect(() => {
     if (isDashboard) return;
     const handleScroll = () => {
       const currentY = window.scrollY;
+      setAtTop(currentY < 30);
       if (currentY > 60 && currentY > lastScrollY.current) {
         setScrolledAway(true);
       } else if (currentY < lastScrollY.current) {
@@ -65,6 +67,7 @@ export default function SiteHeader() {
   useEffect(() => {
     setScrolledAway(false);
     setMenuOpen(false);
+    setAtTop(true);
     lastScrollY.current = 0;
   }, [pathname]);
 

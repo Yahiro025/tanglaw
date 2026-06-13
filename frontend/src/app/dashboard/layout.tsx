@@ -32,7 +32,29 @@ export default function DashboardLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolledAway, setScrolledAway] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [atTop, setAtTop] = useState(true);
   const menuRef = useRef<HTMLDivElement>(null);
+  const lastScrollY = useRef(0);
+
+  const isVisible = hovered || atTop || !scrolledAway;
+
+  // Auto-hide on scroll down, show on scroll up
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentY = window.scrollY;
+      setAtTop(currentY < 30);
+      if (currentY > 60 && currentY > lastScrollY.current) {
+        setScrolledAway(true);
+      } else if (currentY < lastScrollY.current) {
+        if (currentY < 30) setScrolledAway(false);
+      }
+      lastScrollY.current = currentY;
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -69,7 +91,23 @@ export default function DashboardLayout({
             sizing="cover"
             lightColor="rgba(200, 230, 175, 0.85)"
           />
-        <header className="relative z-50 flex items-center justify-center px-4 pt-4 sm:px-6 sm:pt-5">
+
+        {/* Invisible trigger zone — reveals navbar on hover when hidden */}
+        {!isVisible && (
+          <div
+            className="fixed top-0 left-0 right-0 z-[60] h-20"
+            onMouseEnter={() => setHovered(true)}
+            aria-hidden="true"
+          />
+        )}
+
+        <header
+          className={`relative z-50 flex items-center justify-center px-4 pt-4 sm:px-6 sm:pt-5 transition-all duration-700 ease-out ${
+            isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none"
+          }`}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+        >
           <div className="relative flex w-full max-w-4xl items-center">
             {/* DASHBOARD wordmark */}
             <div className="absolute -left-2 top-1/2 -translate-y-1/2 sm:-left-4">
