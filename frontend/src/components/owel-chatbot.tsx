@@ -455,7 +455,7 @@ export default function OwelChatbot({ variant = "floating" }: { variant?: "float
         {!isOpen && (
           <button
             onClick={handleOpen}
-            className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-transparent text-primary shadow-2xl hover:scale-105 transition-transform duration-200 focus:outline-none"
+            className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-[color:var(--theme-surface)] border border-white/15 shadow-[0_4px_24px_rgba(0,0,0,0.25)] hover:scale-105 hover:shadow-[0_4px_32px_rgba(0,0,0,0.35)] transition-all duration-200 focus:outline-none"
             aria-label="Open Owel chat"
           >
             <Image
