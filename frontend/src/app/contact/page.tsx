@@ -40,7 +40,7 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="relative overflow-hidden min-h-screen bg-[color:var(--theme-canvas)] px-4 py-16 sm:px-6 lg:px-8 text-[color:var(--theme-text-body)]">
+    <div className="relative overflow-hidden min-h-screen bg-[color:var(--theme-canvas)] px-4 pt-24 pb-16 sm:px-6 lg:px-8 text-[color:var(--theme-text-body)]">
       <EtheralShadow
         animation={{ scale: 60, speed: 80 }}
         noise={{ opacity: 0.8, scale: 1.0 }}

@@ -28,7 +28,7 @@ export default function HomeClient() {
 
   return (
     <main className="relative z-10">
-      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-7xl px-4 pt-24 pb-20 sm:px-6 lg:px-8">
         <div className="grid gap-12 lg:grid-cols-[0.95fr_0.85fr] items-center">
           <div className="space-y-8">
             <div className="animate-stagger-1 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] uppercase tracking-[0.32em] text-[color:var(--theme-typography-secondary)] font-black shadow-lg shadow-black/20">

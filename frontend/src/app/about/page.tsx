@@ -379,7 +379,7 @@ function CarouselSection() {
 
 export default function AboutPage() {
   return (
-    <div className="relative overflow-hidden bg-[color:var(--theme-canvas)] py-20 text-[color:var(--theme-text-body)]">
+    <div className="relative overflow-hidden bg-[color:var(--theme-canvas)] pt-28 pb-20 text-[color:var(--theme-text-body)]">
       <EtheralShadow
         animation={{ scale: 60, speed: 80 }}
         noise={{ opacity: 0.8, scale: 1.0 }}

@@ -103,9 +103,9 @@ export default function SiteHeader() {
           </Link>
         </div>
 
-        {/* Pill Nav — glassmorphism */}
+        {/* Pill Nav — glassmorphism, hidden on mobile */}
         <nav
-          className={`mx-auto flex items-center gap-1 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/60 px-3 py-2.5 shadow-[0_4px_30px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl transition-all duration-700 sm:gap-2 sm:px-5 ${
+          className={`mx-auto hidden md:flex items-center gap-1 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/60 px-3 py-2.5 shadow-[0_4px_30px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl transition-all duration-700 sm:gap-2 sm:px-5 ${
             !isHome ? "translate-x-4 sm:translate-x-8" : ""
           }`}
         >
