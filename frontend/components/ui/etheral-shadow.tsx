@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useId, useEffect, CSSProperties, ReactNode } from 'react';
+import React, { useRef, useId, useState, useEffect, CSSProperties, ReactNode } from 'react';
 import { useTheme } from 'next-themes';
 
 interface ResponsiveImage { src: string; alt?: string; srcSet?: string; }
@@ -44,60 +44,40 @@ export function EtheralShadow({
     const { resolvedTheme } = useTheme();
     const isDark = resolvedTheme === 'dark';
     const containerRef = useRef<HTMLDivElement>(null);
-    const feColorMatrixRef = useRef<SVGFEColorMatrixElement>(null);
 
-    const animationEnabled = animation && animation.scale > 0;
-
-    // ─── RAF-throttled hue rotation (replaces SVG <animate>) ──────────────
-    const isVisibleRef = useRef(true);
-    const hueRef = useRef(0);
+    // ─── Visibility-based pause for SVG animate (WS-1) ─────────────────────
+    const [animationPlayState, setAnimationPlayState] = useState<'running' | 'paused'>('running');
 
     useEffect(() => {
         const container = containerRef.current;
-        if (!container || !animationEnabled) return;
-
-        let rafId: number;
-        let frameCount = 0;
-
-        const animate = () => {
-            if (!isVisibleRef.current) {
-                rafId = requestAnimationFrame(animate);
-                return;
-            }
-            frameCount++;
-            if (frameCount % 3 === 0) {
-                hueRef.current = (hueRef.current + 2) % 360;
-                feColorMatrixRef.current?.setAttribute('values', String(hueRef.current));
-            }
-            rafId = requestAnimationFrame(animate);
-        };
+        if (!container) return;
 
         const observer = new IntersectionObserver(
             ([entry]) => {
-                isVisibleRef.current = entry.isIntersecting;
+                setAnimationPlayState(entry.isIntersecting ? 'running' : 'paused');
             },
             { threshold: 0.01 }
         );
         observer.observe(container);
 
         const handleVisibility = () => {
-            isVisibleRef.current = !document.hidden;
+            setAnimationPlayState(document.hidden ? 'paused' : 'running');
         };
         document.addEventListener('visibilitychange', handleVisibility);
 
-        rafId = requestAnimationFrame(animate);
-
         return () => {
-            cancelAnimationFrame(rafId);
             observer.disconnect();
             document.removeEventListener('visibilitychange', handleVisibility);
         };
-    }, [animationEnabled]);
+    }, []);
     
     // Dynamically set the shadow color based on the active theme
     const activeColor = isDark ? darkColor : lightColor;
 
+    const animationEnabled = animation && animation.scale > 0;
+
     const displacementScale = animation ? mapRange(animation.scale, 1, 100, 20, 100) : 0;
+    const animationDuration = animation ? mapRange(animation.speed, 1, 100, 1000, 50) : 1;
 
     return (
         <div ref={containerRef} className={`fixed inset-0 pointer-events-none ${className || ''}`} style={{ overflow: "hidden", zIndex: 0, willChange: "filter", transform: "translateZ(0)", ...style }}>
@@ -105,11 +85,19 @@ export function EtheralShadow({
             
             <div style={{ position: "absolute", inset: -displacementScale, filter: animationEnabled ? `url(#${id}) blur(4px)` : "none" }}>
                 {animationEnabled && (
-                    <svg style={{ position: "absolute", width: 0, height: 0 }}>
+                    <svg style={{ position: "absolute", width: 0, height: 0, animationPlayState }}>
                         <defs>
                             <filter id={id}>
                                 <feTurbulence result="undulation" numOctaves="1" baseFrequency={`${mapRange(animation.scale, 0, 100, 0.001, 0.0005)},${mapRange(animation.scale, 0, 100, 0.004, 0.002)}`} seed="0" type="turbulence" />
-                                <feColorMatrix ref={feColorMatrixRef} in="undulation" type="hueRotate" values="180" />
+                                <feColorMatrix in="undulation" type="hueRotate" values="180">
+                                    <animate 
+                                        attributeName="values" 
+                                        from="0" 
+                                        to="360" 
+                                        dur={`${animationDuration / 10}s`} 
+                                        repeatCount="indefinite" 
+                                    />
+                                </feColorMatrix>
                                 <feColorMatrix in="undulation" result="circulation" type="matrix" values="4 0 0 0 1  4 0 0 0 1  4 0 0 0 1  1 0 0 0 0" />
                                 <feDisplacementMap in="SourceGraphic" in2="circulation" scale={displacementScale} result="dist" />
                                 <feDisplacementMap in="dist" in2="undulation" scale={displacementScale} result="output" />
