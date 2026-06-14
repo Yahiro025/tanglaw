@@ -615,36 +615,73 @@ export default function NatureCanvas({
         }
       });
 
-      // Draw connection lines between nearby particles
+      // Draw connection lines between nearby particles (spatial grid for O(n) lookup)
       const maxConnections = 3;
       const connectionDist = 100;
+      const cellSize = connectionDist;
+      const grid = new Map<string, number[]>();
+
+      // Populate spatial grid
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        const px = p.x + Math.sin(p.swayOffset) * p.swayAmount * p.depth;
+        const cellX = Math.floor(px / cellSize);
+        const cellY = Math.floor(p.y / cellSize);
+        const key = `${cellX}_${cellY}`;
+        let bucket = grid.get(key);
+        if (!bucket) {
+          bucket = [];
+          grid.set(key, bucket);
+        }
+        bucket.push(i);
+      }
+
+      // Check each particle against its own and adjacent cells
+      const lineColor = currentTheme === "light" ? "rgba(27, 64, 121, 0.4)" : "rgba(255, 255, 255, 0.4)";
+      const drawn = new Set<string>();
+
       for (let i = 0; i < particles.length; i++) {
         const p1 = particles[i];
         const x1 = p1.x + Math.sin(p1.swayOffset) * p1.swayAmount * p1.depth;
         const y1 = p1.y;
+        const cellX = Math.floor(x1 / cellSize);
+        const cellY = Math.floor(y1 / cellSize);
         let connections = 0;
 
-        for (let j = i + 1; j < particles.length && connections < maxConnections; j++) {
-          const p2 = particles[j];
-          const x2 = p2.x + Math.sin(p2.swayOffset) * p2.swayAmount * p2.depth;
-          const y2 = p2.y;
-          const dx = x1 - x2;
-          const dy = y1 - y2;
-          const dist = Math.sqrt(dx * dx + dy * dy);
+        // Check 3x3 neighborhood
+        for (let dx = -1; dx <= 1 && connections < maxConnections; dx++) {
+          for (let dy = -1; dy <= 1 && connections < maxConnections; dy++) {
+            const key = `${cellX + dx}_${cellY + dy}`;
+            const bucket = grid.get(key);
+            if (!bucket) continue;
 
-          if (dist < connectionDist) {
-            const opacity = (1 - dist / connectionDist) * 0.15;
-            ctx.save();
-            ctx.globalAlpha = opacity;
-            const lineColor = currentTheme === "light" ? "rgba(27, 64, 121, 0.4)" : "rgba(255, 255, 255, 0.4)";
-            ctx.strokeStyle = lineColor;
-            ctx.lineWidth = 0.5;
-            ctx.beginPath();
-            ctx.moveTo(x1, y1);
-            ctx.lineTo(x2, y2);
-            ctx.stroke();
-            ctx.restore();
-            connections++;
+            for (const j of bucket) {
+              if (j <= i) continue;
+              const pairKey = i < j ? `${i}_${j}` : `${j}_${i}`;
+              if (drawn.has(pairKey)) continue;
+
+              const p2 = particles[j];
+              const x2 = p2.x + Math.sin(p2.swayOffset) * p2.swayAmount * p2.depth;
+              const y2 = p2.y;
+              const ddx = x1 - x2;
+              const ddy = y1 - y2;
+              const dist = Math.sqrt(ddx * ddx + ddy * ddy);
+
+              if (dist < connectionDist) {
+                const opacity = (1 - dist / connectionDist) * 0.15;
+                ctx.save();
+                ctx.globalAlpha = opacity;
+                ctx.strokeStyle = lineColor;
+                ctx.lineWidth = 0.5;
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+                ctx.restore();
+                drawn.add(pairKey);
+                connections++;
+              }
+            }
           }
         }
       }

@@ -10,6 +10,7 @@ import { DynamicNatureCanvas } from "@/components/dynamic-backgrounds";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
 import { ThemeProvider } from "next-themes";
+import { ScrollRevealProvider } from "@/components/scroll-reveal";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -51,7 +52,9 @@ export default function RootLayout({
         </Suspense>
 
         <SiteHeader />
-        <main className="flex-grow flex flex-col">{children}</main>
+        <ScrollRevealProvider>
+          <main className="flex-grow flex flex-col">{children}</main>
+        </ScrollRevealProvider>
         <SiteFooter />
         </ThemeProvider>
       </body>

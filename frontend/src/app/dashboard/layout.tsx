@@ -43,18 +43,32 @@ export default function DashboardLayout({
 
   // Auto-hide on scroll down, show on scroll up
   useEffect(() => {
+    let rafId: number;
+    let pendingAtTop = true;
+    let pendingScrolledAway = false;
+
     const handleScroll = () => {
       const currentY = window.scrollY;
-      setAtTop(currentY < 30);
+      pendingAtTop = currentY < 30;
       if (currentY > 60 && currentY > lastScrollY.current) {
-        setScrolledAway(true);
+        pendingScrolledAway = true;
       } else if (currentY < lastScrollY.current) {
-        if (currentY < 30) setScrolledAway(false);
+        if (currentY < 30) pendingScrolledAway = false;
       }
       lastScrollY.current = currentY;
+
+      // Throttle state updates to once per frame
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        setAtTop(pendingAtTop);
+        setScrolledAway(pendingScrolledAway);
+      });
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      cancelAnimationFrame(rafId);
+    };
   }, []);
 
   // Close mobile menu on route change

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import ScrollReveal from "@/components/scroll-reveal";
@@ -44,8 +44,28 @@ export function HeroButton({
 }
 
 export function MascotWithGlow() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isInView, setIsInView] = useState(true);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting);
+      },
+      { threshold: 0.01 }
+    );
+    observer.observe(container);
+
+    return () => observer.disconnect();
+  }, []);
+
+  const animationPlayState = isInView ? 'running' : 'paused';
+
   return (
-    <div className="relative flex items-center justify-center w-full">
+    <div ref={containerRef} className="relative flex items-center justify-center w-full">
       {/* Animated glow halo behind mascot */}
       <motion.div
         className="absolute w-[85%] aspect-square rounded-full"
@@ -53,6 +73,7 @@ export function MascotWithGlow() {
           background: "radial-gradient(circle, rgba(184,201,232,0.35) 0%, rgba(184,201,232,0.12) 40%, transparent 70%)",
           filter: "blur(60px)",
           willChange: "transform, opacity",
+          animationPlayState,
         }}
         whileInView={{ scale: [1, 1.12, 1], opacity: [0.6, 0.9, 0.6] }}
         viewport={{ once: false, margin: "-200px" }}
@@ -65,6 +86,7 @@ export function MascotWithGlow() {
           background: "radial-gradient(circle, rgba(255,255,255,0.25) 0%, transparent 70%)",
           filter: "blur(30px)",
           willChange: "transform, opacity",
+          animationPlayState,
         }}
         whileInView={{ scale: [1, 1.2, 1], opacity: [0.4, 0.7, 0.4] }}
         viewport={{ once: false, margin: "-200px" }}
@@ -75,6 +97,7 @@ export function MascotWithGlow() {
         viewport={{ once: false }}
         transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
         className="relative z-10 w-full"
+        style={{ animationPlayState }}
       >
         <OwelMascot />
       </motion.div>
