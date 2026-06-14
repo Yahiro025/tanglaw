@@ -1,50 +1,7 @@
 "use client";
 
-import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
-
-interface ScrollRevealContextValue {
-  observe: (element: HTMLElement, callback: (isIntersecting: boolean) => void) => () => void;
-}
-
-const ScrollRevealContext = createContext<ScrollRevealContextValue | null>(null);
-
-export function ScrollRevealProvider({ children }: { children: ReactNode }) {
-  const callbacksRef = useRef<Map<Element, (isIntersecting: boolean) => void>>(new Map());
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const callback = callbacksRef.current.get(entry.target);
-          if (callback) {
-            callback(entry.isIntersecting);
-          }
-        });
-      },
-      { threshold: 0.1, rootMargin: "-100px" }
-    );
-
-    // Observe all registered elements
-    callbacksRef.current.forEach((_, element) => {
-      observer.observe(element);
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
-  const observe = (element: HTMLElement, callback: (isIntersecting: boolean) => void) => {
-    callbacksRef.current.set(element, callback);
-    return () => {
-      callbacksRef.current.delete(element);
-    };
-  };
-
-  return (
-    <ScrollRevealContext.Provider value={{ observe }}>
-      {children}
-    </ScrollRevealContext.Provider>
-  );
-}
+import { motion } from "framer-motion";
+import { ReactNode } from "react";
 
 interface ScrollRevealProps {
   children: ReactNode;
@@ -59,37 +16,29 @@ export default function ScrollReveal({
   direction = "up",
   className = "",
 }: ScrollRevealProps) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-  const context = useContext(ScrollRevealContext);
+  const directionOffset = {
+    up: { y: 24, x: 0 },
+    down: { y: -24, x: 0 },
+    left: { y: 0, x: 24 },
+    right: { y: 0, x: -24 },
+    none: { y: 0, x: 0 },
+  };
 
-  useEffect(() => {
-    if (!ref.current || !context) return;
-
-    const unsubscribe = context.observe(ref.current, (isIntersecting) => {
-      if (isIntersecting) {
-        setIsVisible(true);
-      }
-    });
-
-    return unsubscribe;
-  }, [context]);
-
-  const directionClass = {
-    up: "scroll-reveal-up",
-    down: "scroll-reveal-down",
-    left: "scroll-reveal-left",
-    right: "scroll-reveal-right",
-    none: "scroll-reveal-none",
-  }[direction];
+  const offset = directionOffset[direction];
 
   return (
-    <div
-      ref={ref}
-      className={`scroll-reveal ${directionClass} ${isVisible ? "scroll-reveal-visible" : ""} ${className}`}
-      style={{ transitionDelay: `${delay}s` }}
+    <motion.div
+      initial={{ opacity: 0, ...offset }}
+      whileInView={{ opacity: 1, y: 0, x: 0 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{
+        duration: 0.35,
+        ease: [0.21, 1.02, 0.43, 1.01],
+        delay: delay,
+      }}
+      className={className}
     >
       {children}
-    </div>
+    </motion.div>
   );
 }
