@@ -59,7 +59,8 @@ export default function DashboardHomePage() {
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.4 }}
+          viewport={{ once: true, amount: 0.15 }}
+          style={{ willChange: "transform, opacity" }}
           className="order-1 lg:order-none lg:col-span-2 rounded-[2rem] border border-accent-muted/30 bg-[color:var(--theme-surface)] p-5 sm:p-6 lg:p-8 shadow-2xl"
         >
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
@@ -122,8 +123,9 @@ export default function DashboardHomePage() {
 
           {/* ── 3a. Scholarship Directory Card ── */}
           <motion.article
-            whileHover={{ y: -6, scale: 1.01 }}
-            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            whileHover={{ y: -4, scale: 1.005 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            style={{ willChange: "transform" }}
             className="group rounded-[2rem] border border-accent-muted/30 bg-[color:var(--theme-surface)] p-5 sm:p-6 shadow-2xl flex flex-col justify-between"
           >
             <div>
@@ -145,8 +147,9 @@ export default function DashboardHomePage() {
 
           {/* ── 3b. Readiness Check Card ── */}
           <motion.article
-            whileHover={{ y: -6, scale: 1.01 }}
-            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            whileHover={{ y: -4, scale: 1.005 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            style={{ willChange: "transform" }}
             className="group rounded-[2rem] border border-accent-muted/30 bg-[color:var(--theme-surface)] p-5 sm:p-6 shadow-2xl flex flex-col justify-between"
           >
             <div>

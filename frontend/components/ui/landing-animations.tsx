@@ -66,41 +66,53 @@ export function MascotWithGlow() {
 
   return (
     <div ref={containerRef} className="relative flex items-center justify-center w-full">
+      <style>{`
+        @keyframes glow-pulse-outer {
+          0%, 100% { transform: scale(1); opacity: 0.6; }
+          50% { transform: scale(1.12); opacity: 0.9; }
+        }
+        @keyframes glow-pulse-inner {
+          0%, 100% { transform: scale(1); opacity: 0.4; }
+          50% { transform: scale(1.2); opacity: 0.7; }
+        }
+        @keyframes glow-float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-20px); }
+        }
+        .glow-outer {
+          animation: glow-pulse-outer 2s ease-in-out infinite;
+          animation-play-state: ${animationPlayState};
+        }
+        .glow-inner {
+          animation: glow-pulse-inner 2.5s ease-in-out 0.3s infinite;
+          animation-play-state: ${animationPlayState};
+        }
+        .glow-float {
+          animation: glow-float 3s ease-in-out infinite;
+          animation-play-state: ${animationPlayState};
+        }
+      `}</style>
       {/* Animated glow halo behind mascot */}
-      <motion.div
-        className="absolute w-[85%] aspect-square rounded-full"
+      <div
+        className="glow-outer absolute w-[85%] aspect-square rounded-full"
         style={{
           background: "radial-gradient(circle, rgba(184,201,232,0.35) 0%, rgba(184,201,232,0.12) 40%, transparent 70%)",
           filter: "blur(60px)",
           willChange: "transform, opacity",
-          animationPlayState,
         }}
-        whileInView={{ scale: [1, 1.12, 1], opacity: [0.6, 0.9, 0.6] }}
-        viewport={{ once: false, margin: "-50px" }}
-        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
       />
       {/* Inner bright core glow */}
-      <motion.div
-        className="absolute w-[50%] aspect-square rounded-full"
+      <div
+        className="glow-inner absolute w-[50%] aspect-square rounded-full"
         style={{
           background: "radial-gradient(circle, rgba(255,255,255,0.25) 0%, transparent 70%)",
           filter: "blur(30px)",
           willChange: "transform, opacity",
-          animationPlayState,
         }}
-        whileInView={{ scale: [1, 1.2, 1], opacity: [0.4, 0.7, 0.4] }}
-        viewport={{ once: false, margin: "-50px" }}
-        transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
       />
-      <motion.div
-        whileInView={{ y: [0, -20, 0] }}
-        viewport={{ once: false }}
-        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        className="relative z-10 w-full"
-        style={{ animationPlayState }}
-      >
+      <div className="glow-float relative z-10 w-full">
         <OwelMascot />
-      </motion.div>
+      </div>
     </div>
   );
 }

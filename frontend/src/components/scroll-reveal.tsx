@@ -36,6 +36,7 @@ export default function ScrollReveal({
         ease: [0.21, 1.02, 0.43, 1.01],
         delay: delay,
       }}
+      style={{ willChange: "transform, opacity" }}
       className={className}
     >
       {children}

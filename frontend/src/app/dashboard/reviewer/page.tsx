@@ -90,7 +90,8 @@ export default function ReviewerPage() {
       <motion.header
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.4 }}
+        viewport={{ once: true, amount: 0.15 }}
+        style={{ willChange: "transform, opacity" }}
         className="border-technical bg-white p-10 shadow-2xl relative overflow-hidden"
       >
         <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-primary" />

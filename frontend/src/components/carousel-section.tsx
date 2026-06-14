@@ -128,8 +128,9 @@ export default function CarouselSection() {
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
+        viewport={{ once: true, amount: 0.15 }}
         transition={{ duration: 0.35 }}
+        style={{ willChange: "transform, opacity" }}
         className="text-center mb-10"
       >
         <p className="text-[10px] uppercase tracking-[0.34em] text-[color:var(--theme-typography-secondary)] font-black">Our solution</p>

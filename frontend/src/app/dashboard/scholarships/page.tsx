@@ -13,7 +13,8 @@ export default function DashboardScholarshipsPage() {
       <motion.header
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.4 }}
+        viewport={{ once: true, amount: 0.15 }}
+        style={{ willChange: "transform, opacity" }}
         className="rounded-2xl sm:rounded-[2rem] border border-accent-muted/30 bg-white p-4 sm:p-6 lg:p-8 shadow-2xl"
       >
         <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.3em] text-zinc-500 font-bold"><GlowingText glowType="secondary" className="text-zinc-500">Scholarship Directory</GlowingText></p>

@@ -81,6 +81,11 @@ interface NatureCanvasProps {
   className?: string;
 }
 
+/** Returns true if the viewport is narrow (mobile). Used to disable expensive effects. */
+function isMobileWidth(width: number): boolean {
+  return width < 768;
+}
+
 export default function NatureCanvas({
   countDesktop = 75,
   countTablet = 55,
@@ -201,8 +206,9 @@ export default function NatureCanvas({
     let animationFrameId: number;
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
-    // Frame rate cap: target ~30fps to halve GPU load
-    const FRAME_INTERVAL = 1000 / 30;
+    // Frame rate cap: target ~30fps desktop, ~20fps mobile to reduce GPU load
+    const isMobile = isMobileWidth(width);
+    const FRAME_INTERVAL = isMobile ? 1000 / 20 : 1000 / 30;
     let lastFrameTime = 0;
 
     // Responsive particle count based on viewport width (configurable via props)
@@ -515,7 +521,8 @@ export default function NatureCanvas({
         let drawAlpha = p.alpha * (0.7 + 0.3 * p.depth);
 
         // Mouse proximity glow, repulse, and wind effect
-        if (mouse.active) {
+        // Disabled entirely on mobile to reduce CPU/GPU load
+        if (mouse.active && !isMobile) {
           const dx = mouse.x - currentX;
           const dy = mouse.y - p.y;
           const distSq = dx * dx + dy * dy;
@@ -560,32 +567,34 @@ export default function NatureCanvas({
         p.x += p.vx * p.depth;
         p.y += p.vy * p.depth;
 
-        // Update trail using the new visual position
+        // Update trail using the new visual position (disabled on mobile for perf)
         const newCurrentX = p.x + Math.sin(p.swayOffset) * p.swayAmount * p.depth;
-        p.trail.push({ x: newCurrentX, y: p.y });
-        if (p.trail.length > 8) p.trail.shift();
+        if (!isMobile) {
+          p.trail.push({ x: newCurrentX, y: p.y });
+          if (p.trail.length > 8) p.trail.shift();
 
-        // Draw trail
-        if (p.trail.length > 2) {
-          ctx.save();
-          ctx.globalAlpha = 0.12 * p.depth;
-          ctx.strokeStyle = `rgba(${Math.round(p.r)}, ${Math.round(p.g)}, ${Math.round(p.b)}, 0.4)`;
-          ctx.lineWidth = 2 * p.depth;
-          ctx.beginPath();
-          ctx.moveTo(p.trail[0].x, p.trail[0].y);
-          for (let i = 1; i < p.trail.length; i++) {
-            ctx.lineTo(p.trail[i].x, p.trail[i].y);
+          // Draw trail
+          if (p.trail.length > 2) {
+            ctx.save();
+            ctx.globalAlpha = 0.12 * p.depth;
+            ctx.strokeStyle = `rgba(${Math.round(p.r)}, ${Math.round(p.g)}, ${Math.round(p.b)}, 0.4)`;
+            ctx.lineWidth = 2 * p.depth;
+            ctx.beginPath();
+            ctx.moveTo(p.trail[0].x, p.trail[0].y);
+            for (let i = 1; i < p.trail.length; i++) {
+              ctx.lineTo(p.trail[i].x, p.trail[i].y);
+            }
+            ctx.stroke();
+            ctx.restore();
           }
-          ctx.stroke();
-          ctx.restore();
         }
 
         // Draw from cached particle glow canvas via drawImage
         const glowCanvas = getParticleGlowCanvas(p.r, p.g, p.b, drawAlpha, drawSize);
         ctx.drawImage(glowCanvas, currentX - drawSize, p.y - drawSize);
 
-        // Sparkle effect on some particles
-        if (p.isSparkle) {
+        // Sparkle effect on some particles (disabled on mobile for perf)
+        if (p.isSparkle && !isMobile) {
           const sparkleSine = Math.sin(p.swayOffset * 5);
           if (sparkleSine > 0.82) {
             const sparkleSize = drawSize * 0.35;
@@ -635,7 +644,9 @@ export default function NatureCanvas({
         }
       });
 
-      // Draw connection lines between nearby particles (spatial grid for O(n) lookup)
+      // Draw connection lines between nearby particles (disabled on mobile for perf)
+      // Spatial grid for O(n) lookup
+      if (!isMobile) {
       const maxConnections = 3;
       const connectionDist = 100;
       const cellSize = connectionDist;
@@ -705,6 +716,7 @@ export default function NatureCanvas({
           }
         }
       }
+      }  // end if (!isMobile) — skip connection lines on mobile for perf
 
       // Draw burst particles
       for (let i = burstParticles.length - 1; i >= 0; i--) {
