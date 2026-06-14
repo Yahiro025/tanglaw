@@ -168,8 +168,8 @@ export default function CarouselSection() {
               <div className="relative z-10">
                 <div className="mb-4 sm:mb-6 flex items-end justify-between">
                   <span
-                    className={`font-display text-6xl sm:text-7xl md:text-8xl font-black italic leading-none bg-gradient-to-br ${PILLAR_NUM_GRADIENTS[index]} bg-clip-text text-transparent`}
-                    style={{ WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+                    className={`font-display text-6xl sm:text-7xl md:text-8xl font-black italic bg-gradient-to-br ${PILLAR_NUM_GRADIENTS[index]} bg-clip-text text-transparent`}
+                    style={{ WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", lineHeight: "1.1" }}
                   >
                     {pillar.number}
                   </span>
