@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "guardrail": "F1",
+  "enabled": true,
+  "description": "Runtime enforcement for the F1 Task-Drift Guardrail. Blocks tool access for reasoning agents at the dispatch layer, enforcing the F1 preamble at runtime rather than relying on prompt-level compliance.",
+  "reasoningAgentPrefixes": [
+    "metabuff-reasoner",
+    "thinker-gpt",
+    "thinker-with-files-gemini",
+    "metabuff-arch"
+  ],
+  "allowedTools": ["set_output"],
+  "autoTerminateOnViolation": true,
+  "blockAllSpawns": true,
+  "blockMessage": "[F1 GUARD] Tool '{toolName}' is blocked for reasoning agents ({agentType}). Reasoning agents may only call: set_output. This call has been blocked at the runtime layer. Aborting tool execution.",
+  "spawnBlockMessage": "[F1 GUARD] Reasoning agents ({agentType}) may not spawn sub-agents. This prevents bypassing the tool-access gate. Use set_output to report your findings instead.",
+  "failOpenOnError": false,
+  "logViolations": true
+}

@@ -134,7 +134,10 @@ export default function SiteHeader() {
             </span>
           </Link>
 
-          <div ref={menuRef}>
+          <div className="flex items-center gap-2">
+            <ThemeChanger />
+
+            <div ref={menuRef}>
             <button
               onClick={() => setMenuOpen(!menuOpen)}
               className="flex items-center justify-center h-10 w-10 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/60 backdrop-blur-xl shadow-lg transition-all duration-500 hover:bg-[color:var(--theme-surface)]/80"
@@ -220,6 +223,7 @@ export default function SiteHeader() {
                 </div>
               </>
             )}
+          </div>
           </div>
         </div>
 

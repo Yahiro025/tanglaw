@@ -135,13 +135,16 @@ export default function DashboardLayout({
               </span>
             </Link>
 
-            <div ref={menuRef}>
-              <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="flex items-center justify-center h-10 w-10 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/60 backdrop-blur-xl shadow-lg transition-all duration-500 hover:bg-[color:var(--theme-surface)]/80"
-                aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
-                aria-expanded={menuOpen}
-              >
+            <div className="flex items-center gap-2">
+              <ThemeChanger />
+
+              <div ref={menuRef}>
+                <button
+                  onClick={() => setMenuOpen(!menuOpen)}
+                  className="flex items-center justify-center h-10 w-10 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/60 backdrop-blur-xl shadow-lg transition-all duration-500 hover:bg-[color:var(--theme-surface)]/80"
+                  aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+                  aria-expanded={menuOpen}
+                >
                 {menuOpen ? (
                   <X className="h-5 w-5 text-[color:var(--theme-typography-main)]" />
                 ) : (
@@ -188,6 +191,7 @@ export default function DashboardLayout({
                   </div>
                 </>
               )}
+            </div>
             </div>
           </div>
 

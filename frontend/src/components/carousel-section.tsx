@@ -54,19 +54,23 @@ export default function CarouselSection() {
   const pauseUntilRef = useRef(0);
   const isProgrammaticScroll = useRef(false);
 
-  const CARD_W = 576;
-  const GAP = 24;
+  const getCardWidth = useCallback(() => {
+    if (typeof window === "undefined") return 576;
+    return window.innerWidth < 640 ? window.innerWidth - 48 : 576;
+  }, []);
 
   const scrollTo = useCallback((index: number) => {
     if (!carouselRef.current) return;
     isProgrammaticScroll.current = true;
+    const cardW = getCardWidth();
+    const gap = 24;
     carouselRef.current.scrollTo({
-      left: index * (CARD_W + GAP),
+      left: index * (cardW + gap),
       behavior: "smooth",
     });
     activeIndexRef.current = index;
     setActiveIndex(index);
-  }, []);
+  }, [getCardWidth]);
 
   const nextSlide = useCallback(() => {
     const next = (activeIndexRef.current + 1) % PILLARS.length;
@@ -81,12 +85,14 @@ export default function CarouselSection() {
   const handleScroll = useCallback(() => {
     if (!carouselRef.current) return;
     const { scrollLeft } = carouselRef.current;
-    const idx = Math.round(scrollLeft / (CARD_W + GAP));
+    const cardW = getCardWidth();
+    const gap = 24;
+    const idx = Math.round(scrollLeft / (cardW + gap));
     if (idx !== activeIndexRef.current && idx >= 0 && idx < PILLARS.length) {
       activeIndexRef.current = idx;
       setActiveIndex(idx);
     }
-  }, []);
+  }, [getCardWidth]);
 
   const pauseAutoPlay = useCallback(() => {
     pauseUntilRef.current = Date.now() + 8000;
@@ -127,7 +133,7 @@ export default function CarouselSection() {
         className="text-center mb-10"
       >
         <p className="text-[10px] uppercase tracking-[0.34em] text-[color:var(--theme-typography-secondary)] font-black">Our solution</p>
-        <h2 className="mt-4 text-3xl font-black text-[color:var(--theme-typography-main)]"><GlowingText glowType="primary">The five pillars of TANGLAW</GlowingText></h2>
+        <h2 className="mt-4 text-2xl sm:text-3xl font-black text-[color:var(--theme-typography-main)]"><GlowingText glowType="primary">The five pillars of TANGLAW</GlowingText></h2>
       </motion.div>
 
       <div className="relative">
@@ -135,8 +141,8 @@ export default function CarouselSection() {
           ref={carouselRef}
           role="list"
           aria-label="The five pillars of TANGLAW"
-          className="hide-scrollbar flex gap-6 overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth pb-4"
-          style={{ overscrollBehaviorX: "contain", paddingLeft: "calc(50% - 18rem)", paddingRight: "calc(50% - 18rem)" }}
+          className="hide-scrollbar flex gap-6 overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth pb-4 px-6 sm:px-0"
+          style={{ overscrollBehaviorX: "contain" }}
         >
           {PILLARS.map((pillar, index) => (
             <div
@@ -146,8 +152,8 @@ export default function CarouselSection() {
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { pauseAutoPlay(); scrollTo(index); }}}
               onClick={() => { pauseAutoPlay(); scrollTo(index); }}
               className={`
-                relative flex-shrink-0 w-[36rem] snap-center overflow-hidden
-                rounded-3xl border p-8 sm:p-10
+                relative flex-shrink-0 w-[calc(100vw-3rem)] sm:w-[36rem] snap-center overflow-hidden
+                rounded-3xl border p-6 sm:p-8 md:p-10
                 shadow-2xl backdrop-blur-sm
                 transition-all duration-500 cursor-pointer
                 ${index === activeIndex
@@ -160,23 +166,23 @@ export default function CarouselSection() {
               <div className="absolute -bottom-8 -left-8 h-24 w-24 rounded-full bg-[color:var(--theme-accent-periwinkle)]/10 blur-2xl" />
 
               <div className="relative z-10">
-                <div className="mb-6 flex items-center gap-5">
+                <div className="mb-4 sm:mb-6 flex items-center gap-4 sm:gap-5">
                   <span
-                    className={`font-display text-6xl sm:text-7xl font-black italic bg-gradient-to-br ${PILLAR_NUM_GRADIENTS[index]} bg-clip-text text-transparent`}
+                    className={`font-display text-5xl sm:text-6xl md:text-7xl font-black italic bg-gradient-to-br ${PILLAR_NUM_GRADIENTS[index]} bg-clip-text text-transparent`}
                     style={{ WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
                   >
                     {pillar.number}
                   </span>
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[color:var(--theme-borders-system)]/10 bg-[color:var(--theme-accent-periwinkle)]/8 text-[color:var(--theme-accent-periwinkle)]/70">
-                    <pillar.Icon className="h-7 w-7" />
+                  <div className="flex h-11 w-11 sm:h-14 sm:w-14 items-center justify-center rounded-xl sm:rounded-2xl border border-[color:var(--theme-borders-system)]/10 bg-[color:var(--theme-accent-periwinkle)]/8 text-[color:var(--theme-accent-periwinkle)]/70">
+                    <pillar.Icon className="h-5 w-5 sm:h-7 sm:w-7" />
                   </div>
                 </div>
 
-                <h3 className="text-2xl sm:text-3xl font-black text-[color:var(--theme-typography-main)] leading-snug">
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-[color:var(--theme-typography-main)] leading-snug">
                   {pillar.title}
                 </h3>
 
-                <p className="mt-4 text-base sm:text-lg leading-relaxed text-[color:var(--theme-text-body)]" style={{ textAlign: "justify" }}>
+                <p className="mt-3 sm:mt-4 text-sm sm:text-base md:text-lg leading-relaxed text-[color:var(--theme-text-body)]" style={{ textAlign: "justify" }}>
                   {pillar.description}
                 </p>
               </div>
