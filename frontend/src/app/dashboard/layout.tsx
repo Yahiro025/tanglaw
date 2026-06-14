@@ -124,21 +124,87 @@ export default function DashboardLayout({
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
         >
-          {/* DASHBOARD logo + wordmark — absolute to header, positioned at top-left */}
-          <div className="absolute left-4 sm:left-6 top-4 sm:top-5 hidden sm:block">
+          {/* Mobile layout: logo left, hamburger right */}
+          <div className="md:hidden flex items-center justify-between w-full">
             <Link href="/dashboard" className="flex items-center gap-2" aria-label="Go to dashboard">
-              <div className="h-8 w-8 shrink-0 rounded-full border border-white/10 bg-[color:var(--theme-surface)] shadow-lg shadow-black/20 flex items-center justify-center">
+              <div className="h-9 w-9 rounded-full border border-white/10 bg-[color:var(--theme-surface)] shadow-lg shadow-black/20 flex items-center justify-center">
                 <Sparkles className="h-4 w-4 text-primary" />
               </div>
-              <span className="font-display text-lg font-black uppercase tracking-[0.12em] text-[color:var(--theme-typography-main)] sm:text-xl whitespace-nowrap">
+              <span className="font-display text-xl font-black uppercase tracking-[0.12em] text-[color:var(--theme-typography-main)]">
                 Dashboard
               </span>
             </Link>
+
+            <div ref={menuRef}>
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="flex items-center justify-center h-10 w-10 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/60 backdrop-blur-xl shadow-lg transition-all duration-500 hover:bg-[color:var(--theme-surface)]/80"
+                aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+                aria-expanded={menuOpen}
+              >
+                {menuOpen ? (
+                  <X className="h-5 w-5 text-[color:var(--theme-typography-main)]" />
+                ) : (
+                  <Menu className="h-5 w-5 text-[color:var(--theme-typography-main)]" />
+                )}
+              </button>
+
+              {menuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40 bg-black/35 transition-opacity duration-150"
+                    style={{ top: "100%" }}
+                    onClick={() => setMenuOpen(false)}
+                    aria-hidden="true"
+                  />
+                  <div className="absolute top-12 right-0 z-50 w-52 overflow-hidden rounded-2xl border border-white/10 bg-[color:var(--theme-surface)]/80 backdrop-blur-xl shadow-2xl shadow-black/30 origin-top transition-all duration-150">
+                    <nav className="flex flex-col gap-1 p-3 text-[11px] uppercase tracking-[0.18em] font-semibold">
+                      {[
+                        { href: "/dashboard", label: "Overview" },
+                        { href: "/dashboard/scholarships", label: "Scholarships" },
+                        { href: "/dashboard/readiness", label: "Readiness" },
+                      ].map(({ href, label }) => (
+                        <Link
+                          key={href}
+                          href={href}
+                          className={`rounded-full px-4 py-2.5 transition-all duration-300 ${
+                            pathname === href
+                              ? "bg-primary/15 text-primary"
+                              : "text-[color:var(--theme-typography-secondary)] hover:bg-white/5 hover:text-[color:var(--theme-typography-main)]"
+                          }`}
+                        >
+                          {label}
+                        </Link>
+                      ))}
+                      <div className="my-1 h-px bg-white/10" />
+                      <button
+                        onClick={handleSignOut}
+                        className="flex items-center justify-center gap-2 rounded-full bg-primary/90 px-4 py-2.5 text-white transition-all duration-300 hover:bg-primary"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Sign Out
+                      </button>
+                    </nav>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
-          {/* Pill Nav — glassmorphism, centered */}
-          <div className="flex w-full max-w-4xl items-center justify-center">
-            <nav className="hidden md:flex items-center gap-1 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/60 px-3 py-2.5 shadow-[0_4px_30px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl sm:gap-2 sm:px-5">
+          {/* Desktop layout: logo inside pill nav */}
+          <div className="hidden md:flex w-full max-w-4xl items-center justify-center">
+            <nav className="flex items-center gap-1 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/60 px-3 py-2.5 shadow-[0_4px_30px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl sm:gap-2 sm:px-5">
+              <Link href="/dashboard" className="flex items-center gap-2 mr-1" aria-label="Go to dashboard">
+                <div className="h-8 w-8 rounded-full border border-white/10 bg-[color:var(--theme-surface)] shadow-lg shadow-black/20 flex items-center justify-center">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                </div>
+                <span className="font-display text-lg font-black uppercase tracking-[0.12em] text-[color:var(--theme-typography-main)]">
+                  Dashboard
+                </span>
+              </Link>
+
+              <div className="mx-1 h-4 w-px bg-white/10 sm:mx-2" />
+
               {[
                 { href: "/dashboard", label: "Overview" },
                 { href: "/dashboard/scholarships", label: "Scholarships" },
@@ -173,62 +239,6 @@ export default function DashboardLayout({
                 Logout
               </button>
             </nav>
-          </div>
-
-          {/* Mobile hamburger */}
-          <div className="absolute right-3 top-3 sm:right-5 sm:top-4 sm:hidden" ref={menuRef}>
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="flex items-center justify-center h-10 w-10 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/60 backdrop-blur-xl shadow-lg transition-all duration-500 hover:bg-[color:var(--theme-surface)]/80"
-              aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
-              aria-expanded={menuOpen}
-            >
-              {menuOpen ? (
-                <X className="h-5 w-5 text-[color:var(--theme-typography-main)]" />
-              ) : (
-                <Menu className="h-5 w-5 text-[color:var(--theme-typography-main)]" />
-              )}
-            </button>
-
-            {menuOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-40 bg-black/35 transition-opacity duration-150"
-                  style={{ top: "100%" }}
-                  onClick={() => setMenuOpen(false)}
-                  aria-hidden="true"
-                />
-                <div className="absolute top-12 right-0 z-50 w-52 overflow-hidden rounded-2xl border border-white/10 bg-[color:var(--theme-surface)]/80 backdrop-blur-xl shadow-2xl shadow-black/30 origin-top transition-all duration-150">
-                  <nav className="flex flex-col gap-1 p-3 text-[11px] uppercase tracking-[0.18em] font-semibold">
-                    {[
-                      { href: "/dashboard", label: "Overview" },
-                      { href: "/dashboard/scholarships", label: "Scholarships" },
-                      { href: "/dashboard/readiness", label: "Readiness" },
-                    ].map(({ href, label }) => (
-                      <Link
-                        key={href}
-                        href={href}
-                        className={`rounded-full px-4 py-2.5 transition-all duration-300 ${
-                          pathname === href
-                            ? "bg-primary/15 text-primary"
-                            : "text-[color:var(--theme-typography-secondary)] hover:bg-white/5 hover:text-[color:var(--theme-typography-main)]"
-                        }`}
-                      >
-                        {label}
-                      </Link>
-                    ))}
-                    <div className="my-1 h-px bg-white/10" />
-                    <button
-                      onClick={handleSignOut}
-                      className="flex items-center justify-center gap-2 rounded-full bg-primary/90 px-4 py-2.5 text-white transition-all duration-300 hover:bg-primary"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      Sign Out
-                    </button>
-                  </nav>
-                </div>
-              </>
-            )}
           </div>
         </header>
 

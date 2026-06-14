@@ -51,17 +51,18 @@ const definition: AgentDefinition = {
     // ─── Helper: poll for phases file with timeout ───────────────────────────
     // Waits up to 60 seconds for the phases file to appear (written by ecc-planner).
     // This prevents the race condition where Phase 2 reads an empty/missing file.
+    const D = '$' // used in template literals to produce literal ${VAR} for bash variables
     function buildPollCmd(): string {
       return (
         `TIMEOUT=60 INTERVAL=3 ELAPSED=0 PHASES_FILE="${PHASES_FILE}"` +
         `; while [ "$ELAPSED" -lt "$TIMEOUT" ]; do` +
         ` if [ -s "$PHASES_FILE" ] && head -1 "$PHASES_FILE" | grep -q '^\\['; then` +
-        `  echo "PLAN_READY after $${ELAPSED}s" && exit 0;` +
+        `  echo "PLAN_READY after ${D}{ELAPSED}s" && exit 0;` +
         ` fi;` +
         ` sleep "$INTERVAL";` +
         ` ELAPSED=$((ELAPSED + INTERVAL));` +
         ` done;` +
-        ` echo "PLAN_TIMEOUT after $${TIMEOUT}s" && exit 1`
+        ` echo "PLAN_TIMEOUT after ${D}{TIMEOUT}s" && exit 1`
       )
     }
 
