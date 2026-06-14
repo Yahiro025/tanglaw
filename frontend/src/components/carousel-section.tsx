@@ -152,7 +152,7 @@ export default function CarouselSection() {
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { pauseAutoPlay(); scrollTo(index); }}}
               onClick={() => { pauseAutoPlay(); scrollTo(index); }}
               className={`
-                relative flex-shrink-0 w-[calc(100vw-3rem)] sm:w-[36rem] snap-center overflow-hidden
+                relative flex-shrink-0 w-[calc(100vw-3rem)] sm:w-[36rem] snap-center
                 rounded-3xl border p-6 sm:p-8 md:p-10
                 shadow-2xl backdrop-blur-sm
                 transition-all duration-500 cursor-pointer
@@ -173,8 +173,8 @@ export default function CarouselSection() {
                   >
                     {pillar.number}
                   </span>
-                  <div className="mb-1 sm:mb-2 flex h-14 w-14 items-center justify-center rounded-2xl border border-[color:var(--theme-borders-system)]/10 bg-[color:var(--theme-accent-periwinkle)]/8 text-[color:var(--theme-accent-periwinkle)]/70">
-                    <pillar.Icon className="h-7 w-7" />
+                  <div className="mb-1 sm:mb-2 flex h-16 w-16 items-center justify-center rounded-2xl border border-[color:var(--theme-borders-system)]/10 bg-[color:var(--theme-accent-periwinkle)]/8 text-[color:var(--theme-accent-periwinkle)]/70">
+                    <pillar.Icon className="h-8 w-8" />
                   </div>
                 </div>
 
