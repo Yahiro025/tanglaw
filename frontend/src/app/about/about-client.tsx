@@ -252,7 +252,7 @@ export default function AboutClient() {
                   <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                     {DOCUMENTATION_TEAM.map((member, idx) => (
                       <ScrollReveal key={member.username} delay={0.05 * idx} direction="up">
-                        <div className="group flex flex-col items-center text-center h-full rounded-3xl border border-white/10 bg-[color:var(--theme-canvas)]/80 p-5                transition-all duration-500 hover:-translate-y-1 hover:bg-[color:var(--theme-canvas)]/95 shadow-md">
+                        <div className="group flex flex-col items-center text-center h-full rounded-3xl border border-white/10 bg-[color:var(--theme-canvas)]/80 p-5                transition-all duration-300 hover:-translate-y-1 hover:bg-[color:var(--theme-canvas)]/95 shadow-md">
                           <div className="relative h-24 w-24 mb-4 rounded-full overflow-hidden border-2 border-primary/40 bg-[color:var(--theme-surface)] shadow-inner">
                             <Image
                               src={`/team/${PHOTO_2_0[member.username] ?? `${member.username}.jpg`}`}
@@ -298,7 +298,7 @@ export default function AboutClient() {
                   <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     {DEVELOPMENT_TEAM.map((member, idx) => (
                       <ScrollReveal key={member.username} delay={0.05 * idx} direction="up">
-                        <div className="group flex flex-col items-center text-center h-full rounded-3xl border border-white/10 bg-[color:var(--theme-canvas)]/80 p-5                transition-all duration-500 hover:-translate-y-1 hover:bg-[color:var(--theme-canvas)]/95 shadow-md">
+                        <div className="group flex flex-col items-center text-center h-full rounded-3xl border border-white/10 bg-[color:var(--theme-canvas)]/80 p-5                transition-all duration-300 hover:-translate-y-1 hover:bg-[color:var(--theme-canvas)]/95 shadow-md">
                           <div className="relative h-24 w-24 mb-4 rounded-full overflow-hidden border-2 border-primary/40 bg-[color:var(--theme-surface)] shadow-inner">
                             <Image
                               src={`/team/${PHOTO_2_0[member.username] ?? `${member.username}.jpg`}`}

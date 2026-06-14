@@ -525,6 +525,9 @@ export default function NatureCanvas({
           }
         }
 
+        // Scroll velocity influence (parallax wind)
+        p.vy += scrollVelocityRef.current * 0.12 * p.depth;
+
         // Spring-back: particles gently return toward their original position
         const springStrength = 0.006;
         const homeDx = p.originalX - p.x;

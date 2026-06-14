@@ -118,7 +118,7 @@ export default function DashboardLayout({
         )}
 
         <header
-          className={`relative z-50 flex items-start justify-center px-4 pt-4 sm:px-6 sm:pt-5 transition-all duration-700 ease-out ${
+          className={`relative z-50 flex items-start justify-center px-4 pt-4 sm:px-6 sm:pt-5 transition-all duration-400 ease-out ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none"
           }`}
           onMouseEnter={() => setHovered(true)}
@@ -141,7 +141,7 @@ export default function DashboardLayout({
               <div ref={menuRef}>
                 <button
                   onClick={() => setMenuOpen(!menuOpen)}
-                  className="flex items-center justify-center h-10 w-10 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/60 backdrop-blur-xl shadow-lg transition-all duration-500 hover:bg-[color:var(--theme-surface)]/80"
+                  className="flex items-center justify-center h-10 w-10 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/60 backdrop-blur-xl shadow-lg transition-all duration-300 hover:bg-[color:var(--theme-surface)]/80"
                   aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
                   aria-expanded={menuOpen}
                 >
@@ -217,7 +217,7 @@ export default function DashboardLayout({
                 <Link
                   key={href}
                   href={href}
-                  className={`group relative rounded-full px-3.5 py-1.5 text-[10px] font-semibold tracking-[0.18em] uppercase transition-all duration-500 sm:px-4 ${
+                  className={`group relative rounded-full px-3.5 py-1.5 text-[10px] font-semibold tracking-[0.18em] uppercase transition-all duration-300 sm:px-4 ${
                     pathname === href
                       ? "bg-primary/15 text-primary"
                       : "text-[color:var(--theme-typography-secondary)] hover:bg-white/5 hover:text-[color:var(--theme-typography-main)]"
@@ -225,7 +225,7 @@ export default function DashboardLayout({
                 >
                   {label}
                   <span
-                    className={`absolute -bottom-0.5 left-1/2 h-px -translate-x-1/2 rounded-full bg-primary/40 transition-all duration-500 ${
+                    className={`absolute -bottom-0.5 left-1/2 h-px -translate-x-1/2 rounded-full bg-primary/40 transition-all duration-300 ${
                       pathname === href ? "w-3/5 opacity-100" : "w-0 opacity-0 group-hover:w-2/5 group-hover:opacity-60"
                     }`}
                   />
@@ -238,7 +238,7 @@ export default function DashboardLayout({
 
               <button
                 onClick={handleSignOut}
-                className="rounded-full px-3 py-1.5 text-[10px] font-semibold tracking-[0.18em] uppercase text-[color:var(--theme-typography-secondary)] transition-all duration-500 hover:bg-white/5 hover:text-[color:var(--theme-typography-main)] sm:px-4"
+                className="rounded-full px-3 py-1.5 text-[10px] font-semibold tracking-[0.18em] uppercase text-[color:var(--theme-typography-secondary)] transition-all duration-300 hover:bg-white/5 hover:text-[color:var(--theme-typography-main)] sm:px-4"
               >
                 Logout
               </button>

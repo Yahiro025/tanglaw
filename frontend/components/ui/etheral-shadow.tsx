@@ -45,8 +45,10 @@ export function EtheralShadow({
     const isDark = resolvedTheme === 'dark';
     const containerRef = useRef<HTMLDivElement>(null);
 
-    // ─── Visibility-based pause for SVG animate (WS-1) ─────────────────────
+    // ─── Visibility-based pause and RAF-throttled filter updates ───────────
     const [animationPlayState, setAnimationPlayState] = useState<'running' | 'paused'>('running');
+    const hueRef = useRef(0);
+    const feColorMatrixRef = useRef<SVGFEColorMatrixElement>(null);
 
     useEffect(() => {
         const container = containerRef.current;
@@ -60,6 +62,23 @@ export function EtheralShadow({
         );
         observer.observe(container);
 
+        // Manual RAF loop for hue rotation to avoid browser compositing rate SVG <animate>
+        let rafId: number;
+        let frameCount = 0;
+        const animateHue = () => {
+            if (animationPlayState === 'running' && !document.hidden) {
+                frameCount++;
+                if (frameCount % 3 === 0) { // Update every 3rd frame (~20fps)
+                    hueRef.current = (hueRef.current + 1.2) % 360;
+                    if (feColorMatrixRef.current) {
+                        feColorMatrixRef.current.setAttribute('values', String(hueRef.current));
+                    }
+                }
+            }
+            rafId = requestAnimationFrame(animateHue);
+        };
+        rafId = requestAnimationFrame(animateHue);
+
         const handleVisibility = () => {
             setAnimationPlayState(document.hidden ? 'paused' : 'running');
         };
@@ -67,9 +86,10 @@ export function EtheralShadow({
 
         return () => {
             observer.disconnect();
+            cancelAnimationFrame(rafId);
             document.removeEventListener('visibilitychange', handleVisibility);
         };
-    }, []);
+    }, [animationPlayState]);
     
     // Dynamically set the shadow color based on the active theme
     const activeColor = isDark ? darkColor : lightColor;
@@ -85,19 +105,16 @@ export function EtheralShadow({
             
             <div style={{ position: "absolute", inset: -displacementScale, filter: animationEnabled ? `url(#${id}) blur(4px)` : "none" }}>
                 {animationEnabled && (
-                    <svg style={{ position: "absolute", width: 0, height: 0, animationPlayState }}>
+                    <svg style={{ position: "absolute", width: 0, height: 0 }}>
                         <defs>
                             <filter id={id}>
                                 <feTurbulence result="undulation" numOctaves="1" baseFrequency={`${mapRange(animation.scale, 0, 100, 0.001, 0.0005)},${mapRange(animation.scale, 0, 100, 0.004, 0.002)}`} seed="0" type="turbulence" />
-                                <feColorMatrix in="undulation" type="hueRotate" values="180">
-                                    <animate 
-                                        attributeName="values" 
-                                        from="0" 
-                                        to="360" 
-                                        dur={`${animationDuration / 10}s`} 
-                                        repeatCount="indefinite" 
-                                    />
-                                </feColorMatrix>
+                                <feColorMatrix 
+                                    ref={feColorMatrixRef}
+                                    in="undulation" 
+                                    type="hueRotate" 
+                                    values="0" 
+                                />
                                 <feColorMatrix in="undulation" result="circulation" type="matrix" values="4 0 0 0 1  4 0 0 0 1  4 0 0 0 1  1 0 0 0 0" />
                                 <feDisplacementMap in="SourceGraphic" in2="circulation" scale={displacementScale} result="dist" />
                                 <feDisplacementMap in="dist" in2="undulation" scale={displacementScale} result="output" />

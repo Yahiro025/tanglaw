@@ -76,7 +76,7 @@ export function MascotWithGlow() {
           animationPlayState,
         }}
         whileInView={{ scale: [1, 1.12, 1], opacity: [0.6, 0.9, 0.6] }}
-        viewport={{ once: false, margin: "-200px" }}
+        viewport={{ once: false, margin: "-50px" }}
         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
       />
       {/* Inner bright core glow */}
@@ -89,7 +89,7 @@ export function MascotWithGlow() {
           animationPlayState,
         }}
         whileInView={{ scale: [1, 1.2, 1], opacity: [0.4, 0.7, 0.4] }}
-        viewport={{ once: false, margin: "-200px" }}
+        viewport={{ once: false, margin: "-50px" }}
         transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
       />
       <motion.div

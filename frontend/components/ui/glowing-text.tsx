@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 interface GlowingTextProps {
@@ -16,9 +16,33 @@ const glowClasses = {
 };
 
 export function GlowingText({ children, className, glowType = 'primary' }: GlowingTextProps) {
+  const containerRef = useRef<HTMLSpanElement>(null);
+  const [isInView, setIsInView] = useState(true);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting);
+      },
+      { threshold: 0.01 }
+    );
+    observer.observe(container);
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <span
-      className={cn('animate-glow-pulse', glowClasses[glowType], className)}
+      ref={containerRef}
+      className={cn(
+        'animate-glow-pulse', 
+        !isInView && 'animate-glow-pause',
+        glowClasses[glowType], 
+        className
+      )}
     >
       {children}
     </span>
