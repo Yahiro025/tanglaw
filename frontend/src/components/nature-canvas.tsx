@@ -125,6 +125,10 @@ export default function NatureCanvas({
     resetIdleTimer();
   };
 
+  const scrollYRef = useRef(0);
+  const scrollVelocityRef = useRef(0);
+  const lastScrollTimeRef = useRef(0);
+
   useEffect(() => {
     checkTheme();
     checkReducedMotion();
@@ -151,9 +155,22 @@ export default function NatureCanvas({
     const motionObserver = window.matchMedia("(prefers-reduced-motion: reduce)");
     motionObserver.addEventListener("change", checkReducedMotion);
 
-    // Idle timer: track user activity to pause particles when idle
+    // Idle timer + Scroll tracking: track user activity and scroll velocity
+    const onScroll = () => {
+      const now = performance.now();
+      const dt = now - lastScrollTimeRef.current;
+      const currentY = window.scrollY;
+      if (dt > 0 && dt < 100) { // Only calculate velocity for continuous scroll
+        const dy = currentY - scrollYRef.current;
+        scrollVelocityRef.current = scrollVelocityRef.current * 0.5 + (dy / dt) * 0.5;
+      }
+      scrollYRef.current = currentY;
+      lastScrollTimeRef.current = now;
+      handleActivity();
+    };
+
     window.addEventListener("mousemove", handleActivity, { passive: true });
-    window.addEventListener("scroll", handleActivity, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("touchstart", handleActivity, { passive: true });
     resetIdleTimer();
 
@@ -163,7 +180,7 @@ export default function NatureCanvas({
       observer.disconnect();
       motionObserver.removeEventListener("change", checkReducedMotion);
       window.removeEventListener("mousemove", handleActivity);
-      window.removeEventListener("scroll", handleActivity);
+      window.removeEventListener("scroll", onScroll);
       window.removeEventListener("touchstart", handleActivity);
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     };
@@ -729,9 +746,10 @@ export default function NatureCanvas({
         ctx.fill();
       }
 
-      // Decay mouse wind velocity each frame so it dies out when movement stops
+      // Decay velocities each frame so they die out when movement stops
       mouse.windX *= 0.96;
       mouse.windY *= 0.96;
+      scrollVelocityRef.current *= 0.92;
 
       animationFrameId = requestAnimationFrame(draw);
     };
