@@ -166,15 +166,15 @@ export default function CarouselSection() {
               <div className="absolute -bottom-8 -left-8 h-24 w-24 rounded-full bg-[color:var(--theme-accent-periwinkle)]/10 blur-2xl" />
 
               <div className="relative z-10">
-                <div className="mb-4 sm:mb-6 flex items-center gap-4 sm:gap-5">
+                <div className="mb-4 sm:mb-6 flex items-end gap-3 sm:gap-4">
                   <span
-                    className={`font-display text-5xl sm:text-6xl md:text-7xl font-black italic bg-gradient-to-br ${PILLAR_NUM_GRADIENTS[index]} bg-clip-text text-transparent`}
+                    className={`font-display text-6xl sm:text-7xl md:text-8xl font-black italic leading-none bg-gradient-to-br ${PILLAR_NUM_GRADIENTS[index]} bg-clip-text text-transparent`}
                     style={{ WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
                   >
                     {pillar.number}
                   </span>
-                  <div className="flex h-11 w-11 sm:h-14 sm:w-14 items-center justify-center rounded-xl sm:rounded-2xl border border-[color:var(--theme-borders-system)]/10 bg-[color:var(--theme-accent-periwinkle)]/8 text-[color:var(--theme-accent-periwinkle)]/70">
-                    <pillar.Icon className="h-5 w-5 sm:h-7 sm:w-7" />
+                  <div className="mb-1.5 sm:mb-2 flex h-9 w-9 sm:h-11 sm:w-11 md:h-12 md:w-12 items-center justify-center rounded-lg sm:rounded-xl border border-[color:var(--theme-borders-system)]/10 bg-[color:var(--theme-accent-periwinkle)]/8 text-[color:var(--theme-accent-periwinkle)]/70">
+                    <pillar.Icon className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
                   </div>
                 </div>
 
