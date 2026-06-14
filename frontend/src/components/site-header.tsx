@@ -108,16 +108,15 @@ export default function SiteHeader() {
       )}
 
       <header
-        className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-center px-4 pt-4 sm:px-6 sm:pt-5 transition-all duration-700 ease-out ${
+        className={`fixed top-0 left-0 right-0 z-50 flex items-start justify-center px-4 pt-4 sm:px-6 sm:pt-5 transition-all duration-700 ease-out ${
           isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none"
         }`}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
-      <div className="relative flex w-full max-w-4xl items-center">
-        {/* TANGLAW logo + wordmark — visible on non-home pages */}
+        {/* TANGLAW logo + wordmark — fixed at viewport top-left on non-home pages */}
         <div
-          className={`absolute -left-2 top-3 sm:top-1/2 sm:translate-y-[calc(-50%+6px)] transition-all duration-700 sm:-left-4 ${
+          className={`fixed left-4 sm:left-6 top-4 sm:top-5 z-50 transition-all duration-700 ${
             !isHome
               ? "pointer-events-auto translate-x-0 opacity-100"
               : "pointer-events-none -translate-x-6 opacity-0"
@@ -142,137 +141,134 @@ export default function SiteHeader() {
           </Link>
         </div>
 
-        {/* Pill Nav — glassmorphism, hidden on mobile */}
-        <nav
-          className={`mx-auto hidden md:flex items-center gap-1 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/60 px-3 py-2.5 shadow-[0_4px_30px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl transition-all duration-700 sm:gap-2 sm:px-5 ${
-            !isHome ? "translate-x-4 sm:translate-x-8" : ""
-          }`}
-        >
-          <NavLink href="/" active={pathname === "/"}>
-            Home
-          </NavLink>
-          <NavLink href="/about" active={pathname === "/about"}>
-            About
-          </NavLink>
-          <NavLink href="/contact" active={pathname === "/contact"}>
-            Contact
-          </NavLink>
-
-          <div className="mx-1 h-4 w-px bg-white/10 sm:mx-2" />
-
-          {isAuthenticated ? (
-            <NavLink href="/dashboard" active={pathname?.startsWith("/dashboard") ?? false}>
-              Dashboard
+        {/* Pill Nav — glassmorphism, centered */}
+        <div className="flex w-full max-w-4xl items-center justify-center">
+          <nav className="hidden md:flex items-center gap-1 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/60 px-3 py-2.5 shadow-[0_4px_30px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl transition-all duration-700 sm:gap-2 sm:px-5">
+            <NavLink href="/" active={pathname === "/"}>
+              Home
             </NavLink>
-          ) : (
-            <>
-              <NavLink href="/login" active={pathname === "/login"}>
-                Log In
+            <NavLink href="/about" active={pathname === "/about"}>
+              About
+            </NavLink>
+            <NavLink href="/contact" active={pathname === "/contact"}>
+              Contact
+            </NavLink>
+
+            <div className="mx-1 h-4 w-px bg-white/10 sm:mx-2" />
+
+            {isAuthenticated ? (
+              <NavLink href="/dashboard" active={pathname?.startsWith("/dashboard") ?? false}>
+                Dashboard
               </NavLink>
-              <Link
-                href="/signup"
-                className="rounded-full bg-primary/90 px-4 py-1.5 text-[10px] font-semibold tracking-[0.18em] uppercase text-white shadow-[0_0_16px_rgba(27,64,121,0.2)] transition-all duration-500 hover:bg-primary hover:shadow-[0_0_20px_rgba(27,64,121,0.3)]"
-              >
-                Sign Up
-              </Link>
-            </>
-          )}
-
-          <div className="mx-1 h-4 w-px bg-white/10 sm:mx-2" />
-
-          <ThemeChanger />
-        </nav>
-      </div>
-
-      {/* Mobile hamburger */}
-      <div className="absolute right-3 top-3 sm:right-5 sm:top-4 md:hidden" ref={menuRef}>
-        <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="flex items-center justify-center h-10 w-10 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/60 backdrop-blur-xl shadow-lg transition-all duration-500 hover:bg-[color:var(--theme-surface)]/80"
-          aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
-          aria-expanded={menuOpen}
-        >
-          {menuOpen ? (
-            <X className="h-5 w-5 text-[color:var(--theme-typography-main)]" />
-          ) : (
-            <Menu className="h-5 w-5 text-[color:var(--theme-typography-main)]" />
-          )}
-        </button>
-
-        {menuOpen && (
-          <>
-            <div
-              className="fixed inset-0 z-40 bg-black/35 transition-opacity duration-150"
-              style={{ top: "100%" }}
-              onClick={() => setMenuOpen(false)}
-              aria-hidden="true"
-            />
-            <div className="absolute top-12 right-0 z-50 w-52 overflow-hidden rounded-2xl border border-white/10 bg-[color:var(--theme-surface)]/80 backdrop-blur-xl shadow-2xl shadow-black/30 origin-top transition-all duration-150">
-              <nav className="flex flex-col gap-1 p-3 text-[11px] uppercase tracking-[0.18em] font-semibold">
+            ) : (
+              <>
+                <NavLink href="/login" active={pathname === "/login"}>
+                  Log In
+                </NavLink>
                 <Link
-                  href="/"
-                  className={`rounded-full px-4 py-2.5 transition-all duration-300 ${
-                    pathname === "/"
-                      ? "bg-primary/15 text-primary"
-                      : "text-[color:var(--theme-typography-secondary)] hover:bg-white/5 hover:text-[color:var(--theme-typography-main)]"
-                  }`}
+                  href="/signup"
+                  className="rounded-full bg-primary/90 px-4 py-1.5 text-[10px] font-semibold tracking-[0.18em] uppercase text-white shadow-[0_0_16px_rgba(27,64,121,0.2)] transition-all duration-500 hover:bg-primary hover:shadow-[0_0_20px_rgba(27,64,121,0.3)]"
                 >
-                  Home
+                  Sign Up
                 </Link>
-                <Link
-                  href="/about"
-                  className={`rounded-full px-4 py-2.5 transition-all duration-300 ${
-                    pathname === "/about"
-                      ? "bg-primary/15 text-primary"
-                      : "text-[color:var(--theme-typography-secondary)] hover:bg-white/5 hover:text-[color:var(--theme-typography-main)]"
-                  }`}
-                >
-                  About
-                </Link>
-                <Link
-                  href="/contact"
-                  className={`rounded-full px-4 py-2.5 transition-all duration-300 ${
-                    pathname === "/contact"
-                      ? "bg-primary/15 text-primary"
-                      : "text-[color:var(--theme-typography-secondary)] hover:bg-white/5 hover:text-[color:var(--theme-typography-main)]"
-                  }`}
-                >
-                  Contact
-                </Link>
-                {isAuthenticated ? (
+              </>
+            )}
+
+            <div className="mx-1 h-4 w-px bg-white/10 sm:mx-2" />
+
+            <ThemeChanger />
+          </nav>
+        </div>
+
+        {/* Mobile hamburger */}
+        <div className="absolute right-3 top-3 sm:right-5 sm:top-4 md:hidden" ref={menuRef}>
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="flex items-center justify-center h-10 w-10 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/60 backdrop-blur-xl shadow-lg transition-all duration-500 hover:bg-[color:var(--theme-surface)]/80"
+            aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={menuOpen}
+          >
+            {menuOpen ? (
+              <X className="h-5 w-5 text-[color:var(--theme-typography-main)]" />
+            ) : (
+              <Menu className="h-5 w-5 text-[color:var(--theme-typography-main)]" />
+            )}
+          </button>
+
+          {menuOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-40 bg-black/35 transition-opacity duration-150"
+                style={{ top: "100%" }}
+                onClick={() => setMenuOpen(false)}
+                aria-hidden="true"
+              />
+              <div className="absolute top-12 right-0 z-50 w-52 overflow-hidden rounded-2xl border border-white/10 bg-[color:var(--theme-surface)]/80 backdrop-blur-xl shadow-2xl shadow-black/30 origin-top transition-all duration-150">
+                <nav className="flex flex-col gap-1 p-3 text-[11px] uppercase tracking-[0.18em] font-semibold">
                   <Link
-                    href="/dashboard"
+                    href="/"
                     className={`rounded-full px-4 py-2.5 transition-all duration-300 ${
-                      pathname?.startsWith("/dashboard")
+                      pathname === "/"
                         ? "bg-primary/15 text-primary"
                         : "text-[color:var(--theme-typography-secondary)] hover:bg-white/5 hover:text-[color:var(--theme-typography-main)]"
                     }`}
                   >
-                    Dashboard
+                    Home
                   </Link>
-                ) : (
-                  <>
-                    <div className="my-1 h-px bg-white/10" />
+                  <Link
+                    href="/about"
+                    className={`rounded-full px-4 py-2.5 transition-all duration-300 ${
+                      pathname === "/about"
+                        ? "bg-primary/15 text-primary"
+                        : "text-[color:var(--theme-typography-secondary)] hover:bg-white/5 hover:text-[color:var(--theme-typography-main)]"
+                    }`}
+                  >
+                    About
+                  </Link>
+                  <Link
+                    href="/contact"
+                    className={`rounded-full px-4 py-2.5 transition-all duration-300 ${
+                      pathname === "/contact"
+                        ? "bg-primary/15 text-primary"
+                        : "text-[color:var(--theme-typography-secondary)] hover:bg-white/5 hover:text-[color:var(--theme-typography-main)]"
+                    }`}
+                  >
+                    Contact
+                  </Link>
+                  {isAuthenticated ? (
                     <Link
-                      href="/login"
-                      className="rounded-full px-4 py-2.5 text-[color:var(--theme-typography-secondary)] hover:bg-white/5 hover:text-[color:var(--theme-typography-main)] transition-all duration-300"
+                      href="/dashboard"
+                      className={`rounded-full px-4 py-2.5 transition-all duration-300 ${
+                        pathname?.startsWith("/dashboard")
+                          ? "bg-primary/15 text-primary"
+                          : "text-[color:var(--theme-typography-secondary)] hover:bg-white/5 hover:text-[color:var(--theme-typography-main)]"
+                      }`}
                     >
-                      Log In
+                      Dashboard
                     </Link>
-                    <Link
-                      href="/signup"
-                      className="rounded-full bg-primary/90 px-4 py-2.5 text-center text-white transition-all duration-300 hover:bg-primary"
-                    >
-                      Sign Up
-                    </Link>
-                  </>
-                )}
-              </nav>
-            </div>
-          </>
-        )}
-      </div>
-    </header>
+                  ) : (
+                    <>
+                      <div className="my-1 h-px bg-white/10" />
+                      <Link
+                        href="/login"
+                        className="rounded-full px-4 py-2.5 text-[color:var(--theme-typography-secondary)] hover:bg-white/5 hover:text-[color:var(--theme-typography-main)] transition-all duration-300"
+                      >
+                        Log In
+                      </Link>
+                      <Link
+                        href="/signup"
+                        className="rounded-full bg-primary/90 px-4 py-2.5 text-center text-white transition-all duration-300 hover:bg-primary"
+                      >
+                        Sign Up
+                      </Link>
+                    </>
+                  )}
+                </nav>
+              </div>
+            </>
+          )}
+        </div>
+      </header>
     </>
   );
 }

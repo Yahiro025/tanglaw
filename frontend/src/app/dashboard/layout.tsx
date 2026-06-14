@@ -118,27 +118,27 @@ export default function DashboardLayout({
         )}
 
         <header
-          className={`relative z-50 flex items-center justify-center px-4 pt-4 sm:px-6 sm:pt-5 transition-all duration-700 ease-out ${
+          className={`relative z-50 flex items-start justify-center px-4 pt-4 sm:px-6 sm:pt-5 transition-all duration-700 ease-out ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none"
           }`}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
         >
-          <div className="relative flex w-full max-w-4xl items-center">
-            {/* DASHBOARD logo + wordmark — hidden on small screens to prevent overflow */}
-            <div className="absolute -left-2 top-3 sm:top-1/2 sm:translate-y-[calc(-50%+6px)] sm:-left-4 hidden sm:block">
-              <Link href="/dashboard" className="flex items-center gap-2" aria-label="Go to dashboard">
-                <div className="h-8 w-8 shrink-0 rounded-full border border-white/10 bg-[color:var(--theme-surface)] shadow-lg shadow-black/20 flex items-center justify-center">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                </div>
-                <span className="font-display text-lg font-black uppercase tracking-[0.12em] text-[color:var(--theme-typography-main)] sm:text-xl whitespace-nowrap">
-                  Dashboard
-                </span>
-              </Link>
-            </div>
+          {/* DASHBOARD logo + wordmark — absolute to header, positioned at top-left */}
+          <div className="absolute left-4 sm:left-6 top-4 sm:top-5 hidden sm:block">
+            <Link href="/dashboard" className="flex items-center gap-2" aria-label="Go to dashboard">
+              <div className="h-8 w-8 shrink-0 rounded-full border border-white/10 bg-[color:var(--theme-surface)] shadow-lg shadow-black/20 flex items-center justify-center">
+                <Sparkles className="h-4 w-4 text-primary" />
+              </div>
+              <span className="font-display text-lg font-black uppercase tracking-[0.12em] text-[color:var(--theme-typography-main)] sm:text-xl whitespace-nowrap">
+                Dashboard
+              </span>
+            </Link>
+          </div>
 
-            {/* Pill Nav — glassmorphism, hidden on mobile */}
-            <nav className="mx-auto hidden md:flex items-center gap-1 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/60 px-3 py-2.5 shadow-[0_4px_30px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl sm:gap-2 sm:px-5 translate-x-4 sm:translate-x-8">
+          {/* Pill Nav — glassmorphism, centered */}
+          <div className="flex w-full max-w-4xl items-center justify-center">
+            <nav className="hidden md:flex items-center gap-1 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/60 px-3 py-2.5 shadow-[0_4px_30px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl sm:gap-2 sm:px-5">
               {[
                 { href: "/dashboard", label: "Overview" },
                 { href: "/dashboard/scholarships", label: "Scholarships" },
