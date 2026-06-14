@@ -62,7 +62,7 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="relative overflow-hidden min-h-screen bg-[color:var(--theme-canvas)] px-4 py-16 sm:px-6 lg:px-8 text-[color:var(--theme-text-body)]">
+    <div className="relative overflow-hidden min-h-screen bg-[color:var(--theme-canvas)] text-[color:var(--theme-text-body)] flex flex-col">
       <EtheralShadow
         animation={{ scale: 60, speed: 80 }}
         noise={{ opacity: 0.8, scale: 1.0 }}
@@ -70,7 +70,8 @@ export default function SignupPage() {
         lightColor="rgba(200, 230, 175, 0.85)"
       />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(27,64,121,0.14),_transparent_18%)]" />
-      <div className="relative z-10 mx-auto grid max-w-6xl gap-10 lg:grid-cols-[0.95fr_0.9fr]">
+      <div className="relative z-10 flex-1 flex items-center justify-center px-4 pt-28 pb-16 sm:px-6 lg:px-8">
+        <div className="mx-auto grid w-full max-w-6xl gap-10 lg:grid-cols-[0.95fr_0.9fr]">
         <section className="rounded-[2rem] border border-white/10 bg-[color:var(--theme-surface)]/90 p-10 shadow-2xl shadow-black/25 backdrop-blur-sm">
           <p className="text-[10px] uppercase tracking-[0.34em] text-[color:var(--theme-typography-secondary)] font-black">New Scholar Portal</p>
           <h1 className="mt-6 text-4xl font-black tracking-[-0.04em] text-[color:var(--theme-typography-main)] sm:text-5xl">
@@ -90,9 +91,9 @@ export default function SignupPage() {
         </section>
 
         <div className="rounded-[2rem] border border-white/10 bg-[color:var(--theme-surface)]/95 p-8 shadow-2xl shadow-black/25 backdrop-blur-sm">
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <p className="text-[11px] uppercase tracking-[0.34em] text-[color:var(--theme-typography-secondary)] font-black">Create your account</p>
-            <h2 className="mt-4 text-3xl font-black text-[color:var(--theme-typography-main)]">
+            <h2 className="mt-3 text-3xl font-black text-[color:var(--theme-typography-main)]">
               <GlowingText glowType="secondary">Register as a scholar</GlowingText>
             </h2>
           </div>
@@ -116,7 +117,7 @@ export default function SignupPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <label className="space-y-2 text-sm text-[color:var(--theme-text-body)]">
               <span className="font-semibold text-[color:var(--theme-typography-main)]">Full Name</span>
               <input
@@ -156,7 +157,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-black uppercase tracking-[0.18em] text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-white/10"
+              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-black uppercase tracking-[0.18em] text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-white/10"
             >
               {loading ? "Registering..." : <><UserPlus className="h-4 w-4" /> Create Account</>}
             </button>
@@ -209,7 +210,7 @@ export default function SignupPage() {
             </div>
           </form>
 
-          <p className="mt-8 text-center text-sm text-[color:var(--theme-text-body)]">
+          <p className="mt-6 text-center text-sm text-[color:var(--theme-text-body)]">
             Already a scholar?{' '}
             <Link href="/login" className="font-bold hover:underline">
               <GlowingText glowType="secondary" className="text-[color:var(--theme-typography-main)]">
@@ -217,6 +218,7 @@ export default function SignupPage() {
               </GlowingText>
             </Link>
           </p>
+        </div>
         </div>
       </div>
     </div>
