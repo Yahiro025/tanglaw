@@ -162,7 +162,7 @@ export default function CarouselSection() {
                 }
               `}
             >
-              <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-[color:var(--theme-accent-periwinkle)]/5 blur-3xl" />
+              <div className="absolute -bottom-8 -right-8 h-32 w-32 rounded-full bg-[color:var(--theme-accent-periwinkle)]/5 blur-3xl" />
               <div className="absolute -bottom-8 -left-8 h-24 w-24 rounded-full bg-[color:var(--theme-accent-periwinkle)]/10 blur-2xl" />
 
               <div className="relative z-10">
