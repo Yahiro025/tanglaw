@@ -136,12 +136,12 @@ export default function CarouselSection() {
         <h2 className="mt-4 text-2xl sm:text-3xl font-black text-[color:var(--theme-typography-main)]"><GlowingText glowType="primary">The five pillars of TANGLAW</GlowingText></h2>
       </motion.div>
 
-      <div className="relative">
+      <div className="relative -mt-12">
         <div
           ref={carouselRef}
           role="list"
           aria-label="The five pillars of TANGLAW"
-          className="hide-scrollbar flex gap-6 overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth pb-4 px-6 sm:px-0"
+          className="hide-scrollbar flex gap-6 overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth pt-12 pb-12 px-6 sm:px-0"
           style={{ overscrollBehaviorX: "contain" }}
         >
           {PILLARS.map((pillar, index) => (
@@ -157,8 +157,8 @@ export default function CarouselSection() {
                 shadow-2xl backdrop-blur-sm
                 transition-all duration-500 cursor-pointer
                 ${index === activeIndex
-                  ? "border-[color:var(--theme-borders-system)]/20 scale-100 opacity-100 bg-[color:var(--theme-surface)]/90"
-                  : "border-[color:var(--theme-borders-system)]/5 scale-[0.95] opacity-50 bg-[color:var(--theme-surface)]/60"
+                  ? "border-[color:var(--theme-borders-system)]/20 scale-100 opacity-100 bg-[color:var(--theme-surface)]/90 z-20"
+                  : "border-[color:var(--theme-borders-system)]/5 scale-[0.95] opacity-50 bg-[color:var(--theme-surface)]/60 z-10"
                 }
               `}
             >
@@ -169,7 +169,7 @@ export default function CarouselSection() {
                 <div className="mb-4 sm:mb-6 flex items-end justify-between">
                   <span
                     className={`font-display text-6xl sm:text-7xl md:text-8xl font-black italic bg-gradient-to-br ${PILLAR_NUM_GRADIENTS[index]} bg-clip-text text-transparent`}
-                    style={{ WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", lineHeight: "1.1" }}
+                    style={{ WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", lineHeight: "1.2", paddingRight: "0.1em", paddingTop: "0.1em" }}
                   >
                     {pillar.number}
                   </span>
