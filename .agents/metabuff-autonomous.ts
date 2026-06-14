@@ -2,7 +2,7 @@ import { AgentDefinition } from './types/agent-definition'
 
 const definition: AgentDefinition = {
   id: 'metabuff-autonomous',
-  version: '1.0.1',
+  version: '1.0.2',
   displayName: 'MetaBuff Autonomous (Long-Horizon Loop)',
   model: (() => {
     try {
@@ -45,6 +45,23 @@ const definition: AgentDefinition = {
         `mkdir -p ${RECOVERY_DIR} && ` +
         `echo '{"step":"${stepName}","timestamp":"${new Date().toISOString()}"}' > ${RECOVERY_DIR}/${SESSION_ID}.json && ` +
         `cp ${RECOVERY_DIR}/${SESSION_ID}.json ${RECOVERY_DIR}/latest.json`
+      )
+    }
+
+    // ─── Helper: poll for phases file with timeout ───────────────────────────
+    // Waits up to 60 seconds for the phases file to appear (written by ecc-planner).
+    // This prevents the race condition where Phase 2 reads an empty/missing file.
+    function buildPollCmd(): string {
+      return (
+        `TIMEOUT=60 INTERVAL=3 ELAPSED=0 PHASES_FILE="${PHASES_FILE}"` +
+        `; while [ "$ELAPSED" -lt "$TIMEOUT" ]; do` +
+        ` if [ -s "$PHASES_FILE" ] && head -1 "$PHASES_FILE" | grep -q '^\\['; then` +
+        `  echo "PLAN_READY after $${ELAPSED}s" && exit 0;` +
+        ` fi;` +
+        ` sleep "$INTERVAL";` +
+        ` ELAPSED=$((ELAPSED + INTERVAL));` +
+        ` done;` +
+        ` echo "PLAN_TIMEOUT after $${TIMEOUT}s" && exit 1`
       )
     }
 
@@ -92,17 +109,47 @@ const definition: AgentDefinition = {
     }
 
     // ─── Phase 1: PLAN ──────────────────────────────────────────────────────
-    if (session.phase === 0) {
+    // Spawns ecc-planner to write a phased plan to the phases file.
+    // Then polls (up to 60s) for the file to appear before proceeding.
+    if (!session.completedPhases.includes('plan')) {
       yield {
         toolName: 'think_deeply',
         input: {
           thought:
             `Decompose the following task into 3-10 sequential phases: ${prompt}\n` +
-            `Each phase should have an id, name, goal, verifyBy condition, and complexity (simple|complex|mega). ` +
-            `Output your plan as a JSON array and save it to ${PHASES_FILE} using write_file.`,
+            `Each phase should have an id, name, goal, verifyBy condition, and complexity (simple|complex|mega).\n` +
+            `Consider the implementation order: plan -> execute -> validate.\n` +
+            `Keep the plan focused on the original task.`,
         },
       }
 
+      // Write a fallback plan immediately so Phase 2 has something even if
+      // ecc-planner fails or times out.
+      yield {
+        toolName: 'write_file',
+        input: {
+          path: PHASES_FILE,
+          content: JSON.stringify([
+            {
+              id: 'phase_implement',
+              name: 'Implementation',
+              goal: 'Implement the changes described in the task using metabuff-mega',
+              verifyBy: 'Typecheck passes, tests pass',
+              complexity: 'complex',
+            },
+            {
+              id: 'phase_validate',
+              name: 'Validation',
+              goal: 'Validate all changes with metabuff-validator',
+              verifyBy: 'Validator reports no critical/high issues',
+              complexity: 'simple',
+            },
+          ], null, 2),
+          instructions: 'Write fallback plan to phases file (may be overwritten by ecc-planner)',
+        },
+      }
+
+      // Spawn ecc-planner to write a better plan (overwrites the fallback)
       yield {
         toolName: 'spawn_agents',
         input: {
@@ -110,15 +157,27 @@ const definition: AgentDefinition = {
             {
               agent_type: 'ecc-planner',
               prompt:
-                `Write the phased plan for: ${prompt}\n` +
-                `Ensure it follows the required JSON schema with id, name, goal, verifyBy, and complexity fields, ` +
-                `and save it to ${PHASES_FILE} using write_file.`,
+                `Write a phased implementation plan for the following task:\n\n${prompt}\n\n` +
+                `Save the plan as a JSON array to ${PHASES_FILE} using write_file.\n` +
+                `Each phase object must have: id (string), name (string), goal (string), ` +
+                `verifyBy (string), complexity ("simple"|"complex"|"mega").\n` +
+                `The plan should have 2-8 phases. Include implementation and validation phases.`,
             },
           ],
         },
       }
 
-      // Update session to phase 1
+      // Poll for the phases file to exist (written by ecc-planner).
+      // The fallback plan was already written above, so even if the poll times out
+      // we still have a valid plan to use.
+      yield {
+        toolName: 'run_terminal_command',
+        input: {
+          command: buildPollCmd(),
+        },
+      }
+
+      session.completedPhases.push('plan')
       session.phase = 1
       yield {
         toolName: 'write_file',
@@ -136,8 +195,10 @@ const definition: AgentDefinition = {
     }
 
     // ─── Phase 2: EXECUTE ───────────────────────────────────────────────────
-    if (session.phase === 1) {
-      // Read the phases file to pass context to executor
+    // Reads the phases file (written by ecc-planner in Phase 1, guaranteed to
+    // exist because of the polling loop and fallback plan) and passes it to
+    // metabuff-mega.
+    if (!session.completedPhases.includes('execute')) {
       const { toolResult: phasesContent } = (yield {
         toolName: 'run_terminal_command',
         input: {
@@ -164,7 +225,7 @@ const definition: AgentDefinition = {
         },
       }
 
-      // Update session to phase 2
+      session.completedPhases.push('execute')
       session.phase = 2
       yield {
         toolName: 'write_file',
@@ -182,7 +243,7 @@ const definition: AgentDefinition = {
     }
 
     // ─── Phase 3: VALIDATE ──────────────────────────────────────────────────
-    if (session.phase === 2) {
+    if (!session.completedPhases.includes('validate')) {
       yield {
         toolName: 'spawn_agents',
         input: {
@@ -197,7 +258,7 @@ const definition: AgentDefinition = {
         },
       }
 
-      // Update session to phase 3
+      session.completedPhases.push('validate')
       session.phase = 3
       yield {
         toolName: 'write_file',
@@ -215,7 +276,7 @@ const definition: AgentDefinition = {
     }
 
     // ─── Phase 4: SUMMARY ───────────────────────────────────────────────────
-    if (session.phase === 3) {
+    if (!session.completedPhases.includes('summary')) {
       yield {
         toolName: 'run_terminal_command',
         input: {
@@ -225,6 +286,7 @@ const definition: AgentDefinition = {
         },
       }
 
+      session.completedPhases.push('summary')
       session.phase = 4
       yield {
         toolName: 'write_file',
