@@ -94,7 +94,8 @@ export const getQuestions = async (req: Request, res: Response) => {
     const selected = shuffle(pool).slice(0, Math.min(count, pool.length));
     res.json({ data: selected.map((row, idx) => formatQuestion(row, idx + 1)) });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "DB error" });
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[getQuestions] Database query failed:", message, err instanceof Error ? err.stack : "");
+    res.status(500).json({ error: `Database query failed: ${message}` });
   }
 };

@@ -73,7 +73,8 @@ export const getScholarships = async (req: Request, res: Response) => {
 
     res.json({ data: formatted });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "DB error" });
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[getScholarships] Database query failed:", message, err instanceof Error ? err.stack : "");
+    res.status(500).json({ error: `Database query failed: ${message}` });
   }
 };

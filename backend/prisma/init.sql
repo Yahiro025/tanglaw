@@ -1,13 +1,11 @@
-Loaded Prisma config from prisma.config.ts.
-
--- CreateSchema
-CREATE SCHEMA IF NOT EXISTS "public";
-
 -- CreateEnum
 CREATE TYPE "Sector" AS ENUM ('PUBLIC', 'PRIVATE');
 
 -- CreateEnum
 CREATE TYPE "QuestionType" AS ENUM ('LOGIC', 'MATH', 'SCIENCE', 'ENGLISH', 'FILIPINO');
+
+-- CreateEnum
+CREATE TYPE "AssessmentMode" AS ENUM ('DIAGNOSTIC', 'MOCK');
 
 -- CreateTable
 CREATE TABLE "Scholarship" (
@@ -32,6 +30,10 @@ CREATE TABLE "Question" (
     "id" TEXT NOT NULL,
     "type" "QuestionType" NOT NULL,
     "difficulty" INTEGER NOT NULL,
+    "assessmentMode" "AssessmentMode" NOT NULL DEFAULT 'DIAGNOSTIC',
+    "sourceLabel" TEXT,
+    "sequenceNo" INTEGER NOT NULL DEFAULT 0,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
     "text" TEXT NOT NULL,
     "choices" JSONB NOT NULL,
     "correctAnswer" TEXT NOT NULL,
@@ -73,4 +75,3 @@ CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- AddForeignKey
 ALTER TABLE "Message" ADD CONSTRAINT "Message_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-

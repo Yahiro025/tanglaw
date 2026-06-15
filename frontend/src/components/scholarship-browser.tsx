@@ -117,6 +117,7 @@ function matchesAcademicStream(opportunity: ScholarshipOpportunity, filterValue:
 export default function ScholarshipBrowser() {
   const [scholarships, setScholarships] = useState<ScholarshipOpportunity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [incomeLimit, setIncomeLimit] = useState<string>("all");
   const [scholarshipType, setScholarshipType] = useState<string>("all");
@@ -134,12 +135,26 @@ export default function ScholarshipBrowser() {
   // Lazy-load scholarship data on mount
   useEffect(() => {
     let cancelled = false;
-    loadScholarships().then(data => {
-      if (!cancelled) {
-        setScholarships(data);
-        setIsLoading(false);
-      }
-    });
+    loadScholarships()
+      .then(data => {
+        if (!cancelled) {
+          setScholarships(data);
+          setLoadError(null);
+          setIsLoading(false);
+        }
+      })
+      .catch(err => {
+        if (!cancelled) {
+          const message = err instanceof Error ? err.message : String(err);
+          console.error("[ScholarshipBrowser] Failed to load scholarships:", message);
+          setLoadError(
+            err instanceof TypeError
+              ? "We couldn't connect to the server. It may be waking up from sleep — please try again in a moment."
+              : `We couldn't load scholarships: ${message}`
+          );
+          setIsLoading(false);
+        }
+      });
     return () => { cancelled = true; };
   }, []);
 
@@ -276,6 +291,42 @@ export default function ScholarshipBrowser() {
             {[1, 2, 3, 4].map(i => (
               <div key={i} className="bg-[color:var(--theme-surface)]/80 border-2 border-accent-muted/40 rounded-[2rem] p-6 h-64 animate-pulse" />
             ))}
+          </div>
+        ) : loadError ? (
+          <div className="flex flex-col items-center justify-center bg-[color:var(--theme-surface)] border border-accent-rose/30 rounded-[2rem] p-8 sm:p-16 text-center shadow-sm max-w-full">
+            <div className="h-12 w-12 rounded-full bg-accent-rose/20 flex items-center justify-center mb-4">
+              <span className="text-2xl">⚠️</span>
+            </div>
+            <h3 className="font-bold text-base sm:text-lg text-text-primary mb-2">Failed to Load Scholarships</h3>
+            <p className="text-xs sm:text-sm text-[color:var(--theme-text-muted)] max-w-xs sm:max-w-sm mb-6">
+              {loadError}
+            </p>
+            <button
+              onClick={() => {
+                setLoadError(null);
+                setIsLoading(true);
+                cachedScholarships = null;
+                loadScholarships()
+                  .then(data => {
+                    setScholarships(data);
+                    setLoadError(null);
+                    setIsLoading(false);
+                  })
+                  .catch(err => {
+                    const message = err instanceof Error ? err.message : String(err);
+                    console.error("[ScholarshipBrowser] Retry failed:", message);
+                    setLoadError(
+                      err instanceof TypeError
+                        ? "We couldn't connect to the server. It may be waking up from sleep — please try again in a moment."
+                        : `We couldn't load scholarships: ${message}`
+                    );
+                    setIsLoading(false);
+                  });
+              }}
+              className="bg-primary text-white px-5 py-2.5 rounded-full text-sm font-black border border-accent-muted hover:bg-primary-hover transition-colors cursor-pointer"
+            >
+              Retry
+            </button>
           </div>
         ) : filteredScholarships.length > 0 ? (
           <>
