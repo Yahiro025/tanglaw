@@ -10,14 +10,46 @@ import ScholarshipFilterPanel from "./scholarship-filter-panel";
 import ScholarshipCard from "./scholarship-card";
 import ScholarshipPagination from "./scholarship-pagination";
 import type { ScholarshipOpportunity } from "@/data/scholarships-data";
+import { fetchScholarships as fetchBackendScholarships } from "@/lib/backend";
+import type { BackendScholarship } from "@/lib/backend";
 
 // Module-scoped cache — prevents re-fetching on re-renders
 let cachedScholarships: ScholarshipOpportunity[] | null = null;
 
+function mapBackendScholarshipToOpportunity(item: BackendScholarship): ScholarshipOpportunity {
+  const requirements = Array.isArray(item.requirements) ? item.requirements : [];
+  const benefits = Array.isArray(item.benefits) ? item.benefits : [];
+  const priorityPrograms = item.program && item.program !== "Any" ? [item.program] : ["Open to all programs"];
+
+  return {
+    name: item.name,
+    provider: item.provider,
+    coverageType: benefits[0] ?? "Scholarship support",
+    classification: item.type,
+    strand: item.program || "Any",
+    overview: `${item.provider} offers ${item.name}. This scholarship is designed for ${item.program || "qualified students"} and provides ${benefits[0]?.toLowerCase() || "education support"}.`,
+    coverageDetails: benefits.join(" • ") || "Financial assistance and related learning support.",
+    eligibility: {
+      financialStatus: item.incomeBracket > 0
+        ? `Annual household income must not exceed ₱${item.incomeBracket.toLocaleString()}`
+        : "No strict income cap listed.",
+      minimumGPA: requirements.find((entry) => /gwa|gpa|grade/i.test(entry)) || undefined,
+      academicStatus: item.program && item.program !== "Any" ? `Priority program: ${item.program}` : undefined,
+      exclusivity: item.type === "Private" ? "Private scholarship funding" : "Public scholarship funding",
+    },
+    priorityPrograms,
+    requirements,
+    examInformation: { type: "Application Review" },
+    deadline: "Subject to provider deadline",
+    links: item.link ? [item.link] : [],
+  };
+}
+
 async function loadScholarships(): Promise<ScholarshipOpportunity[]> {
   if (cachedScholarships) return cachedScholarships;
-  const mod = await import("@/data/scholarships-data");
-  cachedScholarships = mod.SCHOLARSHIPS_DATA;
+
+  const backendData = await fetchBackendScholarships();
+  cachedScholarships = backendData.map(mapBackendScholarshipToOpportunity);
   return cachedScholarships;
 }
 
@@ -128,10 +160,25 @@ export default function ScholarshipBrowser() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Reset to page 1 whenever any filter changes
-  useEffect(() => {
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchTerm(value);
     setCurrentPage(1);
-  }, [debouncedSearchTerm, incomeLimit, scholarshipType, programType]);
+  }, []);
+
+  const handleIncomeChange = useCallback((value: string) => {
+    setIncomeLimit(value);
+    setCurrentPage(1);
+  }, []);
+
+  const handleTypeChange = useCallback((value: string) => {
+    setScholarshipType(value);
+    setCurrentPage(1);
+  }, []);
+
+  const handleProgramChange = useCallback((value: string) => {
+    setProgramType(value);
+    setCurrentPage(1);
+  }, []);
 
   const filteredScholarships = useMemo(() => {
     return scholarships.filter((item) => {
@@ -198,13 +245,13 @@ export default function ScholarshipBrowser() {
       {/* Sidebar Panel for Filters */}
       <ScholarshipFilterPanel
         searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
+        onSearchChange={handleSearchChange}
         incomeLimit={incomeLimit}
-        onIncomeChange={setIncomeLimit}
+        onIncomeChange={handleIncomeChange}
         scholarshipType={scholarshipType}
-        onTypeChange={setScholarshipType}
+        onTypeChange={handleTypeChange}
         programType={programType}
-        onProgramChange={setProgramType}
+        onProgramChange={handleProgramChange}
         showMobileFilters={showMobileFilters}
         onToggleMobile={() => setShowMobileFilters((prev) => !prev)}
         onReset={handleResetFilters}
@@ -259,7 +306,7 @@ export default function ScholarshipBrowser() {
             <Filter className="h-10 sm:h-12 w-10 sm:w-12 text-[color:var(--theme-typography-secondary)] mb-4 animate-pulse" />
             <h3 className="font-bold text-base sm:text-lg text-text-primary mb-2">No Matching Aid Found</h3>
             <p className="text-xs sm:text-sm text-[color:var(--theme-text-muted)] max-w-xs sm:max-w-sm">
-              We couldn't find any scholarships matching your active filter choices. Try clearing some attributes or adjusting family income constraints.
+              We couldn&apos;t find any scholarships matching your active filter choices. Try clearing some attributes or adjusting family income constraints.
             </p>
             <button
               onClick={handleResetFilters}

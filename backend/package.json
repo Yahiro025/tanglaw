@@ -9,6 +9,7 @@
     "start": "node dist/server.js",
     "lint": "eslint . --ext .ts",
     "seed": "npx ts-node --transpile-only prisma/seed.ts",
+    "seed:questions": "npx ts-node --transpile-only prisma/seed-questions.ts",
     "postinstall": "npx prisma generate"
   },
   "dependencies": {

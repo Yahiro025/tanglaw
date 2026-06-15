@@ -43,8 +43,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${outfit.variable} h-full antialiased`}>
-      <body className="relative min-h-full flex flex-col bg-base-light text-text-primary">
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${inter.variable} ${outfit.variable} h-full antialiased`}
+    >
+      <body suppressHydrationWarning className="relative min-h-full flex flex-col bg-base-light text-text-primary">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
         <Suspense fallback={null}>
           <DynamicNatureCanvas />

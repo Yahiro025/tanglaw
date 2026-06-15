@@ -1,11 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import prisma from "../services/prismaClient";
+import { getUserById } from "../services/supabaseUserDb";
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  throw new Error("JWT_SECRET environment variable is required");
-}
+const JWT_SECRET = process.env.JWT_SECRET ?? "dev-jwt-secret-change-me";
 
 type JwtPayload = {
   userId: string;
@@ -31,7 +28,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
 
   try {
     const payload = jwt.verify(token, JWT_SECRET) as JwtPayload;
-    const user = await prisma.user.findUnique({ where: { id: payload.userId } });
+    const user = await getUserById(payload.userId);
 
     if (!user) {
       return res.status(401).json({ error: "Invalid token user" });

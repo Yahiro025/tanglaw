@@ -1,0 +1,44 @@
+import { Pool } from "pg";
+
+const connectionString = process.env.DATABASE_URL || process.env.DIRECT_URL;
+
+const pool = connectionString ? new Pool({ connectionString }) : null;
+
+export async function getUserByEmail(email: string) {
+  if (!pool) {
+    throw new Error("DATABASE_URL or DIRECT_URL is required to query the Supabase user table.");
+  }
+
+  const result = await pool.query(
+    'SELECT id, email, name, "passwordHash" FROM "User" WHERE email = $1 LIMIT 1',
+    [email]
+  );
+
+  return result.rows[0] ?? null;
+}
+
+export async function getUserById(id: string) {
+  if (!pool) {
+    throw new Error("DATABASE_URL or DIRECT_URL is required to query the Supabase user table.");
+  }
+
+  const result = await pool.query(
+    'SELECT id, email, name, "passwordHash" FROM "User" WHERE id = $1 LIMIT 1',
+    [id]
+  );
+
+  return result.rows[0] ?? null;
+}
+
+export async function createUserRecord(input: { email: string; name: string; passwordHash: string }) {
+  if (!pool) {
+    throw new Error("DATABASE_URL or DIRECT_URL is required to create a Supabase user record.");
+  }
+
+  const result = await pool.query(
+    'INSERT INTO "User" (email, name, "passwordHash", "emailVerified", "createdAt") VALUES ($1, $2, $3, false, NOW()) RETURNING id, email, name',
+    [input.email, input.name, input.passwordHash]
+  );
+
+  return result.rows[0] ?? null;
+}

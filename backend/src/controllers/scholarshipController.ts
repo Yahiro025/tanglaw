@@ -23,7 +23,7 @@ export const getScholarships = async (req: Request, res: Response) => {
     const sector = parseStringQuery(req.query.sector)?.toUpperCase();
     const gwa = parseNumberQuery(req.query.gwa, NaN);
     const page = Math.max(parseNumberQuery(req.query.page, 1), 1);
-    const pageSize = Math.min(Math.max(parseNumberQuery(req.query.pageSize, 20), 1), 50);
+    const pageSize = Math.min(Math.max(parseNumberQuery(req.query.pageSize, 100), 1), 500);
 
     const where: Prisma.ScholarshipWhereInput = {};
     if (program) {

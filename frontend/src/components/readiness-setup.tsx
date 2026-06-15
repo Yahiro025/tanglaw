@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Play, Check, BookOpen, ArrowRight } from "lucide-react";
+import { Play, Check, BookOpen, ArrowRight, Loader2 } from "lucide-react";
 
 const SUBJECTS = [
   "Mathematics",
@@ -14,13 +14,25 @@ const SUBJECTS = [
 
 type SubjectType = typeof SUBJECTS[number];
 
+const DIFFICULTY_LEVELS: { value: 1 | 2 | 3 | 4 | 5; label: string }[] = [
+  { value: 1, label: "Lvl 1 · Easiest" },
+  { value: 2, label: "Lvl 2 · Easy" },
+  { value: 3, label: "Lvl 3 · Moderate" },
+  { value: 4, label: "Lvl 4 · Hard" },
+  { value: 5, label: "Lvl 5 · Advanced" },
+];
+
+const ITEM_COUNT_OPTIONS = [10, 20, 30, 40, 50] as const;
+
 interface ReadinessSetupProps {
   selectedSubjects: SubjectType[];
   onSubjectChange: (subject: SubjectType) => void;
-  itemCount: 10 | 15 | 20 | 25;
-  onItemCountChange: (count: 10 | 15 | 20 | 25) => void;
-  selectedDifficulty: "easy" | "medium" | "hard";
-  onDifficultyChange: (diff: "easy" | "medium" | "hard") => void;
+  itemCount: 10 | 20 | 30 | 40 | 50;
+  onItemCountChange: (count: 10 | 20 | 30 | 40 | 50) => void;
+  selectedDifficulty: 1 | 2 | 3 | 4 | 5;
+  onDifficultyChange: (diff: 1 | 2 | 3 | 4 | 5) => void;
+  isLoading: boolean;
+  loadError: string | null;
   onStartDiagnostics: () => void;
   onStartMockExam: () => void;
 }
@@ -32,6 +44,8 @@ export default function ReadinessSetup({
   onItemCountChange,
   selectedDifficulty,
   onDifficultyChange,
+  isLoading,
+  loadError,
   onStartDiagnostics,
   onStartMockExam,
 }: ReadinessSetupProps) {
@@ -104,19 +118,19 @@ export default function ReadinessSetup({
                   <input
                     type="range"
                     min={10}
-                    max={25}
-                    step={5}
+                    max={50}
+                    step={10}
                     value={itemCount}
-                    onChange={(e) => onItemCountChange(Number(e.target.value) as 10 | 15 | 20 | 25)}
+                    onChange={(e) => onItemCountChange(Number(e.target.value) as 10 | 20 | 30 | 40 | 50)}
                     className="readiness-slider w-full h-2 rounded-full appearance-none cursor-pointer bg-[color:var(--theme-borders-system)]/25 accent-[color:var(--theme-primary)]"
                   />
                   {/* Tick marks */}
                   <div className="flex justify-between px-0.5 mt-2">
-                    {[10, 15, 20, 25].map((val) => (
+                    {ITEM_COUNT_OPTIONS.map((val) => (
                       <button
                         key={val}
                         type="button"
-                        onClick={() => onItemCountChange(val as 10 | 15 | 20 | 25)}
+                        onClick={() => onItemCountChange(val)}
                         className={`text-[10px] font-bold transition-colors cursor-pointer px-1 ${
                           itemCount === val
                             ? "text-[color:var(--theme-primary)]"
@@ -136,30 +150,39 @@ export default function ReadinessSetup({
               <label className="text-sm font-bold text-text-primary block">
                 Select Difficulty Level:
               </label>
-              <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                {(["easy", "medium", "hard"] as const).map((diff) => (
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
+                {DIFFICULTY_LEVELS.map(({ value, label }) => (
                   <button
-                    key={diff}
+                    key={value}
                     type="button"
-                    onClick={() => onDifficultyChange(diff)}
-                    className={`p-3 sm:p-4 rounded-xl border text-[11px] sm:text-xs font-black capitalize transition-all cursor-pointer text-center ${
-                      selectedDifficulty === diff
+                    onClick={() => onDifficultyChange(value)}
+                    className={`p-3 sm:p-4 rounded-xl border text-[11px] sm:text-xs font-black transition-all cursor-pointer text-center ${
+                      selectedDifficulty === value
                         ? "bg-primary border-primary-hover text-white shadow-sm"
                         : "bg-[color:var(--theme-canvas)] border-accent-periwinkle/60 text-[color:var(--theme-text-muted)] hover:border-accent-periwinkle"
                     }`}
                   >
-                    {diff}
+                    {label}
                   </button>
                 ))}
               </div>
             </div>
 
+            {/* Load error */}
+            {loadError && (
+              <div className="rounded-xl border border-accent-rose bg-accent-rose/20 px-4 py-3 text-xs font-semibold text-[color:var(--theme-text-body)]">
+                {loadError}
+              </div>
+            )}
+
             {/* Launch button */}
             <button
               onClick={onStartDiagnostics}
-              className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white py-4 rounded-full font-black border-2 border-accent-muted shadow-md shadow-[var(--theme-glow-primary)] cursor-pointer transition-all duration-300 hover:scale-[1.01]"
+              disabled={isLoading}
+              className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white py-4 rounded-full font-black border-2 border-accent-muted shadow-md shadow-[var(--theme-glow-primary)] cursor-pointer transition-all duration-300 hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              <Play className="h-5 w-5" /> Start Diagnostics Check
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Play className="h-5 w-5" />}
+              {isLoading ? "Loading Questions..." : "Start Diagnostics Check"}
             </button>
           </div>
         </div>
@@ -193,9 +216,11 @@ export default function ReadinessSetup({
 
           <button
             onClick={onStartMockExam}
-            className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white py-4 rounded-full font-black border-2 border-accent-muted shadow-lg shadow-[var(--theme-glow-primary)] cursor-pointer transition-all duration-300 hover:scale-[1.01]"
+            disabled={isLoading}
+            className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white py-4 rounded-full font-black border-2 border-accent-muted shadow-lg shadow-[var(--theme-glow-primary)] cursor-pointer transition-all duration-300 hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
-            Launch Full Mock Exam <ArrowRight className="h-4 w-4" />
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+            {isLoading ? "Loading..." : "Launch Full Mock Exam"}
           </button>
         </div>
       </motion.div>
