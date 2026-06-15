@@ -39,6 +39,23 @@ export interface BackendUser {
   name?: string;
 }
 
+export interface BackendQuestion {
+  id: number;
+  subject: "Mathematics" | "Science" | "English" | "Filipino" | "Logical Reasoning";
+  difficulty: number;
+  questionText: string;
+  options: string[];
+  correctAnswer: number;
+}
+
+const SUBJECT_TO_QUESTION_TYPE: Record<string, string> = {
+  Mathematics: "MATH",
+  Science: "SCIENCE",
+  English: "ENGLISH",
+  Filipino: "FILIPINO",
+  "Logical Reasoning": "LOGIC",
+};
+
 function getStoredToken(): string | null {
   if (typeof window === "undefined") return null;
   return window.localStorage.getItem(AUTH_TOKEN_KEY);
@@ -117,7 +134,28 @@ export async function getCurrentUser(): Promise<BackendUser> {
 }
 
 export async function fetchScholarships(): Promise<BackendScholarship[]> {
-  const payload = await authorizedFetch(`${apiBase}/scholarships`);
+  const payload = await authorizedFetch(`${apiBase}/scholarships?pageSize=100`);
+  return payload.data ?? [];
+}
+
+export async function fetchQuestions(params: {
+  mode: "diagnostic" | "mock";
+  subjects?: string[];
+  difficulty?: number[];
+  count?: number;
+}): Promise<BackendQuestion[]> {
+  const query = new URLSearchParams({ mode: params.mode });
+  if (params.subjects?.length) {
+    query.set("subjects", params.subjects.map((subject) => SUBJECT_TO_QUESTION_TYPE[subject] ?? subject).join(","));
+  }
+  if (params.difficulty?.length) {
+    query.set("difficulty", params.difficulty.join(","));
+  }
+  if (params.count) {
+    query.set("count", String(params.count));
+  }
+
+  const payload = await authorizedFetch(`${apiBase}/questions?${query.toString()}`);
   return payload.data ?? [];
 }
 

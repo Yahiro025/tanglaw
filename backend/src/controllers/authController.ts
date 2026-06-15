@@ -1,14 +1,10 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import prisma from "../services/prismaClient";
+import { createUserRecord, getUserByEmail } from "../services/supabaseUserDb";
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET ?? "dev-jwt-secret-change-me";
 const JWT_EXPIRES_IN = "2h";
-
-if (!JWT_SECRET) {
-  throw new Error("JWT_SECRET environment variable is required");
-}
 
 type AuthenticatedUser = {
   id: string;
@@ -40,21 +36,17 @@ export const signup = async (req: Request, res: Response) => {
   }
 
   try {
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const existing = await getUserByEmail(email);
     if (existing) {
       return res.status(409).json({ error: "A user with this email already exists." });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const user = await prisma.user.create({
-      data: {
-        email,
-        name: fullName,
-        passwordHash,
-        emailVerified: false,
-      },
-    });
+    const user = await createUserRecord({ email, name: fullName, passwordHash });
+    if (!user) {
+      return res.status(500).json({ error: "Unable to create account." });
+    }
 
     const token = createToken(user);
 
@@ -81,7 +73,7 @@ export const login = async (req: Request, res: Response) => {
   }
 
   try {
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await getUserByEmail(email);
     if (!user || !user.passwordHash) {
       return res.status(401).json({ error: "Invalid credentials." });
     }

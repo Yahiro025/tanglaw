@@ -3,15 +3,24 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import dotenv from "dotenv";
 
-dotenv.config({ path: ".env.local" });
-
-const connectionString = process.env.DATABASE_URL || process.env.DIRECT_URL;
-if (!connectionString) {
-  throw new Error("DATABASE_URL is required for Prisma adapter");
+for (const file of [".env.local", ".env"]) {
+  dotenv.config({ path: file });
 }
 
-const pool = new Pool({ connectionString });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL;
+
+const prisma = connectionString
+  ? (() => {
+      const pool = new Pool({ connectionString });
+      const adapter = new PrismaPg(pool);
+      return new PrismaClient({ adapter });
+    })()
+  : new Proxy({} as PrismaClient, {
+      get: (_target, property) => {
+        throw new Error(
+          "Database configuration is missing. Set DATABASE_URL or DIRECT_URL in backend/.env.local before using Prisma."
+        );
+      },
+    });
 
 export default prisma;

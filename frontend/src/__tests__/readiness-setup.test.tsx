@@ -19,6 +19,7 @@ vi.mock("lucide-react", () => ({
   Check: () => <span data-testid="icon-check">Check</span>,
   BookOpen: () => <span data-testid="icon-book-open">BookOpen</span>,
   ArrowRight: () => <span data-testid="icon-arrow-right">ArrowRight</span>,
+  Loader2: () => <span data-testid="icon-loader">Loader2</span>,
 }));
 
 import ReadinessSetup, { SUBJECTS } from "../components/readiness-setup";
@@ -30,8 +31,10 @@ describe("ReadinessSetup", () => {
     onSubjectChange: vi.fn(),
     itemCount: 10 as const,
     onItemCountChange: vi.fn(),
-    selectedDifficulty: "medium" as const,
+    selectedDifficulty: 3 as const,
     onDifficultyChange: vi.fn(),
+    isLoading: false,
+    loadError: null as string | null,
     onStartDiagnostics: vi.fn(),
     onStartMockExam: vi.fn(),
   };
@@ -56,9 +59,9 @@ describe("ReadinessSetup", () => {
 
   it("renders difficulty selection buttons", () => {
     render(<ReadinessSetup {...defaultProps} />);
-    expect(screen.getByText("easy")).toBeInTheDocument();
-    expect(screen.getByText("medium")).toBeInTheDocument();
-    expect(screen.getByText("hard")).toBeInTheDocument();
+    expect(screen.getByText("Lvl 1 · Easiest")).toBeInTheDocument();
+    expect(screen.getByText("Lvl 3 · Moderate")).toBeInTheDocument();
+    expect(screen.getByText("Lvl 5 · Advanced")).toBeInTheDocument();
   });
 
   it("calls onSubjectChange when a subject is clicked", async () => {
@@ -75,8 +78,8 @@ describe("ReadinessSetup", () => {
     const user = userEvent.setup();
     render(<ReadinessSetup {...defaultProps} onDifficultyChange={onDifficultyChange} />);
 
-    await user.click(screen.getByText("easy"));
-    expect(onDifficultyChange).toHaveBeenCalledWith("easy");
+    await user.click(screen.getByText("Lvl 1 · Easiest"));
+    expect(onDifficultyChange).toHaveBeenCalledWith(1);
   });
 
   it("calls onStartDiagnostics when Start Diagnostics button is clicked", async () => {
@@ -141,18 +144,18 @@ describe("ReadinessSetup", () => {
     expect(slider).toHaveValue("10");
   });
 
-  it("renders with maximum item count (25)", () => {
-    render(<ReadinessSetup {...defaultProps} itemCount={25} />);
+  it("renders with maximum item count (50)", () => {
+    render(<ReadinessSetup {...defaultProps} itemCount={50} />);
     const slider = screen.getByRole("slider");
-    expect(slider).toHaveValue("25");
+    expect(slider).toHaveValue("50");
   });
 
   it("calls onItemCountChange when slider value changes", () => {
     const onItemCountChange = vi.fn();
     render(<ReadinessSetup {...defaultProps} onItemCountChange={onItemCountChange} />);
 
-    fireEvent.change(screen.getByRole("slider"), { target: { value: "15" } });
-    expect(onItemCountChange).toHaveBeenCalledWith(15);
+    fireEvent.change(screen.getByRole("slider"), { target: { value: "20" } });
+    expect(onItemCountChange).toHaveBeenCalledWith(20);
   });
 
   it("renders mock exam statistics correctly", () => {
@@ -165,12 +168,12 @@ describe("ReadinessSetup", () => {
   // ─── Display State Tests ──────────────────────────────────────────
 
   it("highlights selected difficulty as active", () => {
-    render(<ReadinessSetup {...defaultProps} selectedDifficulty="hard" />);
+    render(<ReadinessSetup {...defaultProps} selectedDifficulty={5} />);
 
     // All difficulty buttons exist
-    expect(screen.getByText("easy")).toBeInTheDocument();
-    expect(screen.getByText("medium")).toBeInTheDocument();
-    expect(screen.getByText("hard")).toBeInTheDocument();
+    expect(screen.getByText("Lvl 1 · Easiest")).toBeInTheDocument();
+    expect(screen.getByText("Lvl 3 · Moderate")).toBeInTheDocument();
+    expect(screen.getByText("Lvl 5 · Advanced")).toBeInTheDocument();
   });
 
   it("displays correct item count label", () => {
@@ -181,7 +184,7 @@ describe("ReadinessSetup", () => {
   it("has accessible subject selection buttons", () => {
     render(<ReadinessSetup {...defaultProps} />);
     const buttons = screen.getAllByRole("button");
-    // Should have 5 subject buttons + 3 difficulty buttons + 2 launch buttons + tick marks
+    // Should have 5 subject buttons + 5 difficulty buttons + 2 launch buttons + tick marks
     expect(buttons.length).toBeGreaterThanOrEqual(10);
   });
 });

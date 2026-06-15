@@ -22,13 +22,17 @@ model Scholarship {
 }
 
 model Question {
-  id            String       @id @default(uuid())
-  type          QuestionType
-  difficulty    Int
-  text          String
-  choices       Json
-  correctAnswer String
-  explanation   String
+  id             String          @id @default(uuid())
+  type           QuestionType
+  difficulty     Int
+  assessmentMode AssessmentMode  @default(DIAGNOSTIC)
+  sourceLabel    String?
+  sequenceNo     Int             @default(0)
+  isActive       Boolean         @default(true)
+  text           String
+  choices        Json
+  correctAnswer  String
+  explanation    String
 }
 
 model User {
@@ -66,4 +70,9 @@ enum QuestionType {
   SCIENCE
   ENGLISH
   FILIPINO
+}
+
+enum AssessmentMode {
+  DIAGNOSTIC
+  MOCK
 }

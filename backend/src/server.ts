@@ -9,15 +9,13 @@ import apiRouter from "./routes";
  * then starts the Express HTTP listener.
  */
 
-dotenv.config({ path: ".env.local" });
+for (const file of [".env.local", ".env"]) {
+  dotenv.config({ path: file });
+}
 
 const app = express();
 const port = Number(process.env.PORT ?? 4000);
-const frontendOrigin = process.env.FRONTEND_URL;
-
-if (!frontendOrigin) {
-  throw new Error("FRONTEND_URL environment variable is required");
-}
+const frontendOrigin = process.env.FRONTEND_URL ?? "http://localhost:3000";
 
 // Strip trailing slash to avoid CORS origin mismatch (browser sends origin without /)
 const corsOrigin = frontendOrigin.replace(/\/+$/, "");

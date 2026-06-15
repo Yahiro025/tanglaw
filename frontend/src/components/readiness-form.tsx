@@ -4,10 +4,11 @@
  * Interactive Readiness Check and Consolidated Mock Exam component.
  * Thin orchestrator — child components are code-split via next/dynamic.
  */
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { Clock, Flag } from "lucide-react";
+import { fetchQuestions } from "@/lib/backend";
 
 // ─── Code-split child components ──────────────────────────────────────────
 const ReadinessSetup = dynamic(() => import("./readiness-setup"), {
@@ -40,153 +41,17 @@ interface Question {
   correctAnswer: number;
 }
 
-// ─── Question Bank Data ───────────────────────────────────────────────
-const sampleData: Record<SubjectType, { questions: string[]; options: string[][]; correctAnswers: number[] }> = {
-    "Mathematics": {
-      questions: [
-        "If a line passes through the points (2, 3) and (5, 9), what is its slope?",
-        "What is the value of log base 2 of 64?",
-        "Solve for x in the equation: log(x) + log(5) = 2 (where log is base 10).",
-        "A box contains 4 red balls and 6 blue balls. What is the probability of drawing a red ball?",
-        "What is the sum of the interior angles of a regular hexagon?",
-      ],
-      options: [
-        ["2", "3", "4", "0.5"],
-        ["6", "8", "5", "12"],
-        ["20", "15", "10", "50"],
-        ["2/5", "3/5", "1/2", "4/5"],
-        ["720 degrees", "540 degrees", "360 degrees", "188 degrees"],
-      ],
-      correctAnswers: [0, 0, 0, 0, 0],
-    },
-    "Science": {
-      questions: [
-        "What is the chemical symbol for gold?",
-        "Which of the following is a non-renewable source of energy?",
-        "What is the speed of light in a vacuum, approximately?",
-        "Which planet in our solar system is known for its prominent ring system?",
-        "What force holds planets in their orbits around the Sun?",
-      ],
-      options: [
-        ["Au", "Ag", "Fe", "Gd"],
-        ["Coal", "Solar power", "Wind energy", "Hydroelectric energy"],
-        ["300,000 km/s", "150,000 km/s", "500,000 km/s", "1,000,000 km/s"],
-        ["Saturn", "Jupiter", "Neptune", "Uranus"],
-        ["Gravitational force", "Electromagnetic force", "Nuclear force", "Centrifugal force"],
-      ],
-      correctAnswers: [0, 0, 0, 0, 0],
-    },
-    "English": {
-      questions: [
-        "What is the correct plural form of 'child'?",
-        "Identify the figure of speech: 'The world is a stage.'",
-        "Which sentence uses the correct subject-verb agreement?",
-        "What is the antonym of 'benevolent'?",
-        "Which literary device is used in 'The wind whispered through the trees'?",
-      ],
-      options: [
-        ["Children", "Childs", "Childes", "Child"],
-        ["Metaphor", "Simile", "Personification", "Hyperbole"],
-        ["The team are playing well", "The team is playing well", "The team were playing well", "The team have been playing well"],
-        ["Malevolent", "Generous", "Kind", "Altruistic"],
-        ["Personification", "Simile", "Alliteration", "Onomatopoeia"],
-      ],
-      correctAnswers: [0, 0, 1, 0, 0],
-    },
-    "Filipino": {
-      questions: [
-        "Ano ang tamang salin ng 'Good morning' sa Filipino?",
-        "Sino ang itinuturing na Ama ng Wikang Pambansa?",
-        "Anong bahagi ng pananalita ang salitang 'mabilis'?",
-        "'Ang bata ay umiiyak.' Anong uri ng pangungusap ito?",
-        "Ano ang kahulugan ng salitang 'masagana'?",
-      ],
-      options: [
-        ["Magandang umaga", "Magandang hapon", "Magandang gabi", "Magandang tanghali"],
-        ["Manuel L. Quezon", "Jose Rizal", "Andres Bonifacio", "Emilio Aguinaldo"],
-        ["Pang-uri", "Pang-abay", "Pangngalan", "Pandiwa"],
-        ["Pasakalye", "Patanong", "Padamdam", "Pasalaysay"],
-        ["Maunlad at sagana", "Mahirap at salat", "Mabagal at tahimik", "Maliit at payak"],
-      ],
-      correctAnswers: [0, 0, 0, 3, 0],
-    },
-    "Logical Reasoning": {
-      questions: [
-        "If all cats are mammals, and all mammals are warm-blooded, which of the following is true?",
-        "Find the next number in the sequence: 3, 6, 12, 24, 48, ...",
-        "Which word does NOT belong with the others?",
-        "If BOOK is coded as 2151511 in a certain language, how is CAT coded?",
-        "All apples in the basket are red. Some red fruits are sweet. Therefore:",
-      ],
-      options: [
-        ["All cats are warm-blooded", "Some cats are not warm-blooded", "No mammals are cats", "All warm-blooded animals are cats"],
-        ["96", "72", "64", "84"],
-        ["Bicycle", "Car", "Airplane", "Steering wheel"],
-        ["3120", "3119", "3122", "3210"],
-        ["Some apples in the basket might be sweet", "All apples are sweet", "No apples are sweet", "Sweet fruits are always red"],
-      ],
-      correctAnswers: [0, 0, 3, 0, 0],
-    },
-  };
-
 export default function ReadinessForm() {
-  // ─── Per-subject question cache (WS-6: on-demand generation) ─────────────
-  const questionCache = useRef<Map<SubjectType, Question[]>>(new Map());
-
-  function generateSubjectQuestions(subject: SubjectType): Question[] {
-    const cached = questionCache.current.get(subject);
-    if (cached) return cached;
-
-    const data = sampleData[subject];
-    const questions: Question[] = [];
-    const baseId = SUBJECTS.indexOf(subject) * 50 + 1;
-
-    for (let i = 0; i < 50; i++) {
-      const isSampleIndex = i < data.questions.length;
-      const questionText = isSampleIndex
-        ? data.questions[i]
-        : `Diagnostic review item #${i + 1} for ${subject}. Analyze the criteria to determine the correct logical outcome for this specific scenario.`;
-      
-      const options = isSampleIndex
-        ? data.options[i]
-        : [
-            `Option A: Primary selection for review item ${i + 1}`,
-            `Option B: Secondary alternative for review item ${i + 1}`,
-            `Option C: Tertiary option for review item ${i + 1}`,
-            `Option D: Fourth alternative for review item ${i + 1}`
-          ];
-
-      const correctAnswer = isSampleIndex ? data.correctAnswers[i] : (i % 4);
-
-      questions.push({
-        id: baseId + i,
-        subject,
-        difficulty: 1 + (i % 5),
-        questionText,
-        options,
-        correctAnswer,
-      });
-    }
-
-    questionCache.current.set(subject, questions);
-    return questions;
-  }
-
-  // Lazy-initialized question bank (still needed for mock exam — generates all 250)
-  const masterQuestionBank = useMemo(() => {
-    const bank: Question[] = [];
-    for (const subject of SUBJECTS) {
-      bank.push(...generateSubjectQuestions(subject));
-    }
-    return bank;
-  }, []);
-
   // Config states
   const [view, setView] = useState<"setup" | "active" | "feedback">("setup");
   const [selectedType, setSelectedType] = useState<"diagnostics" | "mock">("diagnostics");
   const [selectedSubjects, setSelectedSubjects] = useState<SubjectType[]>([...SUBJECTS]);
-  const [itemCount, setItemCount] = useState<10 | 15 | 20 | 25>(10);
-  const [selectedDifficulty, setSelectedDifficulty] = useState<"easy" | "medium" | "hard">("medium");
+  const [itemCount, setItemCount] = useState<10 | 20 | 30 | 40 | 50>(10);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<1 | 2 | 3 | 4 | 5>(3);
+
+  // Question-fetch states
+  const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Active exam states
   const [activeQuestions, setActiveQuestions] = useState<Question[]>([]);
@@ -267,44 +132,37 @@ export default function ReadinessForm() {
     );
   };
 
-  const handleStartExam = (typeOverride?: "diagnostics" | "mock") => {
+  const handleStartExam = async (typeOverride?: "diagnostics" | "mock") => {
     const examType = typeOverride || selectedType;
-    if (examType === "diagnostics") {
-      if (selectedSubjects.length === 0) {
-        alert("Please select at least one subject to begin.");
-        return;
-      }
+    if (examType === "diagnostics" && selectedSubjects.length === 0) {
+      alert("Please select at least one subject to begin.");
+      return;
+    }
 
-      let difficultyRange = [3];
-      if (selectedDifficulty === "easy") difficultyRange = [1, 2];
-      else if (selectedDifficulty === "medium") difficultyRange = [2, 3, 4];
-      else if (selectedDifficulty === "hard") difficultyRange = [4, 5];
-
-      let pool = masterQuestionBank.filter(
-        (q) => selectedSubjects.includes(q.subject) && difficultyRange.includes(q.difficulty)
+    setLoadError(null);
+    setIsLoadingQuestions(true);
+    try {
+      const questions = await fetchQuestions(
+        examType === "diagnostics"
+          ? { mode: "diagnostic", subjects: selectedSubjects, difficulty: [selectedDifficulty], count: itemCount }
+          : { mode: "mock" }
       );
 
-      if (pool.length === 0) {
-        pool = masterQuestionBank.filter((q) => selectedSubjects.includes(q.subject));
+      setActiveQuestions(questions);
+      setActiveIndex(0);
+      setSelectedAnswers({});
+      setFlaggedItems([]);
+      if (examType === "diagnostics") {
+        setTimeLeft(45);
+      } else {
+        setTimeLeft(180 * 60);
+        setActiveSubject("Mathematics");
       }
-
-      const shuffled = [...pool].sort(() => 0.5 - Math.random());
-      const selected = shuffled.slice(0, Math.min(itemCount, pool.length));
-
-      setActiveQuestions(selected);
-      setActiveIndex(0);
-      setSelectedAnswers({});
-      setFlaggedItems([]);
-      setTimeLeft(45);
       setView("active");
-    } else {
-      setActiveQuestions(masterQuestionBank);
-      setActiveIndex(0);
-      setSelectedAnswers({});
-      setFlaggedItems([]);
-      setTimeLeft(180 * 60);
-      setActiveSubject("Mathematics");
-      setView("active");
+    } catch {
+      setLoadError("We couldn't load questions right now. The server may be waking up from sleep — please try again in a moment.");
+    } finally {
+      setIsLoadingQuestions(false);
     }
   };
 
@@ -432,6 +290,8 @@ export default function ReadinessForm() {
             onItemCountChange={setItemCount}
             selectedDifficulty={selectedDifficulty}
             onDifficultyChange={setSelectedDifficulty}
+            isLoading={isLoadingQuestions}
+            loadError={loadError}
             onStartDiagnostics={() => {
               setSelectedType("diagnostics");
               handleStartExam("diagnostics");
