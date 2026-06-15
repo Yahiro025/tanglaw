@@ -177,7 +177,7 @@ export async function createChatMessage(payload: BackendMessagePayload): Promise
   });
 }
 
-export async function sendChatMessage(question: string): Promise<{ answer: string }> {
+export async function sendChatMessage(question: string): Promise<{ answer: string; remaining?: number; limit?: number; code?: string }> {
   return authorizedFetch(`${apiBase}/chat`, {
     method: "POST",
     body: JSON.stringify({ question }),

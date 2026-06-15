@@ -15,6 +15,40 @@ const MIN_WIDTH = 280;
 const MAX_WIDTH = 800;
 const MIN_HEIGHT = 280;
 const SMALL_SCREEN_BREAKPOINT = 640;
+const DAILY_AI_LIMIT = 3;
+const OWEL_COUNT_KEY = "tanglaw-owel-daily";
+
+/** Read daily AI usage from localStorage. Returns { date, count } or null. */
+function getStoredOwelUsage(): { date: string; count: number } | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(OWEL_COUNT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed.date === "string" && typeof parsed.count === "number") {
+      return parsed;
+    }
+  } catch { /* ignore */ }
+  return null;
+}
+
+/** Increment daily AI usage count in localStorage. Returns new count. */
+function incrementOwelUsage(): number {
+  if (typeof window === "undefined") return 0;
+  const today = new Date().toISOString().slice(0, 10);
+  const stored = getStoredOwelUsage();
+  const count = stored && stored.date === today ? stored.count + 1 : 1;
+  localStorage.setItem(OWEL_COUNT_KEY, JSON.stringify({ date: today, count }));
+  return count;
+}
+
+/** Check if today's AI usage has reached the daily limit. */
+function isDailyLimitReached(): boolean {
+  const stored = getStoredOwelUsage();
+  if (!stored) return false;
+  const today = new Date().toISOString().slice(0, 10);
+  return stored.date === today && stored.count >= DAILY_AI_LIMIT;
+}
 
 function getIsMobile() {
   return typeof window !== "undefined" && window.innerWidth < SMALL_SCREEN_BREAKPOINT;
@@ -48,25 +82,25 @@ const PRELOADED_PROMPTS = [
     label: "What scholarships fit a BSCS student?",
     query: "Owel, what scholarships fit a BSCS student?",
     reply:
-      "As a BSCS (Computer Science) student, you have excellent options.\n\n1. **DOST-SEI Undergraduate Scholarship**: Perfect for STEM majors. Covers tuition, monthly allowance (₱7,000/mo), and book subsidies.\n2. **CHED Merit Scholarship Program**: For students with high GWAs. Offers up to ₱120,000/year.\n3. **Mega-Tech Local Grants**: Corporate-sponsored grants offering direct internship placements after graduation.",
+      "As a BSCS (Computer Science) student, you have excellent options.\n\n1. DOST-SEI Undergraduate Scholarship: Perfect for STEM majors. Covers tuition, monthly allowance (₱7,000/mo), and book subsidies.\n2. CHED Merit Scholarship Program: For students with high GWAs. Offers up to ₱120,000/year.\n3. Mega-Tech Local Grants: Corporate-sponsored grants offering direct internship placements after graduation.",
   },
   {
     label: "Am I eligible for local grants?",
     query: "Am I eligible for local grants?",
     reply:
-      "Local government grants (e.g., Mayor's Scholarships, City educational assistance) typically require:\n\n- **Residency**: Proof of residence in the sponsoring city.\n- **Enrollment**: Registration in a state university or accredited local college.\n- **Income Bracket**: Sponsoring cities usually prioritize students whose family income falls in lower brackets (below ₱300,000/yr).",
+      "Local government grants (e.g., Mayor's Scholarships, City educational assistance) typically require:\n\n- Residency: Proof of residence in the sponsoring city.\n- Enrollment: Registration in a state university or accredited local college.\n- Income Bracket: Sponsoring cities usually prioritize students whose family income falls in lower brackets (below ₱300,000/yr).",
   },
   {
     label: "How does the Readiness Check work?",
     query: "How does the Readiness Check work?",
     reply:
-      "The **TANGLAW Interactive Readiness Check** is a gamified, timed mock assessment tool. It measures your core competencies in:\n- Mathematics\n- Science\n- English\n- Filipino\n\nConfigure your quiz length (up to 25 items) and difficulty tier (1-5) on the Readiness page to test your knowledge!",
+      "The TANGLAW Interactive Readiness Check is a gamified, timed mock assessment tool. It measures your core competencies in:\n- Mathematics\n- Science\n- English\n- Filipino\n\nConfigure your quiz length (up to 25 items) and difficulty tier (1-5) on the Readiness page to test your knowledge!",
   },
   {
     label: "What are the return-of-service terms?",
     query: "What are the return-of-service terms?",
     reply:
-      "Return of Service (ROS) is common for high-value government grants. For example, **DOST-SEI** requires you to work in the Philippines in your field of study for a duration equal to the number of years you enjoyed the scholarship. It's a wonderful way to give back to local science and technology!",
+      "Return of Service (ROS) is common for high-value government grants. For example, DOST-SEI requires you to work in the Philippines in your field of study for a duration equal to the number of years you enjoyed the scholarship. It's a wonderful way to give back to local science and technology!",
   },
 ];
 
@@ -85,6 +119,16 @@ export default function OwelChatbot({ variant = "floating" }: { variant?: "float
 
   // Keep the ref in sync with state so resize callbacks always read current dims
   panelDimsRef.current = { width: panelWidth, height: panelHeight };
+  const [dailyLimitReached, setDailyLimitReached] = useState(() => isDailyLimitReached());
+  const [remainingQueries, setRemainingQueries] = useState(() => {
+    const stored = getStoredOwelUsage();
+    const today = new Date().toISOString().slice(0, 10);
+    if (stored && stored.date === today) {
+      return Math.max(0, DAILY_AI_LIMIT - stored.count);
+    }
+    return DAILY_AI_LIMIT;
+  });
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -287,15 +331,45 @@ export default function OwelChatbot({ variant = "floating" }: { variant?: "float
     let aiGenerated = false;
 
     if (matchingPrompt) {
+      // Preloaded quick questions are always free and bypass the daily limit
       replyText = matchingPrompt.reply;
+    } else if (dailyLimitReached || isDailyLimitReached()) {
+      // Block AI queries when daily limit is reached
+      replyText = `Hoot! You've reached the daily AI chat limit (${DAILY_AI_LIMIT} queries per day). You can still use the Quick Questions above, or try again tomorrow!`;
+      setDailyLimitReached(true);
+      setRemainingQueries(0);
     } else {
       try {
-        const { answer } = await sendChatMessage(textToSend);
-        replyText = answer;
-        aiGenerated = true;
-      } catch (error) {
+        const result = await sendChatMessage(textToSend);
+        replyText = result.answer;
+
+        // Check if backend returned a daily-limit response (polite, not an actual AI call)
+        if (result.code === "DAILY_LIMIT") {
+          // Don't count as AI-generated — no LLM was called
+          setDailyLimitReached(true);
+          setRemainingQueries(0);
+        } else {
+          aiGenerated = true;
+          // Update local usage tracking
+          const newCount = incrementOwelUsage();
+          const remaining = Math.max(0, DAILY_AI_LIMIT - newCount);
+          setRemainingQueries(remaining);
+          if (remaining <= 0) {
+            setDailyLimitReached(true);
+          }
+        }
+      } catch (error: unknown) {
+        const errMsg = error instanceof Error ? error.message : String(error);
         console.error("AI chat failed, using generic fallback:", error);
-        replyText = `Hoot! I've noted your question: "${textToSend}". As your AI assistant, I recommend browsing the Scholarships page or using the review engine for deeper guidance.`;
+
+        // Check if it's a daily limit error from the backend
+        if (errMsg.includes("Daily AI chat limit") || errMsg.includes("DAILY_LIMIT") || errMsg.includes("429")) {
+          replyText = `Hoot! You've reached the daily AI chat limit (${DAILY_AI_LIMIT} queries per day). You can still use the Quick Questions above, or try again tomorrow!`;
+          setDailyLimitReached(true);
+          setRemainingQueries(0);
+        } else {
+          replyText = `Hoot! I've noted your question: "${textToSend}". As your AI assistant, I recommend browsing the Scholarships page or using the review engine for deeper guidance.`;
+        }
       }
     }
 
@@ -319,7 +393,7 @@ export default function OwelChatbot({ variant = "floating" }: { variant?: "float
     }
 
     setIsTyping(false);
-  }, [input]);
+  }, [dailyLimitReached]);
 
   // ── Shared panel body (used by both desktop & mobile) ──────────────────
 
@@ -408,6 +482,22 @@ export default function OwelChatbot({ variant = "floating" }: { variant?: "float
         </div>
       </div>
 
+      {/* Quota indicator */}
+      {!dailyLimitReached && (
+        <div className="px-3 pt-2 pb-0 bg-[color:var(--theme-surface)] flex-shrink-0">
+          <p className="text-[10px] text-[color:var(--theme-text-muted)] text-center">
+            {remainingQueries} of {DAILY_AI_LIMIT} AI queries remaining today
+          </p>
+        </div>
+      )}
+      {dailyLimitReached && (
+        <div className="px-3 pt-2 pb-0 bg-[color:var(--theme-surface)] flex-shrink-0">
+          <p className="text-[10px] text-amber-500 dark:text-amber-400 text-center font-medium">
+            Daily AI limit reached — Quick Questions still available
+          </p>
+        </div>
+      )}
+
       {/* Input */}
       <form
         onSubmit={(e) => {
@@ -420,7 +510,7 @@ export default function OwelChatbot({ variant = "floating" }: { variant?: "float
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask Owel about grants..."
+          placeholder={dailyLimitReached ? "Quick Questions only — limit reached" : "Ask Owel about grants..."}
           className="flex-1 rounded-full border border-white/10 bg-base-light/70 px-4 py-2 text-sm text-[color:var(--theme-typography-main)] focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <button
