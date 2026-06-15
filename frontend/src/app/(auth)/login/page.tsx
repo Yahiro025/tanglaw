@@ -12,6 +12,7 @@ import { LogIn, ArrowRight, CheckCircle2, ShieldAlert } from "lucide-react";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import { GlowingText } from "../../../../components/ui/glowing-text";
+import { loginUser } from "@/lib/backend";
 
 const EtheralShadow = dynamic(
   () => import("../../../../components/ui/etheral-shadow").then((mod) => mod.EtheralShadow),
@@ -36,19 +37,27 @@ export default function LoginPage() {
     setLoading(true);
     setMessage(null);
 
-    const result = await signIn("credentials", {
-      redirect: false,
-      email,
-      password,
-    });
+    try {
+      await loginUser(email, password);
+      const result = await signIn("credentials", {
+        redirect: false,
+        email,
+        password,
+      });
 
-    if (result?.error) {
-      setMessage({ type: "error", text: result.error });
-    } else {
-      router.push("/dashboard");
+      if (result?.error) {
+        setMessage({ type: "error", text: result.error });
+      } else {
+        router.push("/dashboard");
+      }
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: error instanceof Error ? error.message : "Unable to sign in.",
+      });
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
