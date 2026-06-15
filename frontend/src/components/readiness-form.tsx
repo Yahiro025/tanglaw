@@ -391,14 +391,14 @@ export default function ReadinessForm() {
                               setActiveSubject(subj);
                               setActiveIndex(start);
                             }}
-                            className={`w-full text-left p-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-between ${
+                            className={`w-full text-left p-4 rounded-xl border text-sm sm:text-xs font-bold transition-all flex items-center justify-between min-h-[48px] ${
                               isFocus
                                 ? "bg-primary border-primary-hover text-white shadow-sm"
                                 : "bg-[color:var(--theme-canvas)]/55 border-accent-periwinkle/30 text-[color:var(--theme-text-body)] hover:border-accent-periwinkle"
                             }`}
                           >
                             <span>{subj}</span>
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] ${isFocus ? "bg-white/20 text-white" : "bg-base-pastel text-text-primary"}`}>
+                            <span className={`px-2 py-0.5 rounded-full text-xs sm:text-[10px] ${isFocus ? "bg-white/20 text-white" : "bg-base-pastel text-text-primary"}`}>
                               {answeredInSubj}/50
                             </span>
                           </button>
@@ -431,7 +431,7 @@ export default function ReadinessForm() {
                             <button
                               key={globalIdx}
                               onClick={() => setActiveIndex(globalIdx)}
-                              className={`aspect-square rounded-xl border text-[11px] font-black transition-all hover:scale-105 cursor-pointer ${stateClass}`}
+                              className={`aspect-square min-h-[44px] rounded-xl border text-sm sm:text-[11px] font-black transition-all hover:scale-105 cursor-pointer ${stateClass}`}
                             >
                               {i + 1}
                             </button>
@@ -504,20 +504,20 @@ export default function ReadinessForm() {
                           <button
                             key={idx}
                             onClick={() => handleSelectOption(idx)}
-                            className={`w-full text-left p-3.5 sm:p-4 rounded-xl border-2 transition-all flex items-center gap-3 cursor-pointer ${
+                            className={`w-full text-left p-4 sm:p-4 rounded-xl border-2 transition-all flex items-center gap-3 cursor-pointer min-h-[48px] ${
                               isSelected
                                 ? "bg-primary border-primary-hover text-white font-bold shadow-sm"
                                 : "bg-[color:var(--theme-surface)] border-accent-muted/30 text-[color:var(--theme-text-body)] hover:border-accent-periwinkle hover:bg-[color:var(--theme-canvas)]"
                             }`}
                           >
-                            <span className={`h-6 w-6 rounded-full flex items-center justify-center border text-xs font-bold ${
+                            <span className={`h-8 w-8 sm:h-6 sm:w-6 rounded-full flex items-center justify-center border text-sm sm:text-xs font-bold flex-shrink-0 ${
                               isSelected
                                 ? "bg-white text-primary"
                                 : "border-white/10 bg-[color:var(--theme-canvas)]/90 text-[color:var(--theme-text-muted)]"
                             }`}>
                               {String.fromCharCode(65 + idx)}
                             </span>
-                            {opt}
+                            <span className="text-sm sm:text-base">{opt}</span>
                           </button>
                         );
                       })}
@@ -527,7 +527,7 @@ export default function ReadinessForm() {
                     <div className="mt-8 pt-6 border-t border-accent-muted/30 flex flex-wrap items-center justify-between gap-3">
                       <button
                         onClick={toggleFlag}
-                        className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-bold transition-colors cursor-pointer ${
+                        className={`inline-flex items-center gap-2 rounded-full border px-4 py-3 text-sm sm:text-xs font-bold transition-colors cursor-pointer min-h-[44px] ${
                           flaggedItems.includes(activeIndex)
                             ? "bg-amber-100 border-amber-300 text-amber-800"
                             : "bg-[color:var(--theme-canvas)] border-accent-periwinkle text-[color:var(--theme-text-body)] hover:bg-amber-50 hover:border-amber-200"
@@ -541,14 +541,14 @@ export default function ReadinessForm() {
                         <button
                           onClick={handlePrevQuestion}
                           disabled={activeIndex === 0}
-                          className="px-4 py-2 bg-white rounded-xl text-xs font-bold border border-accent-muted text-zinc-700 hover:bg-base-pastel disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                          className="px-4 py-3 bg-white rounded-xl text-sm sm:text-xs font-bold border border-accent-muted text-zinc-700 hover:bg-base-pastel disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer min-h-[44px]"
                         >
                           Previous
                         </button>
                         <button
                           onClick={handleNextQuestion}
                           disabled={selectedAnswers[activeIndex] === undefined}
-                          className="flex items-center gap-1.5 bg-primary text-white px-5 py-2 rounded-xl text-xs font-bold border border-accent-muted shadow-sm hover:bg-primary-hover cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                          className="flex items-center gap-1.5 bg-primary text-white px-5 py-3 rounded-xl text-sm sm:text-xs font-bold border border-accent-muted shadow-sm hover:bg-primary-hover cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px]"
                         >
                           Next
                         </button>

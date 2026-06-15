@@ -81,19 +81,18 @@ export default function ReadinessSetup({
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
                 {SUBJECTS.map((subj) => {
                   const isChecked = selectedSubjects.includes(subj);
-                  return (
-                    <button
+                  return (                      <button
                       key={subj}
                       type="button"
                       onClick={() => onSubjectChange(subj)}
-                      className={`p-3 sm:p-4 rounded-xl border text-[11px] sm:text-xs font-bold transition-all duration-300 cursor-pointer text-left flex items-center justify-between gap-2 sm:gap-3 ${
+                      className={`p-4 sm:p-4 rounded-xl border text-sm sm:text-xs font-bold transition-all duration-300 cursor-pointer text-left flex items-center justify-between gap-2 sm:gap-3 min-h-[48px] ${
                         isChecked
                           ? "bg-primary border-primary-hover text-white shadow-sm shadow-[var(--theme-glow-primary)]"
                           : "bg-[color:var(--theme-canvas)] border-accent-periwinkle/60 text-[color:var(--theme-text-muted)] hover:border-accent-periwinkle"
                       }`}
                     >
                       <span className="break-words text-balance">{subj}</span>
-                      {isChecked && <Check className="h-4 w-4 text-white" />}
+                      {isChecked && <Check className="h-4 w-4 text-white flex-shrink-0" />}
                     </button>
                   );
                 })}
@@ -131,7 +130,7 @@ export default function ReadinessSetup({
                         key={val}
                         type="button"
                         onClick={() => onItemCountChange(val)}
-                        className={`text-[10px] font-bold transition-colors cursor-pointer px-1 ${
+                        className={`text-xs font-bold transition-colors cursor-pointer px-2 py-1 min-h-[36px] ${
                           itemCount === val
                             ? "text-[color:var(--theme-primary)]"
                             : "text-[color:var(--theme-text-muted)] hover:text-[color:var(--theme-primary)]"
@@ -150,13 +149,13 @@ export default function ReadinessSetup({
               <label className="text-sm font-bold text-text-primary block">
                 Select Difficulty Level:
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 sm:gap-3">
                 {DIFFICULTY_LEVELS.map(({ value, label }) => (
                   <button
                     key={value}
                     type="button"
                     onClick={() => onDifficultyChange(value)}
-                    className={`p-3 sm:p-4 rounded-xl border text-[11px] sm:text-xs font-black transition-all cursor-pointer text-center ${
+                    className={`p-4 sm:p-4 rounded-xl border text-sm sm:text-xs font-black transition-all cursor-pointer text-center min-h-[48px] ${
                       selectedDifficulty === value
                         ? "bg-primary border-primary-hover text-white shadow-sm"
                         : "bg-[color:var(--theme-canvas)] border-accent-periwinkle/60 text-[color:var(--theme-text-muted)] hover:border-accent-periwinkle"
@@ -179,7 +178,7 @@ export default function ReadinessSetup({
             <button
               onClick={onStartDiagnostics}
               disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white py-4 rounded-full font-black border-2 border-accent-muted shadow-md shadow-[var(--theme-glow-primary)] cursor-pointer transition-all duration-300 hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white py-4 sm:py-4 rounded-full font-black border-2 border-accent-muted shadow-md shadow-[var(--theme-glow-primary)] cursor-pointer transition-all duration-300 hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 min-h-[52px]"
             >
               {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Play className="h-5 w-5" />}
               {isLoading ? "Loading Questions..." : "Start Diagnostics Check"}
@@ -217,7 +216,7 @@ export default function ReadinessSetup({
           <button
             onClick={onStartMockExam}
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white py-4 rounded-full font-black border-2 border-accent-muted shadow-lg shadow-[var(--theme-glow-primary)] cursor-pointer transition-all duration-300 hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+            className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white py-4 sm:py-4 rounded-full font-black border-2 border-accent-muted shadow-lg shadow-[var(--theme-glow-primary)] cursor-pointer transition-all duration-300 hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 min-h-[52px]"
           >
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
             {isLoading ? "Loading..." : "Launch Full Mock Exam"}

@@ -89,7 +89,7 @@ function isMobileWidth(width: number): boolean {
 export default function NatureCanvas({
   countDesktop = 75,
   countTablet = 55,
-  countMobile = 35,
+  countMobile = 15,
   className,
 }: NatureCanvasProps) {
   const pathname = usePathname();
@@ -206,9 +206,9 @@ export default function NatureCanvas({
     let animationFrameId: number;
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
-    // Frame rate cap: target ~30fps desktop, ~20fps mobile to reduce GPU load
-    const isMobile = isMobileWidth(width);
-    const FRAME_INTERVAL = isMobile ? 1000 / 20 : 1000 / 30;
+    // Frame rate cap: target ~30fps desktop, ~15fps mobile to reduce GPU load
+    let isMobile = isMobileWidth(width);
+    let FRAME_INTERVAL = isMobile ? 1000 / 15 : 1000 / 30;
     let lastFrameTime = 0;
 
     // Responsive particle count based on viewport width (configurable via props)
@@ -252,7 +252,7 @@ export default function NatureCanvas({
     for (let i = 0; i < count; i++) {
       const palette = getColors(themeRef.current);
       const color = palette[Math.floor(Math.random() * palette.length)];
-      const size = 18 + Math.random() * 34; // glowing orbs — larger for more presence
+      const size = isMobile ? 8 + Math.random() * 14 : 18 + Math.random() * 34; // smaller orbs on mobile
       const baseAlpha = 0.18 + Math.random() * 0.22;
       const x = Math.random() * width;
       const y = Math.random() * height;
@@ -297,6 +297,8 @@ export default function NatureCanvas({
         if (!canvas) return;
         width = canvas.width = window.innerWidth;
         height = canvas.height = window.innerHeight;
+        isMobile = isMobileWidth(width);
+        FRAME_INTERVAL = isMobile ? 1000 / 15 : 1000 / 30;
       }, 200);
     };
 
@@ -326,8 +328,8 @@ export default function NatureCanvas({
     renderBgCache();
 
     // Particle glow cache: keyed by r,g,b,alpha,size rounded to reduce cache misses
-    // Capped at 1500 entries to prevent unbounded memory growth (~20MB max).
-    const particleGlowCache = new LRUCache<string, HTMLCanvasElement>(1500);
+    // Capped at 1500 entries on desktop, 400 on mobile to prevent memory bloat.
+    const particleGlowCache = new LRUCache<string, HTMLCanvasElement>(isMobile ? 400 : 1500);
     const getParticleGlowCanvas = (r: number, g: number, b: number, alpha: number, size: number): HTMLCanvasElement => {
       const key = `${Math.round(r)},${Math.round(g)},${Math.round(b)},${alpha.toFixed(2)},${Math.round(size)}`;
       const cached = particleGlowCache.get(key);
@@ -382,6 +384,7 @@ export default function NatureCanvas({
 
     const handleClick = (e: MouseEvent) => {
       if (reducedMotionRef.current) return;
+      if (isMobile) return; // disable burst particles on mobile to save GPU
       if (isInteractiveElement(e.target)) return;
       const palette = getColors(themeRef.current);
       const burstCount = 8 + Math.floor(Math.random() * 5);
@@ -408,35 +411,8 @@ export default function NatureCanvas({
     window.addEventListener("mouseleave", handleMouseLeave);
     window.addEventListener("click", handleClick);
 
-    // Touch events for mobile particle interaction
-    const handleTouchMove = (e: TouchEvent) => {
-      if (e.touches.length === 0) return;
-      const touch = e.touches[0];
-      const dx = touch.clientX - mouse.x;
-      const dy = touch.clientY - mouse.y;
-      if (mouse.x !== -1000) {
-        mouse.windX = mouse.windX * 0.6 + dx * 0.4;
-        mouse.windY = mouse.windY * 0.6 + dy * 0.4;
-      }
-      mouse.x = touch.clientX;
-      mouse.y = touch.clientY;
-      mouse.active = true;
-    };
-    const handleTouchStart = (e: TouchEvent) => {
-      if (e.touches.length === 0) return;
-      const touch = e.touches[0];
-      mouse.x = touch.clientX;
-      mouse.y = touch.clientY;
-      mouse.active = true;
-    };
-    const handleTouchEnd = () => {
-      mouse.active = false;
-      mouse.x = -1000;
-      mouse.y = -1000;
-    };
-    window.addEventListener("touchmove", handleTouchMove, { passive: true });
-    window.addEventListener("touchstart", handleTouchStart, { passive: true });
-    window.addEventListener("touchend", handleTouchEnd);
+    // Touch events removed on mobile — mouse interaction is disabled on mobile anyway,
+    // so these listeners are dead code. This saves event-handler overhead on mobile browsers.
 
     const draw = (timestamp: number) => {
       if (!isRunning) return;
@@ -827,19 +803,13 @@ export default function NatureCanvas({
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseleave", handleMouseLeave);
       window.removeEventListener("click", handleClick);
-      window.removeEventListener("touchmove", handleTouchMove);
-      window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchend", handleTouchEnd);
+
       if (resizeTimeout) clearTimeout(resizeTimeout);
       intersectionObserver.disconnect();
       isRunning = false;
       cancelAnimationFrame(animationFrameId);
     };
   }, [pathname]);
-
-  if (pathname?.startsWith("/dashboard")) {
-    return null;
-  }
 
   return (
     <div

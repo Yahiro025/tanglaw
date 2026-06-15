@@ -184,3 +184,27 @@ input[type="range"].readiness-slider::-moz-range-thumb {
 input[type="range"].readiness-slider::-moz-range-thumb:hover {
   transform: scale(1.1);
 }
+
+/* ── Mobile CSS-only particle background ─────────────────────────────── */
+@keyframes mobile-particle-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(20px, -30px) scale(1.08); }
+  66% { transform: translate(-15px, -55px) scale(0.92); }
+}
+
+@keyframes mobile-particle-fade {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.85; }
+}
+
+.mobile-particle-orb {
+  animation: mobile-particle-float ease-in-out infinite,
+             mobile-particle-fade ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-particle-orb {
+    animation: none;
+    opacity: 0.5;
+  }
+}
