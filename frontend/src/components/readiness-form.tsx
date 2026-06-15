@@ -537,18 +537,18 @@ export default function ReadinessForm() {
                         {flaggedItems.includes(activeIndex) ? "Unflag" : "Flag for Review"}
                       </button>
 
-                      <div className="flex gap-3">
+                      <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                         <button
                           onClick={handlePrevQuestion}
                           disabled={activeIndex === 0}
-                          className="px-4 py-3 bg-[color:var(--theme-surface)] rounded-xl text-sm sm:text-xs font-bold border border-accent-muted text-[color:var(--theme-text-body)] hover:bg-[color:var(--theme-canvas)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer min-h-[44px]"
+                          className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-4 bg-[color:var(--theme-surface)] rounded-xl text-sm font-black border border-accent-muted text-[color:var(--theme-text-body)] hover:bg-[color:var(--theme-canvas)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer min-h-[56px] transition-colors"
                         >
                           Previous
                         </button>
                         <button
                           onClick={handleNextQuestion}
                           disabled={selectedAnswers[activeIndex] === undefined}
-                          className="flex items-center gap-1.5 bg-primary text-white px-5 py-3 rounded-xl text-sm sm:text-xs font-bold border border-accent-muted shadow-sm hover:bg-primary-hover cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px]"
+                          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary text-white px-8 py-4 rounded-xl text-sm font-black border border-accent-muted shadow-sm hover:bg-primary-hover cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed min-h-[56px] transition-colors"
                         >
                           Next
                         </button>
