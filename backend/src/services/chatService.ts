@@ -154,7 +154,7 @@ async function runRagChain(
         }
       }
 
-      const context = await searchScholarshipsAsContext(searchQuery, 8);
+      const context = await searchScholarshipsAsContext(searchQuery);
       console.log(`[Owel DB RAG] Retrieved context for query: "${searchQuery}"`);
       return context;
     },
