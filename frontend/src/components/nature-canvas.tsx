@@ -113,15 +113,17 @@ export default function NatureCanvas({
     reducedMotionRef.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   };
 
-  // Idle timer: hide particles after 5s of no activity
   const GLOW_CSS_VAR = "--particles-glow-filter";
 
+  // Idle timer: hide particles after 5s of no activity (mobile only to save battery)
   const resetIdleTimer = () => {
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-    idleTimerRef.current = setTimeout(() => {
-      isVisibleRef.current = false;
-      if (containerRef.current) containerRef.current.style.opacity = "0";
-    }, 5000);
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      idleTimerRef.current = setTimeout(() => {
+        isVisibleRef.current = false;
+        if (containerRef.current) containerRef.current.style.opacity = "0";
+      }, 5000);
+    }
   };
 
   const handleActivity = () => {

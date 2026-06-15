@@ -10,6 +10,7 @@ import { DynamicNatureCanvas } from "@/components/dynamic-backgrounds";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
 import { ThemeProvider } from "next-themes";
+import FaviconSwitcher from "@/components/favicon-switcher";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -31,9 +32,17 @@ export const metadata: Metadata = {
   title: "TANGLAW | AI-Powered Scholarship Navigation",
   description:
     "TANGLAW is an AI-first scholarship navigator for Filipino learners, combining readiness checks, grant discovery, and guidance into a single academic dashboard.",
-  icons: {
-    icon: [{ url: "/assets/owel-head.png", type: "image/png" }],
-    shortcut: "/assets/owel-head.png",
+  icons: {      icon: [
+        { url: "/assets/owel-head.svg", sizes: "any", type: "image/svg+xml" },
+        { url: "/favicon.ico", sizes: "16x16 32x32 48x48" },
+        { url: "/assets/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+        { url: "/assets/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+        { url: "/assets/favicon-48x48.png", sizes: "48x48", type: "image/png" },
+      ],
+    apple: [
+      { url: "/assets/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
   },
 };
 
@@ -50,6 +59,7 @@ export default function RootLayout({
     >
       <body suppressHydrationWarning className="relative min-h-full flex flex-col bg-base-light text-text-primary">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+        <FaviconSwitcher />
         <Suspense fallback={null}>
           <DynamicNatureCanvas />
         </Suspense>

@@ -162,6 +162,12 @@ const PHOTO_2_0: Record<string, string> = {
 };
 
 export default function AboutClient() {
+  const [activeMember, setActiveMember] = useState<string | null>(null);
+
+  const toggleMember = (username: string) => {
+    setActiveMember((prev) => (prev === username ? null : username));
+  };
+
   return (
     <div className="relative overflow-hidden bg-[color:var(--theme-canvas)] pt-28 pb-20 text-[color:var(--theme-text-body)]">
       <EtheralShadow
@@ -252,8 +258,20 @@ export default function AboutClient() {
                   <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                     {DOCUMENTATION_TEAM.map((member, idx) => (
                       <ScrollReveal key={member.username} delay={0.05 * idx} direction="up">
-                        <div className="group flex flex-col items-center text-center h-full rounded-3xl border border-white/10 bg-[color:var(--theme-canvas)]/80 p-5                transition-all duration-300 hover:-translate-y-1 hover:bg-[color:var(--theme-canvas)]/95 shadow-md">
-                          <div className="relative h-24 w-24 mb-4 rounded-full overflow-hidden border-2 border-primary/40 bg-[color:var(--theme-surface)] shadow-inner">
+                        <div className="flex flex-col items-center text-center h-full rounded-3xl border border-white/10 bg-[color:var(--theme-canvas)]/80 p-5                transition-all duration-300 hover:-translate-y-1 hover:bg-[color:var(--theme-canvas)]/95 shadow-md">
+                          <div
+                            className="group relative h-24 w-24 mb-4 rounded-full overflow-hidden border-2 border-primary/40 bg-[color:var(--theme-surface)] shadow-inner cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-color-[var(--theme-canvas)] focus-visible:outline-none"
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`Toggle LinkedIn profile for ${member.name}`}
+                            onClick={() => toggleMember(member.username)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                toggleMember(member.username);
+                              }
+                            }}
+                          >
                             <Image
                               src={`/team/${PHOTO_2_0[member.username] ?? `${member.username}.jpg`}`}
                               alt={member.name}
@@ -261,17 +279,17 @@ export default function AboutClient() {
                               sizes="96px"
                               className="object-cover"
                             />
-                            {/* LinkedIn overlay — visible on mobile, fades in on desktop hover */}
-                            <div className="
-                              absolute inset-0 rounded-full
-                              flex items-center justify-center
-                              bg-black/50 backdrop-blur-[1px]
-                              opacity-100 md:opacity-0 md:group-hover:opacity-100
-                              group-focus-within:opacity-100
-                              pointer-events-auto md:pointer-events-none md:group-hover:pointer-events-auto
-                              group-focus-within:pointer-events-auto
-                              transition-all duration-200 ease-in-out
-                            ">
+                            {/* LinkedIn overlay — click to toggle on mobile, hover or click on desktop */}
+                            <div
+                              className={`
+                                absolute inset-0 rounded-full
+                                flex items-center justify-center
+                                bg-black/50 backdrop-blur-[1px]
+                                ${activeMember === member.username ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}
+                                md:group-hover:opacity-100 md:group-hover:pointer-events-auto
+                                transition-all duration-200 ease-in-out
+                              `}
+                            >
                               <a
                                 href={member.linkedin || "#"}
                                 target="_blank"
@@ -282,6 +300,10 @@ export default function AboutClient() {
                               >
                                 <Linkedin className="h-5 w-5 text-white" />
                               </a>
+                            </div>
+                            {/* LinkedIn tap hint badge — visible on mobile only */}
+                            <div className="absolute bottom-0.5 right-0.5 md:hidden flex items-center justify-center h-5 w-5 rounded-full bg-[#0A66C2] shadow-md border border-white/20 pointer-events-none" aria-hidden="true">
+                              <Linkedin className="h-3 w-3 text-white" />
                             </div>
                           </div>
                           <p className="text-xs font-semibold uppercase tracking-[0.27em] text-[color:var(--theme-typography-secondary)]">{member.role}</p>
@@ -298,8 +320,20 @@ export default function AboutClient() {
                   <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     {DEVELOPMENT_TEAM.map((member, idx) => (
                       <ScrollReveal key={member.username} delay={0.05 * idx} direction="up">
-                        <div className="group flex flex-col items-center text-center h-full rounded-3xl border border-white/10 bg-[color:var(--theme-canvas)]/80 p-5                transition-all duration-300 hover:-translate-y-1 hover:bg-[color:var(--theme-canvas)]/95 shadow-md">
-                          <div className="relative h-24 w-24 mb-4 rounded-full overflow-hidden border-2 border-primary/40 bg-[color:var(--theme-surface)] shadow-inner">
+                        <div className="flex flex-col items-center text-center h-full rounded-3xl border border-white/10 bg-[color:var(--theme-canvas)]/80 p-5                transition-all duration-300 hover:-translate-y-1 hover:bg-[color:var(--theme-canvas)]/95 shadow-md">
+                          <div
+                            className="group relative h-24 w-24 mb-4 rounded-full overflow-hidden border-2 border-primary/40 bg-[color:var(--theme-surface)] shadow-inner cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-color-[var(--theme-canvas)] focus-visible:outline-none"
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`Toggle LinkedIn profile for ${member.name}`}
+                            onClick={() => toggleMember(member.username)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                toggleMember(member.username);
+                              }
+                            }}
+                          >
                             <Image
                               src={`/team/${PHOTO_2_0[member.username] ?? `${member.username}.jpg`}`}
                               alt={member.name}
@@ -307,17 +341,17 @@ export default function AboutClient() {
                               sizes="96px"
                               className="object-cover"
                             />
-                            {/* LinkedIn overlay — visible on mobile, fades in on desktop hover */}
-                            <div className="
-                              absolute inset-0 rounded-full
-                              flex items-center justify-center
-                              bg-black/50 backdrop-blur-[1px]
-                              opacity-100 md:opacity-0 md:group-hover:opacity-100
-                              group-focus-within:opacity-100
-                              pointer-events-auto md:pointer-events-none md:group-hover:pointer-events-auto
-                              group-focus-within:pointer-events-auto
-                              transition-all duration-200 ease-in-out
-                            ">
+                            {/* LinkedIn overlay — click to toggle on mobile, hover or click on desktop */}
+                            <div
+                              className={`
+                                absolute inset-0 rounded-full
+                                flex items-center justify-center
+                                bg-black/50 backdrop-blur-[1px]
+                                ${activeMember === member.username ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}
+                                md:group-hover:opacity-100 md:group-hover:pointer-events-auto
+                                transition-all duration-200 ease-in-out
+                              `}
+                            >
                               <a
                                 href={member.linkedin || "#"}
                                 target="_blank"
@@ -328,6 +362,10 @@ export default function AboutClient() {
                               >
                                 <Linkedin className="h-5 w-5 text-white" />
                               </a>
+                            </div>
+                            {/* LinkedIn tap hint badge — visible on mobile only */}
+                            <div className="absolute bottom-0.5 right-0.5 md:hidden flex items-center justify-center h-5 w-5 rounded-full bg-[#0A66C2] shadow-md border border-white/20 pointer-events-none" aria-hidden="true">
+                              <Linkedin className="h-3 w-3 text-white" />
                             </div>
                           </div>
                           <p className="text-xs font-semibold uppercase tracking-[0.27em] text-[color:var(--theme-typography-secondary)]">{member.role}</p>
