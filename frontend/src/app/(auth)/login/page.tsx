@@ -4,9 +4,9 @@
  * Login page for the public authentication flow.
  * Uses local storage to simulate an authenticated session.
  */
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { LogIn, ArrowRight, CheckCircle2, ShieldAlert } from "lucide-react";
 import { motion } from "framer-motion";
@@ -21,11 +21,18 @@ const EtheralShadow = dynamic(
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [showOAuth, setShowOAuth] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get("expired") === "1") {
+      setMessage({ type: "error", text: "Your session has expired. Please sign in again to continue." });
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -4,8 +4,6 @@ import jwt from "jsonwebtoken";
 import { createUserRecord, getUserByEmail } from "../services/supabaseUserDb";
 
 const JWT_SECRET = process.env.JWT_SECRET ?? "dev-jwt-secret-change-me";
-const JWT_EXPIRES_IN = "2h";
-
 type AuthenticatedUser = {
   id: string;
   email: string;
@@ -13,9 +11,7 @@ type AuthenticatedUser = {
 };
 
 const createToken = (user: AuthenticatedUser) => {
-  return jwt.sign({ userId: user.id, email: user.email, name: user.name }, JWT_SECRET, {
-    expiresIn: JWT_EXPIRES_IN,
-  });
+  return jwt.sign({ userId: user.id, email: user.email, name: user.name }, JWT_SECRET);
 };
 
 const isValidEmail = (value: unknown): value is string => {

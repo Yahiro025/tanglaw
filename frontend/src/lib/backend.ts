@@ -80,6 +80,13 @@ async function authorizedFetch(input: RequestInfo, init: RequestInit = {}) {
 
   const response = await fetch(input, { ...init, headers });
   if (!response.ok) {
+    if (response.status === 401) {
+      setStoredToken(null);
+      if (typeof window !== "undefined") {
+        window.location.replace("/login?expired=1");
+      }
+      throw new Error("Your session has expired. Please sign in again.");
+    }
     const errorText = await response.text();
     throw new Error(`Request failed ${response.status}: ${response.statusText} ${errorText}`);
   }
