@@ -11,7 +11,8 @@ const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL;
 
 const prisma = connectionString
   ? (() => {
-      const pool = new Pool({ connectionString });
+      // @ts-expect-error `family` is valid at runtime but missing from @types/pg v8.20.0 PoolConfig
+      const pool = new Pool({ connectionString, family: 4 });
       const adapter = new PrismaPg(pool);
       return new PrismaClient({ adapter });
     })()

@@ -2,7 +2,8 @@ import { Pool } from "pg";
 
 const connectionString = process.env.DATABASE_URL || process.env.DIRECT_URL;
 
-const pool = connectionString ? new Pool({ connectionString }) : null;
+// @ts-expect-error `family` is valid at runtime but missing from @types/pg v8.20.0 PoolConfig
+const pool = connectionString ? new Pool({ connectionString, family: 4 }) : null;
 
 export async function getUserByEmail(email: string) {
   if (!pool) {
