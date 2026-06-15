@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { randomUUID } from "crypto";
 
 const connectionString = process.env.DATABASE_URL || process.env.DIRECT_URL;
 
@@ -37,8 +38,8 @@ export async function createUserRecord(input: { email: string; name: string; pas
   }
 
   const result = await pool.query(
-    'INSERT INTO "User" (email, name, "passwordHash", "emailVerified", "createdAt") VALUES ($1, $2, $3, false, NOW()) RETURNING id, email, name',
-    [input.email, input.name, input.passwordHash]
+    'INSERT INTO "User" (id, email, name, "passwordHash", "emailVerified", "createdAt") VALUES ($1, $2, $3, $4, false, NOW()) RETURNING id, email, name',
+    [randomUUID(), input.email, input.name, input.passwordHash]
   );
 
   return result.rows[0] ?? null;
