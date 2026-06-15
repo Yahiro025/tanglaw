@@ -159,8 +159,14 @@ export default function ReadinessForm() {
         setActiveSubject("Mathematics");
       }
       setView("active");
-    } catch {
-      setLoadError("We couldn't load questions right now. The server may be waking up from sleep — please try again in a moment.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error("[Readiness] Failed to load questions:", message);
+      setLoadError(
+        err instanceof TypeError
+          ? "We couldn't connect to the server. It may be waking up from sleep — please try again in a moment."
+          : `We couldn't load questions: ${message}`
+      );
     } finally {
       setIsLoadingQuestions(false);
     }
@@ -189,6 +195,7 @@ export default function ReadinessForm() {
     setSelectedAnswers({});
     setFlaggedItems([]);
     setActiveIndex(0);
+    setLoadError(null);
   };
 
   // Computations
@@ -304,6 +311,28 @@ export default function ReadinessForm() {
         )}
 
         {/* ── 2. ACTIVE QUIZ/SIMULATION BOARD ──────────────────────────────── */}
+        {view === "active" && activeQuestions.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -16 }}
+            className="w-full"
+          >
+            <div className="rounded-[2rem] border border-accent-rose/30 bg-accent-rose/10 p-8 sm:p-10 text-center space-y-4">
+              <p className="text-lg font-black text-text-primary">No questions available</p>
+              <p className="text-sm text-[color:var(--theme-text-body)]">
+                The question bank appears to be empty. The server may still be seeding the database — please try again in a moment.
+              </p>
+              <button
+                onClick={handleRestart}
+                className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-full font-black text-sm cursor-pointer transition-colors"
+              >
+                Back to Setup
+              </button>
+            </div>
+          </motion.div>
+        )}
+
         {view === "active" && activeQuestions.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
