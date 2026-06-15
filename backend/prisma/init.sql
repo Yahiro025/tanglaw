@@ -44,7 +44,7 @@ CREATE TABLE "Question" (
 
 -- CreateTable
 CREATE TABLE "User" (
-    "id" TEXT NOT NULL,
+    "id" TEXT NOT NULL DEFAULT gen_random_uuid(),
     "email" TEXT NOT NULL,
     "name" TEXT,
     "passwordHash" TEXT,
