@@ -246,7 +246,7 @@ export default function DashboardLayout({
           </div>
         </header>
 
-        <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-6 lg:py-8 w-full flex-1"> {children} </main>
+        <main className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 py-6 lg:py-8 w-full flex-1"> {children} </main>
         {/* Floating chatbot: hidden on /dashboard (has its own CTA + modal), visible on other pages */}
         {pathname !== "/dashboard" && <OwelChatbot />}
 
