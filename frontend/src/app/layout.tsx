@@ -32,8 +32,8 @@ export const metadata: Metadata = {
   description:
     "TANGLAW is an AI-first scholarship navigator for Filipino learners, combining readiness checks, grant discovery, and guidance into a single academic dashboard.",
   icons: {
-    icon: [{ url: "/assets/owel-head.webp", type: "image/webp" }],
-    shortcut: "/assets/owel-head.webp",
+    icon: [{ url: "/assets/owel-head.png", type: "image/png" }],
+    shortcut: "/assets/owel-head.png",
   },
 };
 

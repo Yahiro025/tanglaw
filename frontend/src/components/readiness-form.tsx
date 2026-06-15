@@ -530,7 +530,7 @@ export default function ReadinessForm() {
                         className={`inline-flex items-center gap-2 rounded-full border px-4 py-3 text-sm sm:text-xs font-bold transition-colors cursor-pointer min-h-[44px] ${
                           flaggedItems.includes(activeIndex)
                             ? "bg-amber-100 border-amber-300 text-amber-800"
-                            : "bg-[color:var(--theme-canvas)] border-accent-periwinkle text-[color:var(--theme-text-body)] hover:bg-amber-50 hover:border-amber-200"
+                            : "bg-[color:var(--theme-canvas)] border-accent-periwinkle text-[color:var(--theme-text-body)] hover:bg-[color:var(--theme-surface)] hover:border-accent-periwinkle"
                         }`}
                       >
                         <Flag className="h-4 w-4" />
@@ -541,7 +541,7 @@ export default function ReadinessForm() {
                         <button
                           onClick={handlePrevQuestion}
                           disabled={activeIndex === 0}
-                          className="px-4 py-3 bg-white rounded-xl text-sm sm:text-xs font-bold border border-accent-muted text-zinc-700 hover:bg-base-pastel disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer min-h-[44px]"
+                          className="px-4 py-3 bg-[color:var(--theme-surface)] rounded-xl text-sm sm:text-xs font-bold border border-accent-muted text-[color:var(--theme-text-body)] hover:bg-[color:var(--theme-canvas)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer min-h-[44px]"
                         >
                           Previous
                         </button>

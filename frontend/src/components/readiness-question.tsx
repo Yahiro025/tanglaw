@@ -101,7 +101,7 @@ const ReadinessQuestion = React.memo(function ReadinessQuestion({
         <button
           onClick={onPrev}
           disabled={!canGoPrev}
-          className="flex items-center gap-1.5 px-4 py-3 bg-white rounded-xl text-sm sm:text-xs font-bold border border-accent-muted text-zinc-700 hover:bg-base-pastel disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer min-h-[44px]"
+          className="flex items-center gap-1.5 px-4 py-3 bg-[color:var(--theme-surface)] rounded-xl text-sm sm:text-xs font-bold border border-accent-muted text-[color:var(--theme-text-body)] hover:bg-[color:var(--theme-canvas)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer min-h-[44px]"
         >
           Previous
         </button>

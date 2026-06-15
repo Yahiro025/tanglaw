@@ -261,14 +261,14 @@ export default function AboutClient() {
                               sizes="96px"
                               className="object-cover"
                             />
-                            {/* LinkedIn overlay — fades in on card hover or keyboard focus */}
+                            {/* LinkedIn overlay — visible on mobile, fades in on desktop hover */}
                             <div className="
                               absolute inset-0 rounded-full
                               flex items-center justify-center
                               bg-black/50 backdrop-blur-[1px]
-                              opacity-0 group-hover:opacity-100
+                              opacity-100 md:opacity-0 md:group-hover:opacity-100
                               group-focus-within:opacity-100
-                              pointer-events-none group-hover:pointer-events-auto
+                              pointer-events-auto md:pointer-events-none md:group-hover:pointer-events-auto
                               group-focus-within:pointer-events-auto
                               transition-all duration-200 ease-in-out
                             ">
@@ -307,14 +307,14 @@ export default function AboutClient() {
                               sizes="96px"
                               className="object-cover"
                             />
-                            {/* LinkedIn overlay — fades in on card hover or keyboard focus */}
+                            {/* LinkedIn overlay — visible on mobile, fades in on desktop hover */}
                             <div className="
                               absolute inset-0 rounded-full
                               flex items-center justify-center
                               bg-black/50 backdrop-blur-[1px]
-                              opacity-0 group-hover:opacity-100
+                              opacity-100 md:opacity-0 md:group-hover:opacity-100
                               group-focus-within:opacity-100
-                              pointer-events-none group-hover:pointer-events-auto
+                              pointer-events-auto md:pointer-events-none md:group-hover:pointer-events-auto
                               group-focus-within:pointer-events-auto
                               transition-all duration-200 ease-in-out
                             ">

@@ -54,7 +54,7 @@ export default function InitializationTerminal() {
         initial={{ opacity: 0, y: -20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="border-technical bg-white p-6 flex items-center justify-between shadow-sm relative overflow-hidden rounded-xl"
+        className="border-technical bg-[color:var(--theme-surface)] p-6 flex items-center justify-between shadow-sm relative overflow-hidden rounded-xl"
       >
         <div className="flex items-center gap-6">
           <motion.div 
@@ -90,7 +90,7 @@ export default function InitializationTerminal() {
         initial={{ opacity: 0, scale: 0.98 }}
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true }}
-        className="grid gap-0 lg:grid-cols-[1fr_340px] items-stretch border-technical shadow-2xl bg-white overflow-hidden relative rounded-xl"
+        className="grid gap-0 lg:grid-cols-[1fr_340px] items-stretch border-technical shadow-2xl bg-[color:var(--theme-surface)] overflow-hidden relative rounded-xl"
       >
         <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-primary z-20 rounded-tl-lg" />
         
@@ -147,7 +147,7 @@ export default function InitializationTerminal() {
                         whileTap={{ scale: 0.99 }}
                         onClick={() => setFormData({ ...formData, program: p })}
                         className={`p-6 border-technical text-[10px] font-black uppercase tracking-widest text-left transition-all rounded-md ${
-                          formData.program === p ? "bg-primary text-white" : "bg-white"
+                          formData.program === p ? "bg-primary text-white" : "bg-[color:var(--theme-surface)] text-[color:var(--theme-text-body)]"
                         }`}
                       >
                         {p} - Bachelor of Science
@@ -167,7 +167,7 @@ export default function InitializationTerminal() {
                         whileHover={{ backgroundColor: "var(--theme-surface)" }}
                         onClick={() => setFormData({ ...formData, income: t })}
                         className={`p-5 text-[9px] font-black uppercase tracking-widest text-left border-b border-technical last:border-b-0 transition-all ${
-                          formData.income === t ? "bg-primary text-white" : "bg-white"
+                          formData.income === t ? "bg-primary text-white" : "bg-[color:var(--theme-surface)] text-[color:var(--theme-text-body)]"
                         }`}
                       >
                         {t} ANNUAL_INCOME_BRACKET
@@ -225,7 +225,7 @@ export default function InitializationTerminal() {
               <p className="text-[8px] font-mono uppercase text-[color:var(--theme-text-muted)] font-black tracking-widest">Data Metadata</p>
               <motion.div 
                 layout
-                className="p-6 border-technical bg-white/50 text-[9px] font-mono space-y-2 opacity-80 rounded-lg shadow-inner"
+                className="p-6 border-technical bg-[color:var(--theme-surface)]/50 text-[9px] font-mono space-y-2 opacity-80 rounded-lg shadow-inner"
               >
                 <p>U_ALIAS: <span className="text-primary">{formData.name || "NULL"}</span></p>
                 <p>A_COORDS: <span className="text-primary">{formData.program || "NULL"}</span></p>

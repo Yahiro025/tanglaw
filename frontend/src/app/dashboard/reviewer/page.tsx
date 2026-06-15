@@ -92,7 +92,7 @@ export default function ReviewerPage() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.15 }}
         style={{ willChange: "transform, opacity" }}
-        className="border-technical bg-white p-10 shadow-2xl relative overflow-hidden"
+        className="border-technical bg-[color:var(--theme-surface)] p-10 shadow-2xl relative overflow-hidden"
       >
         <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-primary" />
         <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-primary" />
@@ -126,7 +126,7 @@ export default function ReviewerPage() {
         </div>
       </motion.header>
 
-      <div className="grid gap-0 lg:grid-cols-[300px_1fr] border-technical bg-white shadow-2xl overflow-hidden">
+      <div className="grid gap-0 lg:grid-cols-[300px_1fr] border-technical bg-[color:var(--theme-surface)] shadow-2xl overflow-hidden">
         <aside className="p-8 border-b lg:border-b-0 lg:border-r border-technical bg-[color:var(--theme-surface)]/30">
           <div className="flex items-center justify-between mb-10 pb-4 border-b border-technical">
             <div className="space-y-1">
@@ -141,7 +141,7 @@ export default function ReviewerPage() {
             </button>
           </div>
 
-          <div className="grid grid-cols-5 gap-0 border-technical bg-white overflow-hidden">
+          <div className="grid grid-cols-5 gap-0 border-technical bg-[color:var(--theme-surface)] overflow-hidden">
             {QUESTION_BANK.map((question) => {
               const isActive = question.id - 1 === activeIndex;
               const answered = selectedAnswers[question.id] !== undefined;
@@ -151,7 +151,7 @@ export default function ReviewerPage() {
                 ? "bg-primary text-white"
                 : answered
                 ? "bg-[color:var(--theme-surface)] text-primary"
-                : "bg-white text-[color:var(--theme-text-muted)]";
+                : "bg-[color:var(--theme-canvas)] text-[color:var(--theme-text-muted)]";
 
               return (
                 <button
@@ -180,7 +180,7 @@ export default function ReviewerPage() {
           </div>
         </aside>
 
-        <section className="bg-white flex flex-col">
+        <section className="bg-[color:var(--theme-surface)] flex flex-col">
           <div className="p-12 space-y-12">
             <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
               <div className="space-y-4">
@@ -208,7 +208,7 @@ export default function ReviewerPage() {
                   <label
                     key={option}
                     className={`group flex cursor-pointer items-center gap-8 border-b border-technical last:border-b-0 px-8 py-6 transition-all ${
-                      selected ? "bg-primary text-white" : "bg-white text-[color:var(--theme-text-body)] hover:bg-[color:var(--theme-surface)]"
+                      selected ? "bg-primary text-white" : "bg-[color:var(--theme-surface)] text-[color:var(--theme-text-body)] hover:bg-[color:var(--theme-canvas)]"
                     }`}
                   >
                     <input
@@ -236,7 +236,7 @@ export default function ReviewerPage() {
               <button
                 onClick={toggleFlag}
                 className={`inline-flex items-center gap-3 border-technical px-8 py-3 text-[10px] font-black uppercase tracking-[0.3em] transition-all hover:translate-y-[-1px] ${
-                  flaggedItems.includes(currentQuestion.id) ? "bg-amber-300 border-amber-400 text-zinc-900" : "bg-white text-[color:var(--theme-text-body)] hover:bg-gray-50"
+                  flaggedItems.includes(currentQuestion.id) ? "bg-amber-300 border-amber-400 text-zinc-900" : "bg-[color:var(--theme-surface)] text-[color:var(--theme-text-body)] hover:bg-[color:var(--theme-canvas)]"
                 }`}
               >
                 <Flag className="h-4 w-4" /> {flaggedItems.includes(currentQuestion.id) ? "De-flag" : "Flag Unit"}
@@ -245,7 +245,7 @@ export default function ReviewerPage() {
               <button
                 onClick={() => setActiveIndex((prev) => Math.max(prev - 1, 0))}
                 disabled={activeIndex === 0}
-                className="inline-flex items-center gap-3 border-technical bg-white px-8 py-3 text-[10px] font-black uppercase tracking-[0.3em] text-[color:var(--theme-text-body)] hover:bg-gray-50 transition-all disabled:opacity-20"
+                className="inline-flex items-center gap-3 border-technical bg-[color:var(--theme-surface)] px-8 py-3 text-[10px] font-black uppercase tracking-[0.3em] text-[color:var(--theme-text-body)] hover:bg-[color:var(--theme-canvas)] transition-all disabled:opacity-20"
               >
                 Previous
               </button>
