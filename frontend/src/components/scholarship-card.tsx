@@ -11,6 +11,12 @@ interface ScholarshipCardProps {
   onToggle: (name: string) => void;
 }
 
+const ELIGIBILITY_LABELS: Record<string, string> = {
+  financialStatus: "Financial Status",
+  minimumGPA: "Minimum GPA",
+  academicStatus: "Academic Status",
+};
+
 const ScholarshipCard = React.memo(function ScholarshipCard({
   scholarship,
   isExpanded,
@@ -31,7 +37,7 @@ const ScholarshipCard = React.memo(function ScholarshipCard({
           <span className={`text-[10px] font-black tracking-wider uppercase px-2.5 py-0.5 rounded-full border ${
             !isPrivate
               ? "bg-accent-periwinkle/65 border-accent-muted text-text-primary"
-              : "bg-primary/10 border-primary/20 text-primary"
+              : "bg-primary/10 border-primary/20 text-primary dark:text-text-primary"
           }`}>
             {s.classification}
           </span>
@@ -104,7 +110,7 @@ const ScholarshipCard = React.memo(function ScholarshipCard({
                 <ul className="text-xs text-[color:var(--theme-text-body)] space-y-1 pl-4 list-disc">
                   {Object.entries(s.eligibility).map(([key, value]) => {
                     if (!value) return null;
-                    const label = key
+                    const label = ELIGIBILITY_LABELS[key] ?? key
                       .replace(/([A-Z])/g, " $1")
                       .replace(/^./, (str) => str.toUpperCase());
                     return (
@@ -135,11 +141,11 @@ const ScholarshipCard = React.memo(function ScholarshipCard({
                 <h4 className="text-xs font-black text-text-primary uppercase tracking-wide flex items-center gap-1.5">
                   <FileText className="h-3.5 w-3.5" /> Requirements Checklist
                 </h4>
-                <ul className="text-xs text-[color:var(--theme-text-body)] space-y-1 pl-4 list-decimal">
+                <ol className="text-xs text-[color:var(--theme-text-body)] space-y-1.5 pl-5 list-decimal marker:text-text-primary marker:font-semibold">
                   {s.requirements.map((r, i) => (
-                    <li key={i}>{r}</li>
+                    <li key={i} className="pl-1">{r}</li>
                   ))}
-                </ul>
+                </ol>
               </div>
 
               {/* Exam & Deadline info */}

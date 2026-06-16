@@ -42,6 +42,7 @@ export const getScholarships = async (req: Request, res: Response) => {
       take: pageSize,
       select: {
         id: true,
+        minGwa: true,
         name: true,
         provider: true,
         sector: true,
@@ -58,6 +59,7 @@ export const getScholarships = async (req: Request, res: Response) => {
       name: scholarship.name,
       provider: scholarship.provider,
       type: scholarship.sector === "PUBLIC" ? "Public" : "Private",
+      minGwa: scholarship.minGwa,
       incomeBracket: Number(scholarship.incomeBracket),
       program: scholarship.programCategories?.length ? scholarship.programCategories[0] : "Any",
       benefits: scholarship.benefits

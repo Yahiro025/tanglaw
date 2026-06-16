@@ -74,7 +74,7 @@ export default function DashboardHomePage() {
               </p>
             </div>
             <div className="rounded-[2rem] border border-primary/10 bg-primary/5 px-4 sm:px-5 py-4 text-sm text-primary shadow-sm md:max-w-xs flex-shrink-0 w-full md:w-auto">
-              <p className="font-semibold text-primary"><GlowingText glowType="secondary">Live Module Access</GlowingText></p>
+              <p className="font-semibold text-primary dark:text-white"><GlowingText glowType="secondary" className="dark:text-white">Live Module Access</GlowingText></p>
               <p className="mt-2 text-[color:var(--theme-text-body)] text-xs leading-relaxed">
                 Launch the AI Scholarship Chatbot, benchmark your readiness, or begin the simulation from within the dashboard only.
               </p>

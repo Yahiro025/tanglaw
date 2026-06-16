@@ -33,9 +33,12 @@ function mapBackendScholarshipToOpportunity(item: BackendScholarship): Scholarsh
       financialStatus: item.incomeBracket > 0
         ? `Annual household income must not exceed ₱${item.incomeBracket.toLocaleString()}`
         : "No strict income cap listed.",
-      minimumGPA: requirements.find((entry) => /gwa|gpa|grade/i.test(entry)) || undefined,
-      academicStatus: item.program && item.program !== "Any" ? `Priority program: ${item.program}` : undefined,
-      exclusivity: item.type === "Private" ? "Private scholarship funding" : "Public scholarship funding",
+      minimumGPA: item.minGwa > 1.3
+        ? (item.minGwa >= 75 ? `${item.minGwa}%` : `${item.minGwa.toFixed(2)}`)
+        : undefined,
+      academicStatus: item.program && item.program !== "Any"
+        ? (item.program.toLowerCase().includes("all program") ? item.program : `Priority program: ${item.program}`)
+        : undefined,
     },
     priorityPrograms,
     requirements,
@@ -57,60 +60,60 @@ async function loadScholarships(): Promise<ScholarshipOpportunity[]> {
 function getNumericIncomeLimit(statusText?: string): number {
   if (!statusText) return 0;
   const cleanText = statusText.toLowerCase();
-  
+
   // Look for monthly values first
   if (cleanText.includes("30,000 monthly") || cleanText.includes("30,000/month")) return 360000;
-  
+
   // Annual values
   if (cleanText.includes("400,000") || cleanText.includes("400.000")) return 400000;
   if (cleanText.includes("350,000")) return 350000;
   if (cleanText.includes("300,000") || cleanText.includes("300.000")) return 300000;
   if (cleanText.includes("250,000")) return 250000;
   if (cleanText.includes("180,000")) return 180000;
-  
+
   // Other currencies / special thresholds
   if (cleanText.includes("usd $1000") || cleanText.includes("usd $1,000")) return 700000;
-  
+
   return 0;
 }
 
 // Helper to filter by academic stream
 function matchesAcademicStream(opportunity: ScholarshipOpportunity, filterValue: string): boolean {
   if (filterValue === "all") return true;
-  
+
   const programs = opportunity.priorityPrograms.map(p => p.toLowerCase());
   const strand = opportunity.strand.toLowerCase();
-  
+
   // General fallback matches
   if (
-    programs.some(p => p.includes("open to all") || p.includes("all programs") || p.includes("all CHED recognized") || p.includes("tba")) || 
-    strand.includes("all strand") || 
+    programs.some(p => p.includes("open to all") || p.includes("all programs") || p.includes("all CHED recognized") || p.includes("tba")) ||
+    strand.includes("all strand") ||
     strand.includes("tba")
   ) {
     return true;
   }
 
   if (filterValue === "stem") {
-    return programs.some(p => 
-      p.includes("computer") || p.includes("information technology") || p.includes("it") || 
-      p.includes("engineering") || p.includes("science") || p.includes("math") || 
+    return programs.some(p =>
+      p.includes("computer") || p.includes("information technology") || p.includes("it") ||
+      p.includes("engineering") || p.includes("science") || p.includes("math") ||
       p.includes("architecture") || p.includes("design") || p.includes("technology") || p.includes("stem")
     ) || strand.includes("stem") || strand.includes("bscs") || strand.includes("bsce") || strand.includes("engineering") || strand.includes("bsarch");
   }
-  
+
   if (filterValue === "humanities") {
-    return programs.some(p => 
-      p.includes("journalism") || p.includes("education") || p.includes("broadcasting") || 
+    return programs.some(p =>
+      p.includes("journalism") || p.includes("education") || p.includes("broadcasting") ||
       p.includes("advertising") || p.includes("communication") || p.includes("arts") || p.includes("social work")
     ) || strand.includes("communication") || strand.includes("education");
   }
-  
+
   if (filterValue === "medical-allied") {
-    return programs.some(p => 
+    return programs.some(p =>
       p.includes("health") || p.includes("therapy") || p.includes("medical") || p.includes("radiology")
     );
   }
-  
+
   return false;
 }
 
