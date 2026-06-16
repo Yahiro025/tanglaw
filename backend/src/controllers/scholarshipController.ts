@@ -61,7 +61,7 @@ export const getScholarships = async (req: Request, res: Response) => {
       type: scholarship.sector === "PUBLIC" ? "Public" : "Private",
       minGwa: scholarship.minGwa,
       incomeBracket: Number(scholarship.incomeBracket),
-      program: scholarship.programCategories?.length ? scholarship.programCategories[0] : "Any",
+      programCategories: scholarship.programCategories || [],
       benefits: scholarship.benefits
         .split(/\r?\n/)
         .map((item) => item.trim())

@@ -16,18 +16,57 @@ import type { BackendScholarship } from "@/lib/backend";
 // Module-scoped cache — prevents re-fetching on re-renders
 let cachedScholarships: ScholarshipOpportunity[] | null = null;
 
+function inferStrand(programs: string[]): string {
+  if (programs.length === 0 || (programs.length === 1 && programs[0].toLowerCase() === "any")) return "Any";
+  const joined = programs.join(" ").toLowerCase();
+
+  if (programs.some((p) => /all strand|all programs|all ched|open to all|any/i.test(p))) return "All Strand";
+  if (
+    joined.includes("computer") || joined.includes("engineering") || joined.includes("science") ||
+    joined.includes("math") || joined.includes("technology") || joined.includes("it ") ||
+    joined.includes("architecture") || joined.includes("statistics") || joined.includes("physics") ||
+    joined.includes("chemistry") || joined.includes("biology")
+  ) return "STEM";
+  if (
+    joined.includes("journalism") || joined.includes("education") || joined.includes("communication") ||
+    joined.includes("arts") || joined.includes("history") || joined.includes("philosophy") ||
+    joined.includes("literature") || joined.includes("broadcasting") || joined.includes("social work")
+  ) return "Humanities";
+  if (
+    joined.includes("nursing") || joined.includes("medical") || joined.includes("health") ||
+    joined.includes("pharmacy") || joined.includes("radiology") || joined.includes("therapy") ||
+    joined.includes("medtech")
+  ) return "Medical Allied";
+  if (
+    joined.includes("tourism") || joined.includes("hospitality") || joined.includes("hotel")
+  ) return "Tourism & Hospitality";
+  if (
+    joined.includes("accountancy") || joined.includes("accounting") || joined.includes("business") ||
+    joined.includes("management") || joined.includes("finance")
+  ) return "Business & Accountancy";
+
+  return programs[0];
+}
+
 function mapBackendScholarshipToOpportunity(item: BackendScholarship): ScholarshipOpportunity {
   const requirements = Array.isArray(item.requirements) ? item.requirements : [];
   const benefits = Array.isArray(item.benefits) ? item.benefits : [];
-  const priorityPrograms = item.program && item.program !== "Any" ? [item.program] : ["Open to all programs"];
+  const priorityPrograms = item.programCategories?.length ? item.programCategories : ["Open to all programs"];
 
   return {
     name: item.name,
     provider: item.provider,
     coverageType: benefits[0] ?? "Scholarship support",
     classification: item.type,
-    strand: item.program || "Any",
-    overview: `${item.provider} offers ${item.name}. This scholarship is designed for ${item.program || "qualified students"} and provides ${benefits[0]?.toLowerCase() || "education support"}.`,
+    strand: inferStrand(item.programCategories),
+    overview: (() => {
+      const programSummary = item.programCategories?.length
+        ? item.programCategories.length <= 3
+          ? item.programCategories.join(", ")
+          : `${item.programCategories.slice(0, 3).join(", ")} and ${item.programCategories.length - 3} more`
+        : "qualified students";
+      return `${item.provider} offers ${item.name}. This scholarship is designed for ${programSummary} and provides ${benefits[0]?.toLowerCase() || "education support"}.`;
+    })(),
     coverageDetails: benefits.join(" • ") || "Financial assistance and related learning support.",
     eligibility: {
       financialStatus: item.incomeBracket > 0
@@ -36,9 +75,7 @@ function mapBackendScholarshipToOpportunity(item: BackendScholarship): Scholarsh
       minimumGPA: item.minGwa > 1.3
         ? (item.minGwa >= 75 ? `${item.minGwa}%` : `${item.minGwa.toFixed(2)}`)
         : undefined,
-      academicStatus: item.program && item.program !== "Any"
-        ? (item.program.toLowerCase().includes("all program") ? item.program : `Priority program: ${item.program}`)
-        : undefined,
+      // academicStatus removed — priorityPrograms already lists all eligible programs accurately
     },
     priorityPrograms,
     requirements,

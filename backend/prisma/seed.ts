@@ -1,6 +1,6 @@
 import { Sector } from "@prisma/client";
 import prisma from "../src/services/prismaClient";
-import { SCHOLARSHIPS_DATA } from "../../frontend/src/data/scholarships-data";
+import { SCHOLARSHIPS_DATA } from "../../frontend/src/data/canonical-scholarships";
 
 interface ScholarshipSeed {
   name: string;

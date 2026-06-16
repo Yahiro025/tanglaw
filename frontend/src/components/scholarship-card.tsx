@@ -16,7 +16,6 @@ const ELIGIBILITY_LABELS: Record<string, string> = {
   residency: "Residency",
   financialStatus: "Financial Status",
   minimumGPA: "Minimum GPA",
-  academicStatus: "Academic Status",
 };
 
 const ScholarshipCard = React.memo(function ScholarshipCard({

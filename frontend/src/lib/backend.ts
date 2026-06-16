@@ -14,7 +14,7 @@ export interface BackendScholarship {
   type: "Public" | "Private";
   incomeBracket: number;
   minGwa: number;
-  program: string;
+  programCategories: string[];
   benefits: string[];
   requirements: string[];
   link: string;
