@@ -12,6 +12,8 @@ interface ScholarshipCardProps {
 }
 
 const ELIGIBILITY_LABELS: Record<string, string> = {
+  exclusivity: "Exclusivity",
+  residency: "Residency",
   financialStatus: "Financial Status",
   minimumGPA: "Minimum GPA",
   academicStatus: "Academic Status",

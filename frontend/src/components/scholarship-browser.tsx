@@ -9,7 +9,7 @@ import { Filter, ArrowUp } from "lucide-react";
 import ScholarshipFilterPanel from "./scholarship-filter-panel";
 import ScholarshipCard from "./scholarship-card";
 import ScholarshipPagination from "./scholarship-pagination";
-import type { ScholarshipOpportunity } from "@/data/scholarships-data";
+import { OSFA_SCHOLARSHIPS, type ScholarshipOpportunity } from "@/data/scholarships-data";
 import { fetchScholarships as fetchBackendScholarships } from "@/lib/backend";
 import type { BackendScholarship } from "@/lib/backend";
 
@@ -48,11 +48,27 @@ function mapBackendScholarshipToOpportunity(item: BackendScholarship): Scholarsh
   };
 }
 
+// Merge backend DB results with hardcoded OSFA scholarships.
+// Backend entries take priority; static OSFA entries fill any gaps.
+function mergeWithOsfa(backend: ScholarshipOpportunity[]): ScholarshipOpportunity[] {
+  const map = new Map<string, ScholarshipOpportunity>();
+  for (const item of backend) {
+    map.set(item.name, item);
+  }
+  for (const item of OSFA_SCHOLARSHIPS) {
+    if (!map.has(item.name)) {
+      map.set(item.name, item);
+    }
+  }
+  return Array.from(map.values());
+}
+
 async function loadScholarships(): Promise<ScholarshipOpportunity[]> {
   if (cachedScholarships) return cachedScholarships;
 
   const backendData = await fetchBackendScholarships();
-  cachedScholarships = backendData.map(mapBackendScholarshipToOpportunity);
+  const merged = mergeWithOsfa(backendData.map(mapBackendScholarshipToOpportunity));
+  cachedScholarships = merged;
   return cachedScholarships;
 }
 
