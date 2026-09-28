@@ -98,7 +98,7 @@ export default function ThemeChanger() {
     return (
       <button
         disabled
-        className="inline-flex items-center justify-center h-10 w-10 rounded-full border border-white/15 bg-white/5 shadow-lg backdrop-blur-sm"
+        className="inline-flex items-center justify-center h-10 w-10 rounded-full border border-white/15 bg-white/5 md:shadow-lg md:backdrop-blur-sm"
         aria-label="Loading theme"
       >
         <span className="h-5 w-5" />
@@ -109,7 +109,7 @@ export default function ThemeChanger() {
   return (
     <button
       onClick={toggleTheme}
-      className="inline-flex items-center justify-center h-10 w-10 rounded-full border border-white/15 bg-white/5 shadow-lg backdrop-blur-sm transition hover:bg-white/10 focus:outline-none"
+      className="inline-flex items-center justify-center h-10 w-10 rounded-full border border-white/15 bg-white/5 md:shadow-lg md:backdrop-blur-sm transition hover:bg-white/10 focus:outline-none"
       aria-label={`Switch to ${resolvedTheme === "light" ? "dark" : "light"} theme`}
       title={`Current theme: ${resolvedTheme === "light" ? "Light" : "Dark"}`}
     >

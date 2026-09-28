@@ -236,19 +236,19 @@ html.dark .mobile-static-bg {
 .mobile-static-bg .msb-glow {
   position: absolute;
   left: 50%;
-  top: 27%;
-  width: 130vw;
-  height: 130vw;
-  margin-left: -65vw;
-  margin-top: -65vw;
+  top: 23%;
+  width: 110vw;
+  height: 110vw;
+  margin-left: -55vw;
+  margin-top: -55vw;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(255, 214, 120, 0.45) 0%, rgba(255, 200, 90, 0.18) 30%, transparent 62%);
   opacity: 0.55;
   animation: msb-pulse 7s ease-in-out infinite;
 }
 html.dark .mobile-static-bg .msb-glow {
-  background: radial-gradient(circle, rgba(232, 176, 70, 0.6) 0%, rgba(220, 160, 60, 0.22) 28%, transparent 60%);
-  opacity: 0.9;
+  background: radial-gradient(circle, rgba(240, 184, 74, 0.72) 0%, rgba(220, 160, 60, 0.25) 26%, transparent 56%);
+  opacity: 1;
 }
 .mobile-static-bg .msb-svg {
   position: absolute;
@@ -257,7 +257,7 @@ html.dark .mobile-static-bg .msb-glow {
   height: 100%;
   opacity: 0.55;
 }
-html.dark .mobile-static-bg .msb-svg { opacity: 1; }
+html.dark .mobile-static-bg .msb-svg { opacity: 0.6; }
 html:not(.dark) .mobile-static-bg .msb-stars { display: none; }
 @keyframes msb-pulse {
   0%, 100% { opacity: 0.8; }
@@ -268,4 +268,8 @@ html:not(.dark) .mobile-static-bg .msb-stars { display: none; }
 }
 @media (min-width: 768px) {
   .mobile-static-bg { display: none; }
+}
+
+@media (max-width: 767px), (prefers-reduced-motion: reduce) {
+  .animate-glow-pulse { animation: none; }
 }

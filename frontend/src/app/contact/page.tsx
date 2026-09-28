@@ -40,7 +40,7 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="relative overflow-hidden min-h-screen bg-[color:var(--theme-canvas)] px-4 pt-24 pb-16 sm:px-6 lg:px-8 text-[color:var(--theme-text-body)]">
+    <div className="relative overflow-hidden min-h-screen bg-transparent md:bg-[color:var(--theme-canvas)] px-4 pt-24 pb-16 sm:px-6 lg:px-8 text-[color:var(--theme-text-body)]">
       <EtheralShadow
         animation={{ scale: 60, speed: 80 }}
         noise={{ opacity: 0.8, scale: 1.0 }}
@@ -65,7 +65,7 @@ export default function ContactPage() {
 
         <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
           <ScrollReveal direction="left" className="h-full">
-            <section className="rounded-[2rem] border border-white/10 bg-[color:var(--theme-surface)]/90 p-8 shadow-2xl shadow-black/20 backdrop-blur-sm h-full flex flex-col justify-center">
+            <section className="rounded-[2rem] border border-white/10 bg-[color:var(--theme-surface)]/90 p-8 md:shadow-2xl md:shadow-black/20 md:backdrop-blur-sm h-full flex flex-col justify-center">
               <div className="space-y-6">
                 <div className="inline-flex items-center gap-3 rounded-full bg-white/5 px-4 py-2 text-[10px] uppercase tracking-[0.32em] text-[color:var(--theme-typography-secondary)] font-black">
                   Support Node
@@ -95,7 +95,7 @@ export default function ContactPage() {
           </ScrollReveal>
 
           <ScrollReveal direction="right" className="h-full">
-            <main className="rounded-[2rem] border border-white/10 bg-[color:var(--theme-surface)]/90 p-8 shadow-2xl shadow-black/20 backdrop-blur-sm">
+            <main className="rounded-[2rem] border border-white/10 bg-[color:var(--theme-surface)]/90 p-8 md:shadow-2xl md:shadow-black/20 md:backdrop-blur-sm">
               <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <p className="text-xs uppercase tracking-[0.32em] text-[color:var(--theme-typography-secondary)] font-bold">Reach Out</p>

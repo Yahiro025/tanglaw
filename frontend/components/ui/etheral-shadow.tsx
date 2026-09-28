@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useId, useState, useEffect, CSSProperties, ReactNode } from 'react';
+import React, { useId, useState, useEffect, CSSProperties, ReactNode } from 'react';
 import { useTheme } from 'next-themes';
 
 interface ResponsiveImage { src: string; alt?: string; srcSet?: string; }
@@ -43,54 +43,17 @@ export function EtheralShadow({
     const id = useInstanceId();
     const { resolvedTheme } = useTheme();
     const isDark = resolvedTheme === 'dark';
-    const containerRef = useRef<HTMLDivElement>(null);
 
-    // ─── Visibility-based pause and RAF-throttled filter updates ───────────
-    const [animationPlayState, setAnimationPlayState] = useState<'running' | 'paused'>('running');
-    const hueRef = useRef(0);
-    const feColorMatrixRef = useRef<SVGFEColorMatrixElement>(null);
-
+    // Mount only at md+ (>= 768px); mobile uses the static CSS background instead.
+    const [isDesktop, setIsDesktop] = useState(false);
     useEffect(() => {
-        const container = containerRef.current;
-        if (!container) return;
+        const mq = window.matchMedia('(min-width: 768px)');
+        const update = () => setIsDesktop(mq.matches);
+        update();
+        mq.addEventListener('change', update);
+        return () => mq.removeEventListener('change', update);
+    }, []);
 
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                setAnimationPlayState(entry.isIntersecting ? 'running' : 'paused');
-            },
-            { threshold: 0.01 }
-        );
-        observer.observe(container);
-
-        // Manual RAF loop for hue rotation to avoid browser compositing rate SVG <animate>
-        let rafId: number;
-        let frameCount = 0;
-        const animateHue = () => {
-            if (animationPlayState === 'running' && !document.hidden) {
-                frameCount++;
-                if (frameCount % 3 === 0) { // Update every 3rd frame (~20fps)
-                    hueRef.current = (hueRef.current + 1.2) % 360;
-                    if (feColorMatrixRef.current) {
-                        feColorMatrixRef.current.setAttribute('values', String(hueRef.current));
-                    }
-                }
-            }
-            rafId = requestAnimationFrame(animateHue);
-        };
-        rafId = requestAnimationFrame(animateHue);
-
-        const handleVisibility = () => {
-            setAnimationPlayState(document.hidden ? 'paused' : 'running');
-        };
-        document.addEventListener('visibilitychange', handleVisibility);
-
-        return () => {
-            observer.disconnect();
-            cancelAnimationFrame(rafId);
-            document.removeEventListener('visibilitychange', handleVisibility);
-        };
-    }, [animationPlayState]);
-    
     // Dynamically set the shadow color based on the active theme
     const activeColor = isDark ? darkColor : lightColor;
 
@@ -99,8 +62,10 @@ export function EtheralShadow({
     const displacementScale = animation ? mapRange(animation.scale, 1, 100, 20, 100) : 0;
     const animationDuration = animation ? mapRange(animation.speed, 1, 100, 1000, 50) : 1;
 
+    if (!isDesktop) return null;
+
     return (
-        <div ref={containerRef} className={`fixed inset-0 pointer-events-none ${className || ''}`} style={{ overflow: "hidden", zIndex: 0, willChange: "filter", transform: "translateZ(0)", ...style }}>
+        <div className={`fixed inset-0 pointer-events-none ${className || ''}`} style={{ overflow: "hidden", zIndex: 0, transform: "translateZ(0)", ...style }}>
             
             
             <div style={{ position: "absolute", inset: -displacementScale, filter: animationEnabled ? `url(#${id}) blur(4px)` : "none" }}>
@@ -109,12 +74,6 @@ export function EtheralShadow({
                         <defs>
                             <filter id={id}>
                                 <feTurbulence result="undulation" numOctaves="1" baseFrequency={`${mapRange(animation.scale, 0, 100, 0.001, 0.0005)},${mapRange(animation.scale, 0, 100, 0.004, 0.002)}`} seed="0" type="turbulence" />
-                                <feColorMatrix 
-                                    ref={feColorMatrixRef}
-                                    in="undulation" 
-                                    type="hueRotate" 
-                                    values="0" 
-                                />
                                 <feColorMatrix in="undulation" result="circulation" type="matrix" values="4 0 0 0 1  4 0 0 0 1  4 0 0 0 1  1 0 0 0 0" />
                                 <feDisplacementMap in="SourceGraphic" in2="circulation" scale={displacementScale} result="dist" />
                                 <feDisplacementMap in="dist" in2="undulation" scale={displacementScale} result="output" />

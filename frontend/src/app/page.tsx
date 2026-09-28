@@ -8,7 +8,7 @@ import HomeClient from "./home-client";
 
 export default function Home() {
   return (
-    <div className="relative bg-[color:var(--theme-canvas)] font-sans text-[color:var(--theme-text-body)]">
+    <div className="relative bg-transparent md:bg-[color:var(--theme-canvas)] font-sans text-[color:var(--theme-text-body)]">
       <DynamicLandingBackground />
       <HomeClient />
     </div>

@@ -71,8 +71,7 @@
   border-radius: 9999px;
   padding: 0.55rem 0.95rem;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  /* backdrop blur only on desktop, see media query below */
   cursor: pointer;
   color: var(--theme-typography-main, #1B4079);
   font-weight: 700;
@@ -163,8 +162,6 @@
   width: clamp(280px, 45vw, 460px);
   height: 100%;
   background: var(--theme-surface, #F4F9E2);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   border-left: 1px solid rgba(127, 156, 150, 0.2);
   box-shadow: -10px 0 40px rgba(0, 0, 0, 0.15);
   display: flex;
@@ -400,5 +397,16 @@
 
   .staggered-menu-wrapper[data-open] .sm-logo-img {
     filter: invert(100%);
+  }
+}
+
+@media (min-width: 768px) {
+  .sm-toggle {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .staggered-menu-panel {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
 }

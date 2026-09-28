@@ -169,7 +169,7 @@ export default function AboutClient() {
   };
 
   return (
-    <div className="relative overflow-hidden bg-[color:var(--theme-canvas)] pt-28 pb-20 text-[color:var(--theme-text-body)]">
+    <div className="relative overflow-hidden bg-transparent md:bg-[color:var(--theme-canvas)] pt-28 pb-20 text-[color:var(--theme-text-body)]">
       <EtheralShadow
         animation={{ scale: 60, speed: 80 }}
         noise={{ opacity: 0.8, scale: 1.0 }}
@@ -195,7 +195,7 @@ export default function AboutClient() {
 
         <ScrollReveal direction="up">
           <section className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] items-start mb-20">
-            <div className="rounded-[2rem] border border-white/10 bg-[color:var(--theme-surface)]/90 p-8 shadow-2xl shadow-black/25 backdrop-blur-sm">
+            <div className="rounded-[2rem] border border-white/10 bg-[color:var(--theme-surface)]/90 p-8 md:shadow-2xl md:shadow-black/25 md:backdrop-blur-sm">
               <div className="mb-6 flex items-center gap-3 rounded-full bg-white/5 px-4 py-2 text-[10px] uppercase tracking-[0.28em] text-[color:var(--theme-typography-secondary)] font-black">
                 <BookOpen className="h-4 w-4" /> Our mission
               </div>
@@ -242,7 +242,7 @@ export default function AboutClient() {
         <CarouselSection />
 
         <ScrollReveal direction="up">
-          <section className="rounded-[2rem] border border-white/10 bg-[color:var(--theme-surface)]/90 p-8 shadow-2xl shadow-black/25 backdrop-blur-sm">
+          <section className="rounded-[2rem] border border-white/10 bg-[color:var(--theme-surface)]/90 p-8 md:shadow-2xl md:shadow-black/25 md:backdrop-blur-sm">
             <div className="space-y-12">
               <div className="mx-auto text-center max-w-2xl space-y-4">
                 <p className="text-[10px] uppercase tracking-[0.34em] text-[color:var(--theme-typography-secondary)] font-black">Our creators</p>

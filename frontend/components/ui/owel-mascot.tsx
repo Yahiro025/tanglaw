@@ -32,12 +32,10 @@ export function OwelMascot({ className }: OwelMascotProps) {
 
   return (
     <div
-      className={cn("relative w-full", className)}
+      className={cn("relative w-full md:[filter:drop-shadow(0_0_30px_rgba(184,201,232,0.25))_drop-shadow(0_0_60px_rgba(184,201,232,0.1))]", className)}
       style={{
         maxWidth: MASCOT_SIZE,
         aspectRatio: '1 / 1',
-        filter:
-          'drop-shadow(0 0 30px rgba(184,201,232,0.25)) drop-shadow(0 0 60px rgba(184,201,232,0.1))',
       }}
     >
       {/* Single theme image — loads only the active theme's mascot */}

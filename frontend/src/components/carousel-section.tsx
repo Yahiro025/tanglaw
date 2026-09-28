@@ -142,7 +142,7 @@ export default function CarouselSection() {
                 className="pl-3 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3"
               >
                 <div className="p-1 h-full">
-                  <Card className="h-full border border-white/10 bg-[color:var(--theme-surface)]/85 backdrop-blur-xl shadow-xl transition-all duration-300 hover:shadow-2xl hover:border-primary/30 hover:-translate-y-1">
+                  <Card className="h-full border border-white/10 bg-[color:var(--theme-surface)]/85 md:backdrop-blur-xl md:shadow-xl transition-all duration-300 hover:shadow-2xl hover:border-primary/30 hover:-translate-y-1">
                     <CardContent className="flex flex-col justify-between p-6 sm:p-8 h-full min-h-[320px]">
                       <div>
                         <div className="flex items-center justify-between">

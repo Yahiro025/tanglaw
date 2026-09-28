@@ -12,6 +12,7 @@ import { signOut } from "next-auth/react";
 import dynamic from "next/dynamic";
 import AuthGuard from "@/components/AuthGuard";
 import NextAuthProvider from "@/components/NextAuthProvider";
+import MobileStaticBackground from "@/components/mobile-static-background";
 import ThemeChanger from "@/components/theme-changer";
 import { setAuthToken } from "@/lib/auth-storage";
 
@@ -104,6 +105,7 @@ export default function DashboardLayout({
     <NextAuthProvider>
     <AuthGuard>
       <div className="h-screen overflow-y-auto hide-scrollbar bg-base-light text-text-primary flex flex-col">
+          <MobileStaticBackground />
           <EtheralShadow
             animation={{ scale: 60, speed: 80 }}
             noise={{ opacity: 0.8, scale: 1.0 }}
@@ -144,7 +146,7 @@ export default function DashboardLayout({
               <div ref={menuRef}>
                 <button
                   onClick={() => setMenuOpen(!menuOpen)}
-                  className="flex items-center justify-center h-10 w-10 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/60 backdrop-blur-xl shadow-lg transition-all duration-300 hover:bg-[color:var(--theme-surface)]/80"
+                  className="flex items-center justify-center h-10 w-10 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/85 md:bg-[color:var(--theme-surface)]/60 md:backdrop-blur-xl md:shadow-lg transition-all duration-300 hover:bg-[color:var(--theme-surface)]/80"
                   aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
                   aria-expanded={menuOpen}
                 >
@@ -163,7 +165,7 @@ export default function DashboardLayout({
                     onClick={() => setMenuOpen(false)}
                     aria-hidden="true"
                   />
-                  <div className="absolute top-12 right-0 z-50 w-52 overflow-hidden rounded-2xl border border-white/10 bg-[color:var(--theme-surface)]/80 backdrop-blur-xl shadow-2xl shadow-black/30 origin-top transition-all duration-150">
+                  <div className="absolute top-12 right-0 z-50 w-52 overflow-hidden rounded-2xl border border-white/10 bg-[color:var(--theme-surface)]/95 md:bg-[color:var(--theme-surface)]/80 md:backdrop-blur-xl md:shadow-2xl md:shadow-black/30 origin-top transition-all duration-150">
                     <nav className="flex flex-col gap-1 p-3 text-[11px] uppercase tracking-[0.18em] font-semibold">
                       {[
                         { href: "/dashboard", label: "Overview" },
@@ -200,7 +202,7 @@ export default function DashboardLayout({
 
           {/* Desktop layout: logo inside pill nav */}
           <div className="hidden md:flex w-full max-w-4xl items-center justify-center">
-            <nav className="flex items-center gap-1 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/60 px-3 py-2.5 shadow-[0_4px_30px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl sm:gap-2 sm:px-5">
+            <nav className="flex items-center gap-1 rounded-full border border-white/10 bg-[color:var(--theme-surface)]/85 md:bg-[color:var(--theme-surface)]/60 px-3 py-2.5 shadow-[0_4px_30px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.05)] md:backdrop-blur-xl sm:gap-2 sm:px-5">
               <Link href="/dashboard" className="flex items-center gap-2 mr-1" aria-label="Go to dashboard">
                 <div className="h-8 w-8 rounded-full border border-white/10 bg-[color:var(--theme-surface)] shadow-lg shadow-black/20 flex items-center justify-center">
                   <Sparkles className="h-4 w-4 text-primary" />

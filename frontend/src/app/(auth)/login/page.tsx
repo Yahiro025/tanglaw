@@ -69,7 +69,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative overflow-hidden min-h-screen bg-[color:var(--theme-canvas)] text-[color:var(--theme-text-body)] flex flex-col">
+    <div className="relative overflow-hidden min-h-screen bg-transparent md:bg-[color:var(--theme-canvas)] text-[color:var(--theme-text-body)] flex flex-col">
       <EtheralShadow
         animation={{ scale: 60, speed: 80 }}
         noise={{ opacity: 0.8, scale: 1.0 }}
@@ -79,7 +79,7 @@ export default function LoginPage() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(27,64,121,0.14),_transparent_18%)]" />
       <div className="relative z-10 flex-1 flex items-center justify-center px-4 pt-28 pb-16 sm:px-6 lg:px-8">
         <div className="mx-auto grid w-full max-w-6xl gap-10 lg:grid-cols-[0.95fr_0.9fr]">
-        <section className="rounded-[2rem] border border-white/10 bg-[color:var(--theme-surface)]/90 p-10 shadow-2xl shadow-black/25 backdrop-blur-sm">
+        <section className="rounded-[2rem] border border-white/10 bg-[color:var(--theme-surface)]/90 p-10 md:shadow-2xl md:shadow-black/25 md:backdrop-blur-sm">
           <p className="text-[10px] uppercase tracking-[0.34em] text-[color:var(--theme-typography-secondary)] font-black">Scholarship Sanctuary</p>
           <h1 className="mt-6 text-4xl font-black tracking-[-0.04em] text-[color:var(--theme-typography-main)] sm:text-5xl">
             <GlowingText glowType="primary">Welcome back, scholar.</GlowingText>
@@ -97,7 +97,7 @@ export default function LoginPage() {
           </div>
         </section>
 
-        <div className="rounded-[2rem] border border-white/10 bg-[color:var(--theme-surface)]/95 p-8 shadow-2xl shadow-black/25 backdrop-blur-sm">
+        <div className="rounded-[2rem] border border-white/10 bg-[color:var(--theme-surface)]/95 p-8 md:shadow-2xl md:shadow-black/25 md:backdrop-blur-sm">
           <div className="text-center mb-8">
             <p className="text-[11px] uppercase tracking-[0.34em] text-[color:var(--theme-typography-secondary)] font-black">Secure Scholar Login</p>
             <h2 className="mt-3 text-3xl font-black text-[color:var(--theme-typography-main)]">

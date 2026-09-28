@@ -91,6 +91,10 @@ export function MascotWithGlow() {
           animation: glow-float 3s ease-in-out infinite;
           animation-play-state: ${animationPlayState};
         }
+        @media (max-width: 767px) {
+          .glow-outer, .glow-inner { filter: none !important; animation: none !important; will-change: auto !important; }
+          .glow-float { animation: none !important; }
+        }
       `}</style>
       {/* Animated glow halo behind mascot */}
       <div
@@ -130,9 +134,9 @@ export const FeatureCard = React.memo(function FeatureCard({
 }) {
   return (
     <ScrollReveal delay={delay} direction={direction}>
-      <article className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[color:var(--theme-surface)] p-6 shadow-xl shadow-black/20 backdrop-blur-sm h-full hover:border-white/20 transition-all duration-500">
-        <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute -left-8 -bottom-8 h-20 w-20 rounded-full bg-[color:var(--theme-accent-periwinkle)]/5 blur-2xl" />
+      <article className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[color:var(--theme-surface)] p-6 md:shadow-xl md:shadow-black/20 md:backdrop-blur-sm h-full hover:border-white/20 transition-all duration-500">
+        <div className="hidden md:block absolute -right-8 -top-8 h-24 w-24 rounded-full bg-primary/5 blur-3xl" />
+        <div className="hidden md:block absolute -left-8 -bottom-8 h-20 w-20 rounded-full bg-[color:var(--theme-accent-periwinkle)]/5 blur-2xl" />
         <div className="relative z-10">
           <p className="text-xs uppercase tracking-[0.34em] text-[color:var(--theme-typography-secondary)] font-bold">
             {title}
