@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 
 const LandingBackground = dynamic(
@@ -8,5 +9,14 @@ const LandingBackground = dynamic(
 );
 
 export function DynamicLandingBackground() {
-  return <LandingBackground />;
+  // Skip the heavy animated shadow on mobile; the CSS mobile background is used instead.
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return isDesktop ? <LandingBackground /> : null;
 }

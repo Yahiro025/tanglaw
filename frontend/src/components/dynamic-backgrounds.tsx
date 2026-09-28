@@ -3,29 +3,35 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
+import MobileStaticBackground from "@/components/mobile-static-background";
 
 const NatureCanvas = dynamic(() => import("@/components/nature-canvas"), { ssr: false });
-const MobileParticles = dynamic(() => import("@/components/mobile-particles"), { ssr: false });
 
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(() =>
-    typeof window !== "undefined" ? window.innerWidth < 768 : false
-  );
+/** Mount the desktop canvas only at md+ (>= 768px); mobile uses the CSS background. */
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(false);
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
+    const mq = window.matchMedia("(min-width: 768px)");
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
   }, []);
-  return isMobile;
+  return isDesktop;
 }
 
 export function DynamicNatureCanvas() {
   const pathname = usePathname();
-  const isMobile = useIsMobile();
+  const isDesktop = useIsDesktop();
 
   if (pathname?.startsWith("/dashboard")) {
     return null;
   }
 
-  return isMobile ? <MobileParticles /> : <NatureCanvas />;
+  return (
+    <>
+      <MobileStaticBackground />
+      {isDesktop ? <NatureCanvas /> : null}
+    </>
+  );
 }
