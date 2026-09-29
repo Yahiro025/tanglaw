@@ -9,24 +9,35 @@ const GlowCursor = dynamic(() => import("@/components/ui/GlowCursor"), {
 
 function subscribe(callback: () => void) {
   window.addEventListener("resize", callback);
-  const mediaQuery = window.matchMedia("(pointer: fine)");
-  if (mediaQuery.addEventListener) {
-    mediaQuery.addEventListener("change", callback);
+  const finePointerQuery = window.matchMedia("(pointer: fine)");
+  const reducedMotionQuery = window.matchMedia(
+    "(prefers-reduced-motion: reduce)"
+  );
+  if (finePointerQuery.addEventListener) {
+    finePointerQuery.addEventListener("change", callback);
+  }
+  if (reducedMotionQuery.addEventListener) {
+    reducedMotionQuery.addEventListener("change", callback);
   }
 
   return () => {
     window.removeEventListener("resize", callback);
-    if (mediaQuery.removeEventListener) {
-      mediaQuery.removeEventListener("change", callback);
+    if (finePointerQuery.removeEventListener) {
+      finePointerQuery.removeEventListener("change", callback);
+    }
+    if (reducedMotionQuery.removeEventListener) {
+      reducedMotionQuery.removeEventListener("change", callback);
     }
   };
 }
 
 function getSnapshot() {
   if (typeof window === "undefined") return false;
-  return (
-    window.matchMedia("(pointer: fine)").matches && window.innerWidth >= 768
-  );
+  const finePointer = window.matchMedia("(pointer: fine)").matches;
+  const reducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)"
+  ).matches;
+  return finePointer && window.innerWidth >= 768 && !reducedMotion;
 }
 
 function getServerSnapshot() {
@@ -58,10 +69,10 @@ export default function GlowCursorLayer() {
       }}
       color="#67E8F9"
       secondaryColor="#A78BFA"
-      trailLength={40}
+      trailLength={10}
       trailWidth={8}
       trailTaper={0.8}
-      followSpeed={0.16}
+      followSpeed={0.62}
       glowIntensity={1.9}
       glowSpread={1.2}
       hotspot={0.65}

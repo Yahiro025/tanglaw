@@ -4,9 +4,18 @@ import { render, screen } from "@testing-library/react";
 import GlowCursor from "@/components/ui/GlowCursor";
 import GlowCursorLayer from "@/components/glow-cursor-layer";
 
+vi.mock("next/dynamic", () => ({
+  default: () =>
+    function DynamicGlowCursor() {
+      return <div className="glow-cursor" />;
+    },
+}));
+
 beforeEach(() => {
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
-    matches: query.includes("pointer: fine") ? true : false,
+    matches:
+      query.includes("pointer: fine") &&
+      !query.includes("prefers-reduced-motion"),
     media: query,
     onchange: null,
     addListener: vi.fn(),
@@ -80,6 +89,30 @@ describe("GlowCursor Component", () => {
     });
 
     const { container } = render(<GlowCursorLayer />);
-    expect(container).toBeDefined();
+    expect(container.querySelector(".glow-cursor")).toBeInTheDocument();
+  });
+
+  it("renders no glow cursor element when prefers-reduced-motion matches", () => {
+    Object.defineProperty(window, "innerWidth", {
+      writable: true,
+      configurable: true,
+      value: 1024,
+    });
+
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches:
+        query.includes("pointer: fine") ||
+        query.includes("prefers-reduced-motion"),
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+
+    const { container } = render(<GlowCursorLayer />);
+    expect(container.querySelector(".glow-cursor")).not.toBeInTheDocument();
   });
 });

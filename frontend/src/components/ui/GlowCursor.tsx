@@ -1,115 +1,78 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import { Mesh, Program, Renderer, Triangle } from "ogl";
+import { Geometry, Mesh, Program, Renderer } from "ogl";
 import "./GlowCursor.css";
 
 const MAX_POINTS = 64;
 
 const VERTEX_SHADER = `
 attribute vec2 position;
-attribute vec2 uv;
-varying vec2 vUv;
+attribute float aSide;
+attribute float aProgress;
+
+uniform vec2 uResolution;
+
+varying float vSide;
+varying float vProgress;
 
 void main() {
-  vUv = uv;
-  gl_Position = vec4(position, 0.0, 1.0);
+  vSide = aSide;
+  vProgress = aProgress;
+  vec2 ndc = position / uResolution * 2.0 - 1.0;
+  gl_Position = vec4(ndc, 0.0, 1.0);
 }
 `;
 
 const FRAGMENT_SHADER = `
 precision highp float;
 
-#define MAX_POINTS 64
+varying float vSide;
+varying float vProgress;
 
-uniform vec2 uResolution;
-uniform vec2 uPoints[MAX_POINTS];
-uniform float uPointCount;
 uniform vec3 uColor;
 uniform vec3 uSecondaryColor;
-uniform float uTrailWidth;
 uniform float uTaper;
 uniform float uGlowIntensity;
-uniform float uGlowSpread;
 uniform float uHotspot;
 uniform float uBrightness;
 uniform float uOpacity;
-uniform float uPulseSpeed;
-uniform float uNoiseStrength;
 uniform float uNormalBlend;
-uniform float uTime;
 uniform float uFade;
-
-varying vec2 vUv;
 
 float sRGB(float x) {
   if (x <= 0.00031308) return 12.92 * x;
   return 1.055 * pow(x, 1.0 / 2.4) - 0.055;
 }
 
-float hash(vec2 p) {
-  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
-}
-
-float filmGrain(vec2 p, float time) {
-  float frame = time * 18.0;
-  float frameIndex = mod(floor(frame), 256.0);
-  float nextFrameIndex = mod(frameIndex + 1.0, 256.0);
-  float blend = fract(frame);
-  blend = blend * blend * (3.0 - 2.0 * blend);
-  vec2 pixel = floor(p);
-  float current = hash(pixel + vec2(frameIndex * 17.0, frameIndex * 31.0));
-  float next = hash(pixel + vec2(nextFrameIndex * 17.0, nextFrameIndex * 31.0));
-  return mix(current, next, blend) * 2.0 - 1.0;
-}
-
 void main() {
-  vec2 pixel = vUv * uResolution;
-  float denominator = max(uPointCount - 1.0, 1.0);
-  float strongest = 0.0;
-  float strongestCore = 0.0;
-  float colorWeight = 0.0;
-  vec3 colorSum = vec3(0.0);
+  float progress = clamp(vProgress, 0.0, 1.0);
+  float life = pow(max(1.0 - progress, 0.0), mix(0.55, 1.25, uTaper));
+  float across = abs(vSide);
+  float core = exp(-pow(across, 2.0) * 2.5);
+  float beam = min(1.0, 1.0 / (across * across * 4.0 + 1.0));
+  float intensity = (core + beam * uGlowIntensity * 0.55) * life;
 
-  for (int i = 0; i < MAX_POINTS - 1; i++) {
-    float index = float(i);
-    float active = 1.0 - step(uPointCount - 1.0, index);
-    vec2 start = uPoints[i];
-    vec2 end = uPoints[i + 1];
-    vec2 toPixel = pixel - start;
-    vec2 segment = end - start;
-    float along = clamp(dot(toPixel, segment) / max(dot(segment, segment), 0.0001), 0.0, 1.0);
-    float progress = clamp((index + along) / denominator, 0.0, 1.0);
-    float life = pow(max(1.0 - progress, 0.0), mix(0.55, 1.25, uTaper));
-    float width = uTrailWidth * mix(1.0, 0.25, pow(progress, mix(0.55, 1.6, uTaper)));
-    float distanceToTrail = length(toPixel - segment * along);
-    float falloff = max(width * (0.8 + uGlowSpread * 1.4), 0.5);
-    float beam = min(1.0, (falloff * falloff) / (distanceToTrail * distanceToTrail + falloff * falloff));
-    float core = exp(-pow(distanceToTrail / max(width, 0.5), 2.0) * 2.5);
-    float pulseAmount = min(abs(uPulseSpeed), 1.0);
-    float pulse = 1.0 + sin(uTime * uPulseSpeed * 3.0 - progress * 11.0) * 0.16 * pulseAmount;
-    float intensity = (core + beam * uGlowIntensity * 0.55) * life * pulse * active;
-    vec3 segmentColor = mix(uColor, uSecondaryColor, progress);
+  vec3 color = mix(uColor, uSecondaryColor, progress);
+  color = mix(color, vec3(1.0), smoothstep(0.25, 0.95, core * life) * uHotspot);
 
-    strongest = max(strongest, intensity);
-    strongestCore = max(strongestCore, core * life * active);
-    colorSum += segmentColor * intensity;
-    colorWeight += intensity;
-  }
-
-  float grain = filmGrain(pixel, uTime);
-  float noiseAmount = (1.0 - exp(-uNoiseStrength * 2.2)) * 0.4;
-  float alpha = clamp(strongest * uOpacity * uFade, 0.0, 1.0);
+  float edgeFade = 1.0 - smoothstep(0.82, 1.0, across);
+  float alpha = clamp(intensity * uOpacity * uFade * edgeFade, 0.0, 1.0);
   if (alpha < 0.0005) discard;
 
-  vec3 color = colorSum / max(colorWeight, 0.0001);
-  color = mix(color, vec3(1.0), smoothstep(0.25, 0.95, strongestCore) * uHotspot);
-  float luminance = sRGB(clamp(strongest * uBrightness, 0.0, 1.0));
-  luminance *= 1.0 + grain * noiseAmount;
+  float luminance = sRGB(clamp(intensity * uBrightness, 0.0, 1.0));
   vec3 additiveColor = color * luminance;
-  float normalAlpha = clamp(strongest * uBrightness * uOpacity * uFade, 0.0, 1.0);
-  vec3 normalColor = mix(color, vec3(1.0), smoothstep(0.45, 1.0, strongestCore) * uHotspot * 0.35);
-  gl_FragColor = vec4(mix(additiveColor, normalColor, uNormalBlend), mix(alpha, normalAlpha, uNormalBlend));
+  float normalAlpha =
+    clamp(intensity * uBrightness * uOpacity * uFade * edgeFade, 0.0, 1.0);
+  vec3 normalColor = mix(
+    color,
+    vec3(1.0),
+    smoothstep(0.45, 1.0, core * life) * uHotspot * 0.35
+  );
+  gl_FragColor = vec4(
+    mix(additiveColor, normalColor, uNormalBlend),
+    mix(alpha, normalAlpha, uNormalBlend)
+  );
 }
 `;
 
@@ -131,6 +94,9 @@ const hexToRgb = (hex: string): [number, number, number] => {
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
+
+const SEGMENT_EPS = 1e-4;
+const DISTINCT_EPS = 0.75;
 
 export interface GlowCursorProps extends React.HTMLAttributes<HTMLDivElement> {
   color?: string;
@@ -251,7 +217,6 @@ const GlowCursor: React.FC<GlowCursorProps> = ({
         ),
       });
     } catch {
-      // Fallback gracefully if WebGL context creation fails
       return;
     }
 
@@ -260,13 +225,19 @@ const GlowCursor: React.FC<GlowCursorProps> = ({
 
     gl.clearColor(0, 0, 0, 0);
 
-    const pointData = Array(MAX_POINTS * 2).fill(0);
+    const maxVerts = MAX_POINTS * 2;
+    const positionData = new Float32Array(maxVerts * 2);
+    const sideData = new Float32Array(maxVerts);
+    const progressData = new Float32Array(maxVerts);
+
     const points = Array.from({ length: MAX_POINTS }, () => ({ x: 0, y: 0 }));
     const target = { x: 0, y: 0 };
-    const head = { x: 0, y: 0 };
 
     let program: Program;
     let mesh: Mesh;
+    let positionAttr: { data: Float32Array; needsUpdate: boolean; count: number };
+    let sideAttr: { data: Float32Array; needsUpdate: boolean; count: number };
+    let progressAttr: { data: Float32Array; needsUpdate: boolean; count: number };
 
     try {
       program = new Program(gl, {
@@ -274,62 +245,86 @@ const GlowCursor: React.FC<GlowCursorProps> = ({
         fragment: FRAGMENT_SHADER,
         uniforms: {
           uResolution: { value: [1, 1] },
-          uPoints: { value: pointData },
-          uPointCount: { value: initialConfig.trailLength },
           uColor: { value: hexToRgb(initialConfig.color) },
           uSecondaryColor: { value: hexToRgb(initialConfig.secondaryColor) },
-          uTrailWidth: { value: initialConfig.trailWidth },
           uTaper: { value: initialConfig.trailTaper },
           uGlowIntensity: { value: initialConfig.glowIntensity },
-          uGlowSpread: { value: initialConfig.glowSpread },
           uHotspot: { value: initialConfig.hotspot },
           uBrightness: { value: initialConfig.brightness },
           uOpacity: { value: initialConfig.opacity },
-          uPulseSpeed: { value: initialConfig.pulseSpeed },
-          uNoiseStrength: { value: initialConfig.noiseStrength },
           uNormalBlend: { value: initialConfig.blendMode === "normal" ? 1 : 0 },
-          uTime: { value: 0 },
           uFade: { value: 0 },
         },
         transparent: true,
         depthTest: false,
         depthWrite: false,
       });
-      mesh = new Mesh(gl, { geometry: new Triangle(gl), program });
+
+      const geometry = new Geometry(gl, {
+        position: {
+          size: 2,
+          data: positionData,
+          usage: gl.DYNAMIC_DRAW,
+        },
+        aSide: {
+          size: 1,
+          data: sideData,
+          usage: gl.DYNAMIC_DRAW,
+        },
+        aProgress: {
+          size: 1,
+          data: progressData,
+          usage: gl.DYNAMIC_DRAW,
+        },
+      });
+
+      positionAttr = geometry.attributes.position as typeof positionAttr;
+      sideAttr = geometry.attributes.aSide as typeof sideAttr;
+      progressAttr = geometry.attributes.aProgress as typeof progressAttr;
+
+      mesh = new Mesh(gl, {
+        geometry,
+        program,
+        mode: gl.TRIANGLE_STRIP,
+      });
     } catch {
       return;
     }
 
-    let width = 1;
-    let height = 1;
     let initialized = false;
     let pointerInside = false;
     let fade = 0;
     let lastInputTime = performance.now();
     let lastFrameTime = performance.now();
     let raf = 0;
+    let loopActive = false;
     let destroyed = false;
 
     const resize = () => {
-      width = Math.max(container.clientWidth, 1);
-      height = Math.max(container.clientHeight, 1);
-      renderer.setSize(width, height);
+      const w = Math.max(container.clientWidth, 1);
+      const h = Math.max(container.clientHeight, 1);
+      renderer.setSize(w, h);
       if (program.uniforms.uResolution) {
-        program.uniforms.uResolution.value = [width, height];
+        program.uniforms.uResolution.value = [w, h];
       }
     };
 
     const initializeTrail = (x: number, y: number) => {
       target.x = x;
       target.y = y;
-      head.x = x;
-      head.y = y;
       for (const point of points) {
         point.x = x;
         point.y = y;
       }
       initialized = true;
       fade = 1;
+    };
+
+    const scheduleLoop = () => {
+      if (destroyed || loopActive) return;
+      lastFrameTime = performance.now();
+      loopActive = true;
+      raf = requestAnimationFrame(render);
     };
 
     const updatePointer = (event: MouseEvent | PointerEvent) => {
@@ -341,6 +336,7 @@ const GlowCursor: React.FC<GlowCursorProps> = ({
       target.y = y;
       pointerInside = true;
       lastInputTime = performance.now();
+      scheduleLoop();
     };
 
     const onPointerLeave = () => {
@@ -348,30 +344,152 @@ const GlowCursor: React.FC<GlowCursorProps> = ({
       lastInputTime = performance.now();
     };
 
+    const hasDistinctPair = (count: number) => {
+      if (count < 2) return false;
+      for (let i = 0; i < count; i++) {
+        for (let j = i + 1; j < count; j++) {
+          const dx = points[j].x - points[i].x;
+          const dy = points[j].y - points[i].y;
+          if (dx * dx + dy * dy > DISTINCT_EPS * DISTINCT_EPS) {
+            return true;
+          }
+        }
+      }
+      return false;
+    };
+
+    const buildHeadGlow = (
+      trailW: number,
+      spread: number
+    ): number => {
+      const half = Math.max(trailW * (0.8 + spread * 1.4), 0.5);
+      const along = half * 0.55;
+      const hx = points[0].x;
+      const hy = points[0].y;
+      const samples = [
+        { x: hx, y: hy - along, progress: 0 },
+        { x: hx, y: hy + along, progress: 0.08 },
+      ];
+      let vtx = 0;
+      for (const sample of samples) {
+        const o = vtx * 2;
+        positionData[o] = sample.x + half;
+        positionData[o + 1] = sample.y;
+        sideData[vtx] = 1;
+        progressData[vtx] = sample.progress;
+        vtx += 1;
+        const o2 = vtx * 2;
+        positionData[o2] = sample.x - half;
+        positionData[o2 + 1] = sample.y;
+        sideData[vtx] = -1;
+        progressData[vtx] = sample.progress;
+        vtx += 1;
+      }
+      return vtx;
+    };
+
+    const buildRibbon = (
+      pointCount: number,
+      trailW: number,
+      taper: number,
+      spread: number
+    ): number => {
+      if (pointCount < 2 || !hasDistinctPair(pointCount)) {
+        return initialized ? buildHeadGlow(trailW, spread) : 0;
+      }
+
+      const denom = Math.max(pointCount - 1, 1);
+      let vtx = 0;
+      let prevTx = 0;
+      let prevTy = 1;
+      let lastNx = -1;
+      let lastNy = 0;
+
+      for (let i = 0; i < pointCount; i++) {
+        const progress = i / denom;
+        const taperExp = 0.55 + taper * (1.6 - 0.55);
+        const width =
+          trailW *
+          (1 + (0.25 - 1) * Math.pow(Math.pow(progress, taperExp), 1));
+        const halfW = Math.max(width * (0.8 + spread * 1.4), 0.5);
+
+        let tx = 0;
+        let ty = 0;
+        if (i === 0) {
+          tx = points[1].x - points[0].x;
+          ty = points[1].y - points[0].y;
+        } else if (i === pointCount - 1) {
+          tx = points[i].x - points[i - 1].x;
+          ty = points[i].y - points[i - 1].y;
+        } else {
+          tx = points[i + 1].x - points[i - 1].x;
+          ty = points[i + 1].y - points[i - 1].y;
+        }
+
+        const lenSq = tx * tx + ty * ty;
+        if (lenSq < SEGMENT_EPS * SEGMENT_EPS) {
+          tx = prevTx;
+          ty = prevTy;
+        } else {
+          const invLen = 1 / Math.sqrt(lenSq);
+          tx *= invLen;
+          ty *= invLen;
+          prevTx = tx;
+          prevTy = ty;
+        }
+
+        let nx = -ty;
+        let ny = tx;
+        if (nx * lastNx + ny * lastNy < 0) {
+          nx = -nx;
+          ny = -ny;
+        }
+        lastNx = nx;
+        lastNy = ny;
+        const px = points[i].x;
+        const py = points[i].y;
+
+        const o = vtx * 2;
+        positionData[o] = px + nx * halfW;
+        positionData[o + 1] = py + ny * halfW;
+        sideData[vtx] = 1;
+        progressData[vtx] = progress;
+        vtx += 1;
+
+        const o2 = vtx * 2;
+        positionData[o2] = px - nx * halfW;
+        positionData[o2 + 1] = py - ny * halfW;
+        sideData[vtx] = -1;
+        progressData[vtx] = progress;
+        vtx += 1;
+      }
+
+      return vtx;
+    };
+
     const render = (now: number) => {
       if (destroyed) return;
+      loopActive = true;
       const config = propsRef.current;
       const delta = Math.min((now - lastFrameTime) / 16.667, 3);
       lastFrameTime = now;
 
+      const pointCount = clamp(
+        Math.round(config.trailLength),
+        2,
+        MAX_POINTS
+      );
+
       if (initialized) {
-        const headEase =
-          1 - Math.pow(1 - clamp(config.followSpeed, 0.01, 0.99), delta);
-        const chainBase = clamp(0.28 + config.followSpeed * 0.35, 0.08, 0.92);
-        const chainEase = 1 - Math.pow(1 - chainBase, delta);
-        head.x += (target.x - head.x) * headEase;
-        head.y += (target.y - head.y) * headEase;
-        points[0].x = head.x;
-        points[0].y = head.y;
+        points[0].x = target.x;
+        points[0].y = target.y;
 
-        for (let i = 1; i < MAX_POINTS; i++) {
-          points[i].x += (points[i - 1].x - points[i].x) * chainEase;
-          points[i].y += (points[i - 1].y - points[i].y) * chainEase;
-        }
+        const wakeSpeed = clamp(config.followSpeed, 0.01, 0.99);
+        const wakeEase = 1 - Math.pow(1 - wakeSpeed, delta);
 
-        for (let i = 0; i < MAX_POINTS; i++) {
-          pointData[i * 2] = points[i].x;
-          pointData[i * 2 + 1] = points[i].y;
+        for (let i = 1; i < pointCount; i++) {
+          points[i].x += (points[i - 1].x - points[i].x) * wakeEase;
+          points[i].y += (points[i - 1].y - points[i].y) * wakeEase;
         }
       }
 
@@ -382,21 +500,20 @@ const GlowCursor: React.FC<GlowCursorProps> = ({
       const fadeTarget = initialized && config.enabled && !shouldFade ? 1 : 0;
       fade += (fadeTarget - fade) * Math.min(1, fadeStep * 7);
 
-      if (program.uniforms.uPointCount) {
-        program.uniforms.uPointCount.value = clamp(
-          Math.round(config.trailLength),
-          2,
-          MAX_POINTS
-        );
+      if (fade < 0.0005 && fadeTarget === 0) {
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        loopActive = false;
+        raf = 0;
+        return;
       }
+
       if (program.uniforms.uColor) {
         program.uniforms.uColor.value = hexToRgb(config.color);
       }
       if (program.uniforms.uSecondaryColor) {
-        program.uniforms.uSecondaryColor.value = hexToRgb(config.secondaryColor);
-      }
-      if (program.uniforms.uTrailWidth) {
-        program.uniforms.uTrailWidth.value = Math.max(config.trailWidth, 0.1);
+        program.uniforms.uSecondaryColor.value = hexToRgb(
+          config.secondaryColor
+        );
       }
       if (program.uniforms.uTaper) {
         program.uniforms.uTaper.value = clamp(config.trailTaper, 0, 1);
@@ -407,9 +524,6 @@ const GlowCursor: React.FC<GlowCursorProps> = ({
           0
         );
       }
-      if (program.uniforms.uGlowSpread) {
-        program.uniforms.uGlowSpread.value = Math.max(config.glowSpread, 0);
-      }
       if (program.uniforms.uHotspot) {
         program.uniforms.uHotspot.value = clamp(config.hotspot, 0, 1);
       }
@@ -419,29 +533,37 @@ const GlowCursor: React.FC<GlowCursorProps> = ({
       if (program.uniforms.uOpacity) {
         program.uniforms.uOpacity.value = clamp(config.opacity, 0, 1);
       }
-      if (program.uniforms.uPulseSpeed) {
-        program.uniforms.uPulseSpeed.value = config.pulseSpeed;
-      }
-      if (program.uniforms.uNoiseStrength) {
-        program.uniforms.uNoiseStrength.value = clamp(
-          config.noiseStrength,
-          0,
-          1
-        );
-      }
       if (program.uniforms.uNormalBlend) {
         program.uniforms.uNormalBlend.value =
           config.blendMode === "normal" ? 1 : 0;
-      }
-      if (program.uniforms.uTime) {
-        program.uniforms.uTime.value = now * 0.001;
       }
       if (program.uniforms.uFade) {
         program.uniforms.uFade.value = fade;
       }
 
-      renderer.render({ scene: mesh });
-      if (!destroyed) raf = requestAnimationFrame(render);
+      const vertexCount = initialized
+        ? buildRibbon(
+            pointCount,
+            Math.max(config.trailWidth, 0.1),
+            clamp(config.trailTaper, 0, 1),
+            Math.max(config.glowSpread, 0)
+          )
+        : 0;
+
+      if (vertexCount >= 4) {
+        positionAttr.count = vertexCount;
+        sideAttr.count = vertexCount;
+        progressAttr.count = vertexCount;
+        positionAttr.needsUpdate = true;
+        sideAttr.needsUpdate = true;
+        progressAttr.needsUpdate = true;
+        mesh.geometry.setDrawRange(0, vertexCount);
+        renderer.render({ scene: mesh });
+      }
+
+      if (!destroyed) {
+        raf = requestAnimationFrame(render);
+      }
     };
 
     const resizeObserver = new ResizeObserver(resize);
@@ -459,10 +581,11 @@ const GlowCursor: React.FC<GlowCursorProps> = ({
     pointerTarget.addEventListener("pointerleave", onPointerLeave);
 
     resize();
-    raf = requestAnimationFrame(render);
+    scheduleLoop();
 
     return () => {
       destroyed = true;
+      loopActive = false;
       cancelAnimationFrame(raf);
       resizeObserver.disconnect();
       pointerTarget.removeEventListener(
