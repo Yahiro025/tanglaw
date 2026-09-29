@@ -32,6 +32,10 @@ export default function SiteFooter() {
             The Minds Behind Us
           </Link>
           <span className="text-white/20">|</span>
+          <Link href="/privacy" className="hover:text-[color:var(--theme-typography-main)]">
+            Privacy
+          </Link>
+          <span className="text-white/20">|</span>
           <a href="https://pup.edu.ph" target="_blank" rel="noopener noreferrer" className="hover:text-[color:var(--theme-typography-main)]">
             PUP Manila
           </a>
