@@ -4,6 +4,30 @@ import { render, screen } from "@testing-library/react";
 import GlowCursor from "@/components/ui/GlowCursor";
 import GlowCursorLayer from "@/components/glow-cursor-layer";
 
+// jsdom has no WebGL, so stub the ogl pieces GlowCursor touches.
+vi.mock("ogl", () => {
+  class Renderer {
+    gl = { clearColor: vi.fn(), clear: vi.fn(), COLOR_BUFFER_BIT: 16384 };
+    setSize = vi.fn();
+    render = vi.fn();
+  }
+  class Program {
+    uniforms: Record<string, { value: unknown }>;
+    remove = vi.fn();
+    constructor(
+      _gl: unknown,
+      options: { uniforms: Record<string, { value: unknown }> }
+    ) {
+      this.uniforms = options.uniforms;
+    }
+  }
+  class Mesh {
+    geometry = { remove: vi.fn() };
+  }
+  class Triangle {}
+  return { Renderer, Program, Mesh, Triangle };
+});
+
 vi.mock("next/dynamic", () => ({
   default: () =>
     function DynamicGlowCursor() {

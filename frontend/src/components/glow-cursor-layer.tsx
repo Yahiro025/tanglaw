@@ -57,8 +57,7 @@ export default function GlowCursorLayer() {
 
   return (
     <GlowCursor
-      useWindowPointer={true}
-      className="glow-cursor--fixed"
+      useWindowPointer
       style={{
         position: "fixed",
         inset: 0,
@@ -69,10 +68,10 @@ export default function GlowCursorLayer() {
       }}
       color="#67E8F9"
       secondaryColor="#A78BFA"
-      trailLength={10}
+      trailLength={40}
       trailWidth={8}
       trailTaper={0.8}
-      followSpeed={0.62}
+      followSpeed={0.42}
       glowIntensity={1.9}
       glowSpread={1.2}
       hotspot={0.65}
@@ -81,8 +80,9 @@ export default function GlowCursorLayer() {
       pulseSpeed={1.1}
       noiseStrength={0.035}
       idleFade
-      idleTimeout={700}
+      idleTimeout={400}
       fadeDuration={900}
+      maxDevicePixelRatio={1}
       blendMode="screen"
     />
   );
