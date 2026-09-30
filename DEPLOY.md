@@ -183,6 +183,8 @@ npx prisma migrate diff --from-url "$DIRECT_URL" --to-schema-datamodel prisma/sc
 
 Stop if the diff contains a drop or data rewrite. The expected auth diff is two nullable `User` columns and one unique composite index. Render startup refuses destructive `db push` confirmation.
 
+For an existing database that lacks these fields, run `backend/prisma/oauth-provider-columns.sql` in the Supabase SQL Editor. It adds the provider fields and unique index, then checks that the OAuth query can read them. Confirm the Supabase project is active before testing sign-in.
+
 Deploy the backend schema and `/api/auth/oauth/exchange` first. Configure provider credentials and the matching bridge secret on Vercel, then deploy the frontend. If rollback is needed, roll back the frontend first and keep the additive backend fields and endpoint.
 
 Release check: `https://tanglaw-project.vercel.app/api/auth/providers` must list `credentials`, `google`, and `azure-ad`.
