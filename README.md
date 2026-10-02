@@ -132,25 +132,25 @@ This project is intended for academic and project submission use.
 
 ### Documentation Team
 
-| Portrait | Member & role | Contribution | Profile |
-|----------|---------------|--------------|---------|
-| <img src="frontend/public/team/salvaloza2.0.webp" alt="Godsent John C. Salvaloza" width="72"> | **Godsent John C. Salvaloza**<br>Documentation Head | Oversees all paper sections, references indexation, and final compiled academic paper validation. | — |
-| <img src="frontend/public/team/bonador2.0.jpg" alt="Rhaine Venice B. Bonador" width="72"> | **Rhaine Venice B. Bonador**<br>Introduction Writer | Handles Chapter 1 problem contexts, general socioeconomic gaps, and solution frameworks. | — |
-| <img src="frontend/public/team/madera2.0.webp" alt="Kyle Ashley B. Madera" width="72"> | **Kyle Ashley B. Madera**<br>Statement of the Problem Writer | Transforms operational goals into measurable research questions, metrics, and study definitions. | — |
-| <img src="frontend/public/team/alberto2.0.jpg" alt="Hannah Mae V. Alberto" width="72"> | **Hannah Mae V. Alberto**<br>RRL Lead Writer | Manages literature review synthesis, source curation, and academic narrative alignment. | — |
-| <img src="frontend/public/team/partible2.0.jpg" alt="Hannah Nicole B. Partible" width="72"> | **Hannah Nicole B. Partible**<br>RRL Assistant & Citation Checker | Maintains reference accuracy, citation formatting, and academic consistency. | — |
-| <img src="frontend/public/team/perez2.0.webp" alt="Emerald T. Perez" width="72"> | **Emerald T. Perez**<br>Methodology Writer | Structures the research design, evaluation method, and analytical process. | — |
-| <img src="frontend/public/team/araullo2.0.webp" alt="Julliane Mae G. Araullo" width="72"> | **Julliane Mae G. Araullo**<br>Results Writer | Compiles findings, performance metrics, and usability impact narratives. | [LinkedIn](https://www.linkedin.com/in/julliane-mae-araullo-0a7167386/) |
-| <img src="frontend/public/team/pajares2.0.jpg" alt="Daniel F. Pajares" width="72"> | **Daniel F. Pajares**<br>Discussion Writer | Explains implications, limitations, and future recommendations of the project. | — |
+| Portrait | Member & role | Contribution | Profile | GitHub |
+|----------|---------------|--------------|---------|--------|
+| <img src="frontend/public/team/salvaloza2.0.webp" alt="Godsent John C. Salvaloza" width="72"> | **Godsent John C. Salvaloza**<br>Documentation Head | Oversees all paper sections, references indexation, and final compiled academic paper validation. | — | — |
+| <img src="frontend/public/team/bonador2.0.jpg" alt="Rhaine Venice B. Bonador" width="72"> | **Rhaine Venice B. Bonador**<br>Introduction Writer | Handles Chapter 1 problem contexts, general socioeconomic gaps, and solution frameworks. | — | [GitHub](https://github.com/rhainebonador) |
+| <img src="frontend/public/team/madera2.0.webp" alt="Kyle Ashley B. Madera" width="72"> | **Kyle Ashley B. Madera**<br>Statement of the Problem Writer | Transforms operational goals into measurable research questions, metrics, and study definitions. | — | [GitHub](https://github.com/mkyleashley) |
+| <img src="frontend/public/team/alberto2.0.jpg" alt="Hannah Mae V. Alberto" width="72"> | **Hannah Mae V. Alberto**<br>RRL Lead Writer | Manages literature review synthesis, source curation, and academic narrative alignment. | — | [GitHub](https://github.com/hannahmaeva) |
+| <img src="frontend/public/team/partible2.0.jpg" alt="Hannah Nicole B. Partible" width="72"> | **Hannah Nicole B. Partible**<br>RRL Assistant & Citation Checker | Maintains reference accuracy, citation formatting, and academic consistency. | — | [GitHub](https://github.com/nicole-partible) |
+| <img src="frontend/public/team/perez2.0.webp" alt="Emerald T. Perez" width="72"> | **Emerald T. Perez**<br>Methodology Writer | Structures the research design, evaluation method, and analytical process. | — | [GitHub](https://github.com/emzxcsss) |
+| <img src="frontend/public/team/araullo2.0.webp" alt="Julliane Mae G. Araullo" width="72"> | **Julliane Mae G. Araullo**<br>Results Writer | Compiles findings, performance metrics, and usability impact narratives. | [LinkedIn](https://www.linkedin.com/in/julliane-mae-araullo-0a7167386/) | [GitHub](https://github.com/jullianeqt) |
+| <img src="frontend/public/team/pajares2.0.jpg" alt="Daniel F. Pajares" width="72"> | **Daniel F. Pajares**<br>Discussion Writer | Explains implications, limitations, and future recommendations of the project. | — | [GitHub](https://github.com/dane20pajares-hub) |
 
 ### Development Team
 
-| Portrait | Member & role | Contribution | Profile |
-|----------|---------------|--------------|---------|
-| <img src="frontend/public/team/payoyo2.0.jpg" alt="Bennett P. Payoyo" width="72"> | **Bennett P. Payoyo**<br>Project Manager | Directs operational scope, research alignment, task delegation, and final deployment quality gates. | [LinkedIn](https://www.linkedin.com/in/bennett-payoyo/) |
-| <img src="frontend/public/team/albano2.0.jpg" alt="An-joe Mikael T. Albano" width="72"> | **An-joe Mikael T. Albano**<br>Frontend Developer | Leads interface delivery, motion polish, and responsive behavior. | [LinkedIn](https://www.linkedin.com/in/an-joe-mikael-albano-2aa598365/) |
-| <img src="frontend/public/team/delosreyes2.0.jpg" alt="Levrone Viel S. Delos Reyes" width="72"> | **Levrone Viel S. Delos Reyes**<br>Frontend & QA | Supports UI quality checks, interaction validation, and accessibility review. | — |
-| <img src="frontend/public/team/faustino2.0.webp" alt="Charles Joseph V. Faustino" width="72"> | **Charles Joseph V. Faustino**<br>Backend Developer & Database Manager | Builds server interactions, data flow structure, and simulated persistence pathways. | [LinkedIn](https://www.linkedin.com/in/charles286/) |
-| <img src="frontend/public/team/cruz2.0.png" alt="Justin Angelo G. Cruz" width="72"> | **Justin Angelo G. Cruz**<br>QA Tester / Technical Documentation | Manages test matrices, documentation clarity, and final feature verification. | — |
+| Portrait | Member & role | Contribution | Profile | GitHub |
+|----------|---------------|--------------|---------|--------|
+| <img src="frontend/public/team/payoyo2.0.jpg" alt="Bennett P. Payoyo" width="72"> | **Bennett P. Payoyo**<br>Project Manager | Directs operational scope, research alignment, task delegation, and final deployment quality gates. | [LinkedIn](https://www.linkedin.com/in/bennett-payoyo/) | [GitHub](https://github.com/Yahiro025) |
+| <img src="frontend/public/team/albano2.0.jpg" alt="An-joe Mikael T. Albano" width="72"> | **An-joe Mikael T. Albano**<br>Frontend Developer | Leads interface delivery, motion polish, and responsive behavior. | [LinkedIn](https://www.linkedin.com/in/an-joe-mikael-albano-2aa598365/) | [GitHub](https://github.com/Mikael1206) |
+| <img src="frontend/public/team/delosreyes2.0.jpg" alt="Levrone Viel S. Delos Reyes" width="72"> | **Levrone Viel S. Delos Reyes**<br>Frontend & QA | Supports UI quality checks, interaction validation, and accessibility review. | — | [GitHub](https://github.com/solevyiel) |
+| <img src="frontend/public/team/faustino2.0.webp" alt="Charles Joseph V. Faustino" width="72"> | **Charles Joseph V. Faustino**<br>Backend Developer & Database Manager | Builds server interactions, data flow structure, and simulated persistence pathways. | [LinkedIn](https://www.linkedin.com/in/charles286/) | [GitHub](https://github.com/Glyneria) |
+| <img src="frontend/public/team/cruz2.0.png" alt="Justin Angelo G. Cruz" width="72"> | **Justin Angelo G. Cruz**<br>QA Tester / Technical Documentation | Manages test matrices, documentation clarity, and final feature verification. | — | [GitHub](https://github.com/cruzjustin118-art) |
 
 **Institution:** Polytechnic University of the Philippines (PUP Manila) — BSCS 1-2, Science, Technology, and Society (STS)
